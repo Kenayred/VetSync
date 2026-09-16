@@ -16,7 +16,9 @@ object Menu {
             println("\n--- VetSync: Menú Principal ---")
             println("1. Registrar nueva mascota")
             println("2. Mostrar mascotas registradas")
-            println("3. Salir")
+            println("3. Actualizar Informacion mascotas")
+            println("4. Borrar mascota")
+            println("5. Salir")
             print("Ingrese una opción: ")
 
             opcion = scanner.nextInt()
@@ -24,10 +26,12 @@ object Menu {
             when (opcion) {
                 1 -> gestor.agregarMascota(scanner, usuarioActual)
                 2 -> gestor.mostrarMascotasUsuario(usuarioActual.ID, usuarioActual.nombre)
-                3 -> println("Saliendo del sistema VetSync. ¡Hasta luego!")
+                3 -> gestor.actualizarMascota(scanner, usuarioActual.ID, usuarioActual.nombre)
+                4 -> gestor.eliminarMascotaPorIndice(scanner, usuarioActual.ID,usuarioActual.nombre)
+                5 -> println("Saliendo del sistema VetSync.")
                 else -> println("Opción inválida. Intente de nuevo.")
             }
-        } while (opcion != 3)
+        } while (opcion != 5)
     }
 
 

@@ -1,7 +1,13 @@
 package com.example.vetsync.modelo
 
-class Mascota(val nombre: String, val especie: String, var edad: Int, var duenoID: Int) {
+class Mascota(
+    val id: Int,
+    val nombre: String,
+    var especie: String,
+    var edad: Int,
+    var duenoID: Int
+) {
     fun mostrarDetalles() {
-        println("Mascota: $nombre | Especie: $especie | Edad: $edad años")
+        println("ID: ${id} | Mascota: $nombre | Especie: $especie | Edad: $edad años")
     }
 }
