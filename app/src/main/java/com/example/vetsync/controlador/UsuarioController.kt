@@ -6,7 +6,7 @@ class UsuarioController(){
     private val usuariosRegistrados = mutableListOf<Usuario>()
 
     init {
-        // Agregamos usuarios de prueba según los roles de VetSync
+        // Agregamos usuarios de prueba
         usuariosRegistrados.add(Usuario(1,"Laura", "1234","Laura","Cliente"))
         usuariosRegistrados.add(Usuario(2,"vega", "admin","Dr.Vega", "Administrador"))
     }
