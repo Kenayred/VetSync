@@ -5,7 +5,11 @@ import java.util.Scanner
 
 object RegistroView {
 
-    fun mostrarPantalla(scanner: Scanner, controller: UsuarioController) {
+    fun mostrarPantalla(
+        scanner: Scanner,
+        controller: UsuarioController
+    ) {
+
         println("\n--- VetSync: Registro de nuevo cliente ---")
 
         print("Nombre de usuario: ")
@@ -17,6 +21,10 @@ object RegistroView {
         print("Nombre real: ")
         val nombre = scanner.next()
 
-        controller.registrarNuevoCliente(username, password, nombre)
+        controller.registrarNuevoCliente(
+            username,
+            password,
+            nombre
+        )
     }
 }
