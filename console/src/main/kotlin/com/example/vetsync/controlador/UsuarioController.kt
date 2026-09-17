@@ -1,5 +1,6 @@
 package com.example.vetsync.controlador
 
+import com.example.vetsync.modelo.RolUsuario
 import com.example.vetsync.modelo.Usuario
 
 class UsuarioController {
@@ -14,7 +15,7 @@ class UsuarioController {
                 username = "Laura",
                 contrasena = "1234",
                 nombre = "Laura",
-                rol = "Cliente"
+                rol = RolUsuario.CLIENTE
             )
         )
 
@@ -24,7 +25,7 @@ class UsuarioController {
                 username = "vega",
                 contrasena = "admin",
                 nombre = "Dr. Vega",
-                rol = "Administrador"
+                rol = RolUsuario.ADMINISTRADOR
             )
         )
     }
