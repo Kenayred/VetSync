@@ -2,6 +2,7 @@ package com.example.vetsync.controlador
 
 import com.example.vetsync.modelo.Mascota
 import com.example.vetsync.modelo.Usuario
+import com.example.vetsync.utils.ConsolaUtil
 import java.util.Scanner
 
 class GestorMascotas {
@@ -37,7 +38,14 @@ class GestorMascotas {
                 "${index + 1}. " +
                         "Nombre: ${mascota.nombre} | " +
                         "Especie: ${mascota.especie} | " +
-                        "Edad: ${mascota.edad} años"
+                        "Raza: ${mascota.raza} | " +
+                        "Edad: ${mascota.edad} años | " +
+                        "Sexo: ${mascota.sexo} | " +
+                        "Peso: ${
+                            mascota.peso?.let {
+                                "$it kg"
+                            } ?: "N/R"
+                        }"
             )
         }
 
@@ -70,14 +78,75 @@ class GestorMascotas {
 
         val mascota = mascotasDelUsuario[indice]
 
-        print("Nueva especie: ")
+        println("\n--- Actualizar ${mascota.nombre} ---")
+
+        print(
+            "Nueva especie " +
+                    "(actual: ${mascota.especie}): "
+        )
+
         mascota.especie = scanner.next()
 
-        print("Nueva edad: ")
+        print(
+            "Nueva edad " +
+                    "(actual: ${mascota.edad}): "
+        )
+
         mascota.edad = scanner.nextInt()
 
+        print(
+            "Nueva raza " +
+                    "(actual: ${mascota.raza}): "
+        )
+
+        mascota.raza = scanner.next()
+
+        print(
+            "Nuevo sexo " +
+                    "(actual: ${mascota.sexo}): "
+        )
+
+        mascota.sexo = scanner.next()
+
+        print(
+            "Nuevo peso en kg " +
+                    "(0 para no modificar): "
+        )
+
+        val nuevoPeso = scanner.nextDouble()
+
+        if (nuevoPeso > 0) {
+            mascota.peso = nuevoPeso
+        }
+
+        print(
+            "Nuevo microchip " +
+                    "(actual: ${
+                        mascota.microchip ?: "No registrado"
+                    }): "
+        )
+
+        val nuevoMicrochip = scanner.next()
+
+        if (nuevoMicrochip != "-") {
+            mascota.microchip = nuevoMicrochip
+        }
+
+        print(
+            "Nuevas alergias " +
+                    "(actual: ${
+                        mascota.alergias ?: "No registradas"
+                    }): "
+        )
+
+        val nuevasAlergias = scanner.next()
+
+        if (nuevasAlergias != "-") {
+            mascota.alergias = nuevasAlergias
+        }
+
         println(
-            "La información de ${mascota.nombre} " +
+            "\nLa información de ${mascota.nombre} " +
                     "ha sido actualizada correctamente."
         )
     }
@@ -153,25 +222,84 @@ class GestorMascotas {
 
         println("\n--- Agregar Paciente ---")
 
-        print("Nombre de la mascota: ")
-        val nombre = scanner.next()
+        val nombre = ConsolaUtil.leerTexto(
+            scanner,
+            "Nombre de la mascota: "
+        )
 
-        print("Especie: ")
-        val especie = scanner.next()
+        val especie = ConsolaUtil.leerTexto(
+            scanner,
+            "Especie: "
+        )
 
-        print("Edad: ")
-        val edad = scanner.nextInt()
+        val edad = ConsolaUtil.leerEntero(
+            scanner,
+            "Edad: ",
+            minimo = 0
+        )
 
-        val nuevoId = mascotas.size + 1
+        val raza = ConsolaUtil.leerTexto(
+            scanner,
+            "Raza: "
+        )
+
+        val sexo = ConsolaUtil.leerTexto(
+            scanner,
+            "Sexo: "
+        )
+
+        val pesoIngresado =
+            ConsolaUtil.leerDecimal(
+                scanner,
+                "Peso en kg (0 si no desea registrarlo): ",
+                minimo = 0.0
+            )
+
+        val peso = if (pesoIngresado > 0) {
+            pesoIngresado
+        } else {
+            null
+        }
+
+        val microchipIngresado =
+            ConsolaUtil.leerTexto(
+                scanner,
+                "Microchip (Enter si no tiene): ",
+                obligatorio = false
+            )
+
+        val microchip = microchipIngresado.ifBlank {
+                null
+            }
+
+        val alergiasIngresadas =
+            ConsolaUtil.leerTexto(
+                scanner,
+                "Alergias (Enter si no tiene): ",
+                obligatorio = false
+            )
+
+        val alergias = alergiasIngresadas.ifBlank {
+                null
+            }
+
+        val nuevoId = mascotas.maxOfOrNull { it.id}?.plus(1) ?: 1
 
         val nuevaMascota = Mascota(
             id = nuevoId,
             nombre = nombre,
             especie = especie,
             edad = edad,
-            duenoId = usuario.id
+            duenoId = usuario.id,
+            raza = raza,
+            sexo = sexo,
+            peso = peso,
+            microchip = microchip,
+            alergias = alergias
         )
 
         agregarMascota(nuevaMascota)
+
+        println("Paciente agregado correctamente.")
     }
 }

@@ -8,6 +8,9 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import com.example.vetsync.excepciones.CitaNoDisponibleException
+import com.example.vetsync.excepciones.OperacionNoPermitidaException
+import com.example.vetsync.utils.Logger
 
 class CitaController(
     private val mascotaController: GestorMascotas,
@@ -49,13 +52,11 @@ class CitaController(
             item.hora
         )
 
-        require(
-            !existeCitaEnHorario(
-                item.fecha,
-                item.hora
-            )
+        if (existeCitaEnHorario(item.fecha, item.hora)
         ) {
-            "El horario seleccionado ya está ocupado."
+            throw CitaNoDisponibleException(
+                "El horario seleccionado ya está ocupado."
+            )
         }
 
         item.fecha = fechaValida.format(formatoFecha)
@@ -193,8 +194,11 @@ class CitaController(
         val cita = buscarPorId(id)
             ?: return false
 
-        require(cita.estado == EstadoCita.PENDIENTE) {
-            "Solo las citas pendientes pueden ser reprogramadas."
+        if (cita.estado != EstadoCita.PENDIENTE) {
+            throw OperacionNoPermitidaException(
+                "Solo las citas pendientes " +
+                        "pueden ser reprogramadas."
+            )
         }
 
         val fechaValida = validarFecha(nuevaFecha)
@@ -228,12 +232,16 @@ class CitaController(
         id: Int,
         nuevoEstado: EstadoCita
     ): Boolean {
-
         val cita = buscarPorId(id)
             ?: return false
 
-        if (!transicionValida(cita.estado, nuevoEstado)) {
-            return false
+        if (!transicionValida(cita.estado, nuevoEstado)
+        ) {
+            throw OperacionNoPermitidaException(
+                "No se permite cambiar " +
+                        "el estado ${cita.estado} " +
+                        "a $nuevoEstado."
+            )
         }
 
         cita.estado = nuevoEstado
