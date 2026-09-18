@@ -17,6 +17,10 @@ class GestorMascotas {
         return mascotas.filter { it.duenoId == idDueno }
     }
 
+    fun obtenerTodasLasMascotas(): List<Mascota> {
+        return mascotas.toList()
+    }
+
     fun mostrarMascotasUsuario(idDueno: Int, duenoNombre: String) {
 
         val mascotasDelUsuario = obtenerMascotasUsuario(idDueno)
