@@ -5,6 +5,9 @@ import com.example.vetsync.controlador.GestorMascotas
 import com.example.vetsync.controlador.ServicioController
 import com.example.vetsync.modelo.EstadoCita
 import com.example.vetsync.modelo.Usuario
+import com.example.vetsync.excepciones.CitaNoDisponibleException
+import com.example.vetsync.excepciones.OperacionNoPermitidaException
+import com.example.vetsync.utils.Logger
 import java.util.Scanner
 
 object CitaView {
@@ -157,10 +160,37 @@ object CitaView {
 
             println("=====================================")
 
+        } catch (e: CitaNoDisponibleException) {
+
+            println(
+                "\nNo se pudo crear la cita."
+            )
+
+            println(
+                "Motivo: ${e.message}"
+            )
+
+            Logger.error(
+                modulo = "Citas",
+                mensaje = e.message ?: "Cita no disponible",
+                excepcion = e
+            )
+
         } catch (e: IllegalArgumentException) {
 
-            println("\nNo se pudo crear la cita.")
-            println("Motivo: ${e.message}")
+            println(
+                "\nNo se pudo crear la cita."
+            )
+
+            println(
+                "Motivo: ${e.message}"
+            )
+
+            Logger.error(
+                modulo = "Citas",
+                mensaje = e.message ?: "Error de validación",
+                excepcion = e
+            )
         }
     }
 
