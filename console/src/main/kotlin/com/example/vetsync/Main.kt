@@ -8,6 +8,8 @@ import com.example.vetsync.vista.LoginView
 import com.example.vetsync.vista.Menu
 import com.example.vetsync.vista.RegistroView
 import com.example.vetsync.utils.ConsolaUtil
+import com.example.vetsync.modelo.RolUsuario
+import com.example.vetsync.vista.MenuAdministrador
 import java.util.Scanner
 
 fun main() {
@@ -52,13 +54,30 @@ fun main() {
 
                 if (usuarioActual != null) {
 
-                    Menu.ejecutarMenu(
-                        scanner,
-                        usuarioActual,
-                        mascotaController,
-                        servicioController,
-                        citaController
-                    )
+                    when (usuarioActual.rol) {
+
+                        RolUsuario.CLIENTE -> {
+
+                            Menu.ejecutarMenu(
+                                scanner,
+                                usuarioActual,
+                                mascotaController,
+                                servicioController,
+                                citaController
+                            )
+                        }
+
+                        RolUsuario.ADMINISTRADOR -> {
+
+                            MenuAdministrador.ejecutarMenu(
+                                scanner,
+                                usuarioActual,
+                                mascotaController,
+                                servicioController,
+                                citaController
+                            )
+                        }
+                    }
                 }
             }
 
