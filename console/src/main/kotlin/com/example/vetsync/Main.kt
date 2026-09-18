@@ -10,6 +10,7 @@ import com.example.vetsync.vista.RegistroView
 import com.example.vetsync.utils.ConsolaUtil
 import com.example.vetsync.modelo.RolUsuario
 import com.example.vetsync.vista.MenuAdministrador
+import com.example.vetsync.controlador.NotaClinicaController
 import java.util.Scanner
 
 fun main() {
@@ -23,6 +24,8 @@ fun main() {
         mascotaController,
         servicioController
     )
+
+    val notaClinicaController = NotaClinicaController()
 
     var opcionInicio: Int
 
@@ -74,7 +77,8 @@ fun main() {
                                 usuarioActual,
                                 mascotaController,
                                 servicioController,
-                                citaController
+                                citaController,
+                                notaClinicaController
                             )
                         }
                     }

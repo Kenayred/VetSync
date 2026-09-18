@@ -5,6 +5,7 @@ import com.example.vetsync.controlador.GestorMascotas
 import com.example.vetsync.controlador.ServicioController
 import com.example.vetsync.modelo.EstadoCita
 import com.example.vetsync.modelo.Usuario
+import com.example.vetsync.controlador.NotaClinicaController
 import java.util.Scanner
 
 object MenuAdministrador {
@@ -14,7 +15,8 @@ object MenuAdministrador {
         usuarioActual: Usuario,
         mascotaController: GestorMascotas,
         servicioController: ServicioController,
-        citaController: CitaController
+        citaController: CitaController,
+        notaClinicaController: NotaClinicaController
     ) {
 
         var opcion: Int
@@ -30,8 +32,10 @@ object MenuAdministrador {
             println("1. Ver citas")
             println("2. Gestionar estado de cita")
             println("3. Ver pacientes")
-            println("4. Ver servicios")
-            println("5. Cerrar sesión")
+            println("4. Agregar nota clínica")
+            println("5. Ver historial clínico")
+            println("6. Ver servicios")
+            println("7. Cerrar sesión")
             println("========================================")
 
             print("Ingrese una opción: ")
@@ -62,10 +66,27 @@ object MenuAdministrador {
                 }
 
                 4 -> {
-                    servicioController.mostrarServicios()
+                    NotaClinicaView.agregarNotaClinica(
+                        scanner,
+                        citaController,
+                        mascotaController,
+                        notaClinicaController
+                    )
                 }
 
                 5 -> {
+                    NotaClinicaView.mostrarHistorial(
+                        scanner,
+                        mascotaController,
+                        notaClinicaController
+                    )
+                }
+
+                6 -> {
+                    servicioController.mostrarServicios()
+                }
+
+                7 -> {
                     println("Cerrando sesión...")
                 }
 
@@ -74,7 +95,7 @@ object MenuAdministrador {
                 }
             }
 
-        } while (opcion != 5)
+        } while (opcion != 7)
     }
 
     private fun mostrarCitas(
