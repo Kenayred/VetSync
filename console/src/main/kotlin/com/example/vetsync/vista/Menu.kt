@@ -8,8 +8,6 @@ import java.util.Scanner
 
 object Menu {
 
-
-
     fun ejecutarMenu(
         scanner: Scanner,
         usuarioActual: Usuario,
@@ -27,7 +25,12 @@ object Menu {
             println("2. Mostrar mascotas")
             println("3. Actualizar mascota")
             println("4. Eliminar mascota")
-            println("5. Cerrar sesión")
+            println("5. Mostrar servicios")
+            println("6. Solicitar cita")
+            println("7. Mostrar mis citas")
+            println("8. Reprogramar cita")
+            println("9. Cancelar cita")
+            println("10. Cerrar sesión")
 
             print("Ingrese una opción: ")
 
@@ -64,6 +67,47 @@ object Menu {
                 }
 
                 5 -> {
+                    servicioController.mostrarServicios()
+                }
+
+                6 -> {
+                    CitaView.crearCita(
+                        scanner,
+                        usuarioActual,
+                        mascotaController,
+                        servicioController,
+                        citaController
+                    )
+                }
+
+                7 -> {
+                    CitaView.mostrarCitas(
+                        usuarioActual,
+                        citaController,
+                        mascotaController,
+                        servicioController
+                    )
+                }
+
+                8 -> {
+                    CitaView.reprogramarCita(
+                        scanner,
+                        usuarioActual,
+                        citaController,
+                        mascotaController,
+                        servicioController
+                    )
+                }
+
+                9 -> {
+                    CitaView.cancelarCita(
+                        scanner,
+                        usuarioActual,
+                        citaController
+                    )
+                }
+
+                10 -> {
                     println("Cerrando sesión...")
                 }
 
@@ -72,6 +116,6 @@ object Menu {
                 }
             }
 
-        } while (opcion != 5)
+        } while (opcion != 10)
     }
 }
