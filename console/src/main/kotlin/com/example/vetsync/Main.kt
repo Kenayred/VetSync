@@ -1,5 +1,8 @@
 package com.example.vetsync
 
+import com.example.vetsync.controlador.GestorMascotas
+import com.example.vetsync.controlador.ServicioController
+import com.example.vetsync.controlador.CitaController
 import com.example.vetsync.controlador.UsuarioController
 import com.example.vetsync.vista.LoginView
 import com.example.vetsync.vista.Menu
@@ -11,6 +14,13 @@ fun main() {
 
     val scanner = Scanner(System.`in`)
     val usuarioController = UsuarioController()
+    val mascotaController = GestorMascotas()
+    val servicioController = ServicioController()
+
+    val citaController = CitaController(
+        mascotaController,
+        servicioController
+    )
 
     var opcionInicio: Int
 
@@ -44,7 +54,10 @@ fun main() {
 
                     Menu.ejecutarMenu(
                         scanner,
-                        usuarioActual
+                        usuarioActual,
+                        mascotaController,
+                        servicioController,
+                        citaController
                     )
                 }
             }

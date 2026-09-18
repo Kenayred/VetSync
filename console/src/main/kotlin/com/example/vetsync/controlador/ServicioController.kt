@@ -51,6 +51,7 @@ class ServicioController : Gestionable<Servicio> {
     }
 
     override fun agregar(item: Servicio) {
+        validarServicio(item)
         servicios.add(item)
 
         println(
@@ -58,12 +59,31 @@ class ServicioController : Gestionable<Servicio> {
         )
     }
 
+    private fun validarServicio(servicio: Servicio) {
+
+        require(servicio.nombre.isNotBlank()) {
+            "El nombre del servicio no puede estar vacío."
+        }
+
+        require(servicio.descripcion.isNotBlank()) {
+            "La descripción del servicio no puede estar vacía."
+        }
+
+        require(servicio.costo > 0) {
+            "El costo del servicio debe ser mayor que 0."
+        }
+    }
+
     override fun listar(): List<Servicio> {
         return servicios.toList()
     }
 
-    override fun actualizar(item: Servicio): Boolean {
+    fun obtenerServiciosActivos(): List<Servicio> {
+        return servicios.filter { it.activo }
+    }
 
+    override fun actualizar(item: Servicio): Boolean {
+        validarServicio(item)
         val indice = servicios.indexOfFirst {
             it.id == item.id
         }

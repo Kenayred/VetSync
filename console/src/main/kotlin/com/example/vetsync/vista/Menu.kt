@@ -1,16 +1,21 @@
 package com.example.vetsync.vista
 
+import com.example.vetsync.controlador.CitaController
 import com.example.vetsync.controlador.GestorMascotas
+import com.example.vetsync.controlador.ServicioController
 import com.example.vetsync.modelo.Usuario
 import java.util.Scanner
 
 object Menu {
 
-    private val gestorMascotas = GestorMascotas()
+
 
     fun ejecutarMenu(
         scanner: Scanner,
-        usuarioActual: Usuario
+        usuarioActual: Usuario,
+        mascotaController: GestorMascotas,
+        servicioController: ServicioController,
+        citaController: CitaController
     ) {
 
         var opcion: Int
@@ -31,28 +36,28 @@ object Menu {
             when (opcion) {
 
                 1 -> {
-                    gestorMascotas.agregarMascota(
+                    mascotaController.agregarMascota(
                         scanner,
                         usuarioActual
                     )
                 }
 
                 2 -> {
-                    gestorMascotas.mostrarMascotasUsuario(
+                    mascotaController.mostrarMascotasUsuario(
                         usuarioActual.id,
                         usuarioActual.nombre
                     )
                 }
 
                 3 -> {
-                    gestorMascotas.actualizarMascota(
+                    mascotaController.actualizarMascota(
                         scanner,
                         usuarioActual.id
                     )
                 }
 
                 4 -> {
-                    gestorMascotas.eliminarMascota(
+                    mascotaController.eliminarMascota(
                         scanner,
                         usuarioActual.id
                     )
