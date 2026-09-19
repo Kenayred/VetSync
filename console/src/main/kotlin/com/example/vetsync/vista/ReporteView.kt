@@ -42,6 +42,34 @@ object ReporteView {
         )
 
         println()
+        println("DEMANDA DE SERVICIOS")
+        println("----------------------------------------")
+
+        val demandaServicios = reporteController.obtenerDemandaServicios()
+
+        if (demandaServicios.isEmpty()) {
+            println("No hay servicios registrados.")
+        } else {
+            demandaServicios.forEach { (nombreServicio, cantidad) ->
+                println("$nombreServicio: $cantidad")
+            }
+
+            val servicioMasRealizado = reporteController.obtenerServicioMasRealizado()
+
+            if (servicioMasRealizado != null) {
+                println()
+                println(
+                    "Servicio más realizado: " +
+                            servicioMasRealizado.first
+                )
+                println(
+                    "Cantidad de veces realizado: " +
+                            servicioMasRealizado.second
+                )
+            }
+        }
+
+        println()
         println("========================================")
         println("Presione ENTER para continuar...")
         scanner.nextLine()

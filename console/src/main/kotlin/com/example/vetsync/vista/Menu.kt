@@ -33,8 +33,6 @@ object Menu {
             println("9. Cancelar cita")
             println("10. Cerrar sesión")
 
-            print("Ingrese una opción: ")
-
             opcion = ConsolaUtil.leerOpcion(
                 scanner,
                 "Ingrese una opción: ",

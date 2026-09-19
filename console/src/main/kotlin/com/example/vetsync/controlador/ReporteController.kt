@@ -40,4 +40,33 @@ class ReporteController(
     fun obtenerCantidadServicios(): Int {
         return servicioController.obtenerServiciosActivos().size
     }
+
+    fun obtenerDemandaServicios(): Map<String, Int> {
+
+        val citasCompletadas = citaController.listar()
+            .filter { it.estado == EstadoCita.COMPLETADA }
+
+        return servicioController.obtenerServiciosActivos()
+            .associate { servicio ->
+
+                val cantidad = citasCompletadas.count {
+                    it.servicioId == servicio.id
+                }
+
+                servicio.nombre to cantidad
+            }
+    }
+
+    fun obtenerServicioMasRealizado(): Pair<String, Int>? {
+
+        val demandaServicios = obtenerDemandaServicios()
+
+        val servicioMasRealizado = demandaServicios.maxByOrNull { it.value }
+
+        if (servicioMasRealizado == null || servicioMasRealizado.value == 0) {
+            return null
+        }
+
+        return servicioMasRealizado.key to servicioMasRealizado.value
+    }
 }
