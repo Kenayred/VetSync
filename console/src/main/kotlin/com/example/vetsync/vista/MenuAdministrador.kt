@@ -6,6 +6,9 @@ import com.example.vetsync.controlador.ServicioController
 import com.example.vetsync.modelo.EstadoCita
 import com.example.vetsync.modelo.Usuario
 import com.example.vetsync.controlador.NotaClinicaController
+import com.example.vetsync.excepciones.OperacionNoPermitidaException
+import com.example.vetsync.utils.Logger
+import com.example.vetsync.utils.ConsolaUtil
 import java.util.Scanner
 
 object MenuAdministrador {
@@ -20,7 +23,6 @@ object MenuAdministrador {
     ) {
 
         var opcion: Int
-
         do {
 
             println("\n========================================")
@@ -38,9 +40,12 @@ object MenuAdministrador {
             println("7. Cerrar sesión")
             println("========================================")
 
-            print("Ingrese una opción: ")
-
-            opcion = scanner.nextInt()
+            opcion = ConsolaUtil.leerOpcion(
+                scanner,
+                "Ingrese una opción: ",
+                minimo = 1,
+                maximo = 7
+            )
 
             when (opcion) {
 
@@ -192,9 +197,11 @@ object MenuAdministrador {
             )
         }
 
-        print("\nIngrese el ID de la cita: ")
-
-        val id = scanner.nextInt()
+        val id = ConsolaUtil.leerEntero(
+            scanner,
+            "\nIngrese el ID de la cita: ",
+            minimo = 1
+        )
 
         val cita = citaController.buscarPorId(id)
 
@@ -204,49 +211,159 @@ object MenuAdministrador {
             return
         }
 
-        println("\nEstado actual: ${cita.estado}")
-        println("1. Confirmar")
-        println("2. Completar")
-        println("3. Cancelar")
+        println("\nCita seleccionada:")
+        println("ID: ${cita.id}")
+        println("Fecha: ${cita.fecha}")
+        println("Hora: ${cita.hora}")
+        println("Estado actual: ${cita.estado}")
 
-        print("Seleccione una acción: ")
+        // =====================================================
+        // MOSTRAR SOLO LAS ACCIONES VÁLIDAS
+        // =====================================================
 
-        val opcion = scanner.nextInt()
+        when (cita.estado) {
 
-        val nuevoEstado = when (opcion) {
+            EstadoCita.PENDIENTE -> {
 
-            1 -> EstadoCita.CONFIRMADA
+                println("\nAcciones disponibles:")
+                println("1. Confirmar")
+                println("2. Cancelar")
 
-            2 -> EstadoCita.COMPLETADA
+                print("Seleccione una acción: ")
 
-            3 -> EstadoCita.CANCELADA
+                val opcion = ConsolaUtil.leerOpcion(
+                    scanner,
+                    "Seleccione una acción: ",
+                    minimo = 1,
+                    maximo = 2
+                )
 
-            else -> {
-                println("Opción inválida.")
-                return
+                val nuevoEstado = when (opcion) {
+
+                    1 -> EstadoCita.CONFIRMADA
+
+                    2 -> EstadoCita.CANCELADA
+
+                    else -> {
+                        println("Opción inválida.")
+                        return
+                    }
+                }
+
+                try {
+
+                    val resultado =
+                        citaController.cambiarEstado(
+                            id,
+                            nuevoEstado
+                        )
+
+                    if (resultado) {
+
+                        println(
+                            "La cita $id cambió a " +
+                                    "estado $nuevoEstado correctamente."
+                        )
+                    }
+
+                } catch (
+                    e: OperacionNoPermitidaException
+                ) {
+
+                    println(
+                        "Operación no permitida: ${e.message}"
+                    )
+
+                    Logger.error(
+                        modulo = "Gestión de citas",
+                        mensaje = e.message
+                            ?: "Transición no permitida",
+                        excepcion = e
+                    )
+                }
             }
-        }
 
-        val resultado = citaController.cambiarEstado(
-            id,
-            nuevoEstado
-        )
+            EstadoCita.CONFIRMADA -> {
 
-        if (resultado) {
+                println("\nAcciones disponibles:")
+                println("1. Completar")
+                println("2. Cancelar")
 
-            println(
-                "La cita $id cambió a estado $nuevoEstado correctamente."
-            )
+                print("Seleccione una acción: ")
 
-        } else {
+                val opcion = ConsolaUtil.leerOpcion(
+                    scanner,
+                    "Seleccione una acción: ",
+                    minimo = 1,
+                    maximo = 2
+                )
 
-            println(
-                "No se pudo cambiar el estado de la cita."
-            )
+                val nuevoEstado = when (opcion) {
 
-            println(
-                "La transición ${cita.estado} → $nuevoEstado no está permitida."
-            )
+                    1 -> EstadoCita.COMPLETADA
+
+                    2 -> EstadoCita.CANCELADA
+
+                    else -> {
+                        println("Opción inválida.")
+                        return
+                    }
+                }
+
+                try {
+
+                    val resultado =
+                        citaController.cambiarEstado(
+                            id,
+                            nuevoEstado
+                        )
+
+                    if (resultado) {
+
+                        println(
+                            "La cita $id cambió a " +
+                                    "estado $nuevoEstado correctamente."
+                        )
+                    }
+
+                } catch (
+                    e: OperacionNoPermitidaException
+                ) {
+
+                    println(
+                        "Operación no permitida: ${e.message}"
+                    )
+
+                    Logger.error(
+                        modulo = "Gestión de citas",
+                        mensaje = e.message
+                            ?: "Transición no permitida",
+                        excepcion = e
+                    )
+                }
+            }
+
+            EstadoCita.COMPLETADA -> {
+
+                println(
+                    "\nLa cita ya está COMPLETADA."
+                )
+
+                println(
+                    "No existen acciones de cambio de estado disponibles."
+                )
+            }
+
+            EstadoCita.CANCELADA -> {
+
+                println(
+                    "\nLa cita ya está CANCELADA."
+                )
+
+                println(
+                    "No existen acciones de cambio de estado disponibles."
+                )
+            }
         }
     }
 

@@ -66,8 +66,12 @@ class GestorMascotas {
 
         mostrarMascotasUsuario(idUsuario, "")
 
-        print("Ingrese el número de la mascota: ")
-        val opcion = scanner.nextInt()
+        val opcion = ConsolaUtil.leerOpcion(
+            scanner,
+            "\nIngrese el número de la mascota: ",
+            minimo = 1,
+            maximo = mascotasDelUsuario.size
+        )
 
         val indice = opcion - 1
 
@@ -80,68 +84,63 @@ class GestorMascotas {
 
         println("\n--- Actualizar ${mascota.nombre} ---")
 
-        print(
+        mascota.especie = ConsolaUtil.leerTexto(
+            scanner,
             "Nueva especie " +
                     "(actual: ${mascota.especie}): "
         )
 
-        mascota.especie = scanner.next()
-
-        print(
+        mascota.edad = ConsolaUtil.leerEntero(
+            scanner,
             "Nueva edad " +
-                    "(actual: ${mascota.edad}): "
+                    "(actual: ${mascota.edad}): ",
+            minimo = 0
         )
 
-        mascota.edad = scanner.nextInt()
-
-        print(
+        mascota.raza = ConsolaUtil.leerTexto(
+            scanner,
             "Nueva raza " +
                     "(actual: ${mascota.raza}): "
         )
 
-        mascota.raza = scanner.next()
-
-        print(
+        mascota.sexo = ConsolaUtil.leerTexto(
+            scanner,
             "Nuevo sexo " +
                     "(actual: ${mascota.sexo}): "
         )
 
-        mascota.sexo = scanner.next()
-
-        print(
+        val nuevoPeso = ConsolaUtil.leerDecimal(
+            scanner,
             "Nuevo peso en kg " +
-                    "(0 para no modificar): "
+                    "(0 para no modificar): ",
+            minimo = 0.0
         )
-
-        val nuevoPeso = scanner.nextDouble()
 
         if (nuevoPeso > 0) {
             mascota.peso = nuevoPeso
         }
 
-        print(
-            "Nuevo microchip " +
-                    "(actual: ${
-                        mascota.microchip ?: "No registrado"
-                    }): "
-        )
+        val nuevoMicrochip =
+            ConsolaUtil.leerTexto(
+                scanner,
+                "Nuevo microchip " +
+                        "(Enter para conservar actual): ",
+                obligatorio = false
+            )
 
-        val nuevoMicrochip = scanner.next()
-
-        if (nuevoMicrochip != "-") {
+        if (nuevoMicrochip.isNotBlank()) {
             mascota.microchip = nuevoMicrochip
         }
 
-        print(
-            "Nuevas alergias " +
-                    "(actual: ${
-                        mascota.alergias ?: "No registradas"
-                    }): "
-        )
+        val nuevasAlergias =
+            ConsolaUtil.leerTexto(
+                scanner,
+                "Nuevas alergias " +
+                        "(Enter para conservar actuales): ",
+                obligatorio = false
+            )
 
-        val nuevasAlergias = scanner.next()
-
-        if (nuevasAlergias != "-") {
+        if (nuevasAlergias.isNotBlank()) {
             mascota.alergias = nuevasAlergias
         }
 
@@ -156,24 +155,31 @@ class GestorMascotas {
         idUsuario: Int
     ) {
 
-        val mascotasDelUsuario = obtenerMascotasUsuario(idUsuario)
+        val mascotasDelUsuario =
+            obtenerMascotasUsuario(idUsuario)
 
         if (mascotasDelUsuario.isEmpty()) {
-            println("No tienes mascotas registradas.")
+
+            println(
+                "No tienes mascotas registradas."
+            )
+
             return
         }
 
-        mostrarMascotasUsuario(idUsuario, "")
+        mostrarMascotasUsuario(
+            idUsuario,
+            ""
+        )
 
-        print("Ingrese el número de la mascota que desea eliminar: ")
-        val opcion = scanner.nextInt()
+        val opcion = ConsolaUtil.leerOpcion(
+            scanner,
+            "\nIngrese el número de la mascota que desea eliminar: ",
+            minimo = 1,
+            maximo = mascotasDelUsuario.size
+        )
 
         val indice = opcion - 1
-
-        if (indice !in mascotasDelUsuario.indices) {
-            println("Número de opción inválido.")
-            return
-        }
 
         val mascota = mascotasDelUsuario[indice]
 

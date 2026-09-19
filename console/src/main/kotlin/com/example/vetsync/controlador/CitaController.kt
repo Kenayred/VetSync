@@ -185,12 +185,8 @@ class CitaController(
     // REPROGRAMAR
     // =========================================================
 
-    fun reprogramarCita(
-        id: Int,
-        nuevaFecha: String,
-        nuevaHora: String
-    ): Boolean {
-
+    fun reprogramarCita(id: Int, nuevaFecha: String, nuevaHora: String):
+        Boolean {
         val cita = buscarPorId(id)
             ?: return false
 
@@ -228,10 +224,8 @@ class CitaController(
     // CAMBIO DE ESTADO
     // =========================================================
 
-    fun cambiarEstado(
-        id: Int,
-        nuevoEstado: EstadoCita
-    ): Boolean {
+    fun cambiarEstado(id: Int, nuevoEstado: EstadoCita):
+        Boolean {
         val cita = buscarPorId(id)
             ?: return false
 

@@ -41,9 +41,12 @@ fun main() {
         println("2. Registrarse")
         println("3. Salir")
 
-        print("Ingrese una opción: ")
-
-        opcionInicio = scanner.nextInt()
+        opcionInicio = ConsolaUtil.leerOpcion(
+            scanner,
+            "Ingrese una opción: ",
+            minimo = 1,
+            maximo = 3
+        )
 
         when (opcionInicio) {
 

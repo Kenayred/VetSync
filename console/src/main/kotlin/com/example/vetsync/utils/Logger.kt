@@ -21,11 +21,7 @@ object Logger {
         archivoLog.parentFile?.mkdirs()
     }
 
-    fun info(
-        modulo: String,
-        mensaje: String
-    ) {
-
+    fun info(modulo: String, mensaje: String) {
         registrar(
             "INFO",
             modulo,
@@ -33,11 +29,7 @@ object Logger {
         )
     }
 
-    fun warning(
-        modulo: String,
-        mensaje: String
-    ) {
-
+    fun warning(modulo: String, mensaje: String) {
         registrar(
             "WARNING",
             modulo,
@@ -45,11 +37,7 @@ object Logger {
         )
     }
 
-    fun error(
-        modulo: String,
-        mensaje: String
-    ) {
-
+    fun error(modulo: String, mensaje: String) {
         registrar(
             "ERROR",
             modulo,
@@ -57,12 +45,7 @@ object Logger {
         )
     }
 
-    fun error(
-        modulo: String,
-        mensaje: String,
-        excepcion: Exception
-    ) {
-
+    fun error(modulo: String, mensaje: String, excepcion: Exception) {
         val detalle = buildString {
 
             appendLine(mensaje)
@@ -74,19 +57,10 @@ object Logger {
             )
         }
 
-        registrar(
-            "ERROR",
-            modulo,
-            detalle
-        )
+        registrar("ERROR", modulo, detalle)
     }
 
-    private fun registrar(
-        nivel: String,
-        modulo: String,
-        mensaje: String
-    ) {
-
+    private fun registrar(nivel: String, modulo: String, mensaje: String) {
         try {
 
             val fecha =
@@ -101,10 +75,7 @@ object Logger {
             )
 
         } catch (e: Exception) {
-
-            println(
-                "No fue posible escribir el archivo de log."
-            )
+            println("No fue posible escribir el archivo de log.")
         }
     }
 }

@@ -2,6 +2,7 @@ package com.example.vetsync.controlador
 
 import com.example.vetsync.modelo.Gestionable
 import com.example.vetsync.modelo.NotaClinica
+import com.example.vetsync.excepciones.ValidacionException
 
 class NotaClinicaController : Gestionable<NotaClinica> {
 
@@ -106,26 +107,35 @@ class NotaClinicaController : Gestionable<NotaClinica> {
         nota: NotaClinica
     ) {
 
-        require(nota.diagnostico.isNotBlank()) {
-            "El diagnóstico es obligatorio."
+        if (nota.diagnostico.isBlank()) {
+
+            throw ValidacionException(
+                "El diagnóstico es obligatorio."
+            )
         }
 
-        require(nota.receta.isNotBlank()) {
-            "La receta médica es obligatoria."
+        if (nota.receta.isBlank()) {
+
+            throw ValidacionException(
+                "La receta médica es obligatoria."
+            )
         }
 
-        if (nota.peso != null) {
+        if (nota.peso != null && nota.peso <= 0) {
 
-            require(nota.peso > 0) {
+            throw ValidacionException(
                 "El peso debe ser mayor que 0."
-            }
+            )
         }
 
-        if (nota.temperatura != null) {
+        if (
+            nota.temperatura != null &&
+            nota.temperatura <= 0
+        ) {
 
-            require(nota.temperatura > 0) {
+            throw ValidacionException(
                 "La temperatura debe ser mayor que 0."
-            }
+            )
         }
     }
 }

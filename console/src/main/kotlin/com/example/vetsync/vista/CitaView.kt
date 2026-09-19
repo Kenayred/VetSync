@@ -8,6 +8,7 @@ import com.example.vetsync.modelo.Usuario
 import com.example.vetsync.excepciones.CitaNoDisponibleException
 import com.example.vetsync.excepciones.OperacionNoPermitidaException
 import com.example.vetsync.utils.Logger
+import com.example.vetsync.utils.ConsolaUtil
 import java.util.Scanner
 
 object CitaView {
@@ -50,8 +51,12 @@ object CitaView {
             )
         }
 
-        print("Seleccione una opción: ")
-        val opcionMascota = scanner.nextInt()
+        val opcionMascota = ConsolaUtil.leerOpcion(
+            scanner,
+            "Seleccione una opción: ",
+            minimo = 1,
+            maximo = mascotas.size
+        )
 
         val indiceMascota = opcionMascota - 1
 
@@ -89,8 +94,12 @@ object CitaView {
             )
         }
 
-        print("Seleccione un servicio: ")
-        val opcionServicio = scanner.nextInt()
+        val opcionServicio = ConsolaUtil.leerOpcion(
+            scanner,
+            "Seleccione un servicio: ",
+            minimo = 1,
+            maximo = servicios.size
+        )
 
         val indiceServicio = opcionServicio - 1
 
@@ -105,22 +114,29 @@ object CitaView {
         // 3. Fecha
         // -----------------------------------------------------
 
-        print("\nIngrese la fecha (dd/MM/yyyy): ")
-        val fecha = scanner.next()
+        val fecha = ConsolaUtil.leerTexto(
+            scanner,
+            "\nIngrese la fecha (dd/MM/yyyy): "
+        )
 
         // -----------------------------------------------------
         // 4. Hora
         // -----------------------------------------------------
 
-        print("Ingrese la hora (HH:mm): ")
-        val hora = scanner.next()
+        val hora = ConsolaUtil.leerTexto(
+            scanner,
+            "Ingrese la hora (HH:mm): "
+        )
 
         // -----------------------------------------------------
         // 5. Motivo
         // -----------------------------------------------------
 
-        print("Motivo de la consulta (opcional): ")
-        val motivo = scanner.nextLine().trim()
+        val motivo = ConsolaUtil.leerTexto(
+            scanner,
+            "Motivo de consulta (opcional): ",
+            obligatorio = false
+        )
 
         /*
          * Si el usuario todavía estaba en la misma línea
@@ -162,13 +178,9 @@ object CitaView {
 
         } catch (e: CitaNoDisponibleException) {
 
-            println(
-                "\nNo se pudo crear la cita."
-            )
+            println("\nNo se pudo crear la cita.")
 
-            println(
-                "Motivo: ${e.message}"
-            )
+            println("Motivo: ${e.message}")
 
             Logger.error(
                 modulo = "Citas",
@@ -275,8 +287,6 @@ object CitaView {
         scanner: Scanner,
         usuarioActual: Usuario,
         citaController: CitaController,
-        mascotaController: GestorMascotas,
-        servicioController: ServicioController
     ) {
 
         val citas = citaController
@@ -298,8 +308,11 @@ object CitaView {
             )
         }
 
-        print("\nIngrese el ID de la cita: ")
-        val idCita = scanner.nextInt()
+        val idCita = ConsolaUtil.leerEntero(
+            scanner,
+            "\nIngrese el ID de la cita: ",
+            minimo = 1
+        )
 
         val cita = citaController.buscarPorId(idCita)
 
@@ -320,11 +333,15 @@ object CitaView {
             return
         }
 
-        print("Nueva fecha (dd/MM/yyyy): ")
-        val nuevaFecha = scanner.next()
+        val nuevaFecha = ConsolaUtil.leerTexto(
+            scanner,
+            "Nueva fecha (dd/MM/yyyy): "
+        )
 
-        print("Nueva hora (HH:mm): ")
-        val nuevaHora = scanner.next()
+        val nuevaHora = ConsolaUtil.leerTexto(
+            scanner,
+            "Nueva hora (HH:mm): "
+        )
 
         try {
 
@@ -340,14 +357,38 @@ object CitaView {
                 )
             }
 
-        } catch (e: IllegalArgumentException) {
+        } catch (e: OperacionNoPermitidaException) {
 
             println(
-                "No se pudo reprogramar la cita."
+                "\nNo se pudo reprogramar la cita."
             )
 
             println(
                 "Motivo: ${e.message}"
+            )
+
+            Logger.error(
+                modulo = "Citas",
+                mensaje = e.message
+                    ?: "Operación no permitida",
+                excepcion = e
+            )
+
+        } catch (e: IllegalArgumentException) {
+
+            println(
+                "\nNo se pudo reprogramar la cita."
+            )
+
+            println(
+                "Motivo: ${e.message}"
+            )
+
+            Logger.error(
+                modulo = "Citas",
+                mensaje = e.message
+                    ?: "Error de validación",
+                excepcion = e
             )
         }
     }
@@ -381,8 +422,11 @@ object CitaView {
             )
         }
 
-        print("\nIngrese el ID de la cita: ")
-        val idCita = scanner.nextInt()
+        val idCita = ConsolaUtil.leerEntero(
+            scanner,
+            "\nIngrese el ID de la cita: ",
+            minimo = 1
+        )
 
         val cita = citaController.buscarPorId(idCita)
 
