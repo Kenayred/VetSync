@@ -10,7 +10,6 @@ import com.example.vetsync.excepciones.OperacionNoPermitidaException
 import com.example.vetsync.utils.Logger
 import com.example.vetsync.utils.ConsolaUtil
 import com.example.vetsync.controlador.ReporteController
-import com.example.vetsync.vista.ReporteView
 import java.util.Scanner
 
 object MenuAdministrador {

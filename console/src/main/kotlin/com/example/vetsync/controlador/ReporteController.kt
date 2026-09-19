@@ -69,4 +69,19 @@ class ReporteController(
 
         return servicioMasRealizado.key to servicioMasRealizado.value
     }
+
+    fun obtenerPorcentajeEstados(): Map<EstadoCita, Double> {
+
+        val citas = citaController.listar()
+        val total = citas.size
+
+        if (total == 0) {
+            return EstadoCita.entries.associateWith { 0.0 }
+        }
+
+        return EstadoCita.entries.associateWith { estado ->
+            val cantidad = citas.count { it.estado == estado }
+            (cantidad.toDouble() / total) * 100
+        }
+    }
 }

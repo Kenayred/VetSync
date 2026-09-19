@@ -2,6 +2,7 @@ package com.example.vetsync.vista
 
 import com.example.vetsync.controlador.ReporteController
 import com.example.vetsync.utils.ConsolaUtil
+import com.example.vetsync.modelo.EstadoCita
 import java.util.Scanner
 
 object ReporteView {
@@ -24,6 +25,25 @@ object ReporteView {
         println("Citas confirmadas: ${reporteController.obtenerCitasConfirmadas()}")
         println("Citas completadas: ${reporteController.obtenerCitasCompletadas()}")
         println("Citas canceladas: ${reporteController.obtenerCitasCanceladas()}")
+
+        println()
+        println("DISTRIBUCIÓN DE CITAS")
+        println("----------------------------------------")
+
+        val porcentajesEstados = reporteController.obtenerPorcentajeEstados()
+
+        EstadoCita.entries.forEach { estado ->
+            val porcentaje = porcentajesEstados[estado] ?: 0.0
+
+            val nombreEstado = when (estado) {
+                EstadoCita.PENDIENTE -> "Pendientes"
+                EstadoCita.CONFIRMADA -> "Confirmadas"
+                EstadoCita.COMPLETADA -> "Completadas"
+                EstadoCita.CANCELADA -> "Canceladas"
+            }
+
+            println("$nombreEstado: ${"%.2f".format(porcentaje)}%")
+        }
 
         println()
         println("RESUMEN FINANCIERO")
