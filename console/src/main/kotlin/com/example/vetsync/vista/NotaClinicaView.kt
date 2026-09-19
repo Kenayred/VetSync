@@ -4,6 +4,7 @@ import com.example.vetsync.controlador.CitaController
 import com.example.vetsync.controlador.GestorMascotas
 import com.example.vetsync.controlador.NotaClinicaController
 import com.example.vetsync.modelo.EstadoCita
+import com.example.vetsync.utils.ConsolaUtil
 import java.util.Scanner
 
 object NotaClinicaView {
@@ -52,28 +53,26 @@ object NotaClinicaView {
             )
         }
 
-        print("\nIngrese el ID de la cita: ")
-
-        val citaId = scanner.nextInt()
+        val citaId = ConsolaUtil.leerEntero(
+            scanner,
+            "\nIngrese el ID de la cita: ",
+            minimo = 1
+        )
 
         val cita = citaController.buscarPorId(citaId)
 
         if (cita == null) {
-
             println(
                 "No existe una cita con ese ID."
             )
-
             return
         }
 
         if (cita.estado != EstadoCita.CONFIRMADA) {
-
             println(
                 "Solo se puede registrar una nota " +
                         "en una cita confirmada."
             )
-
             return
         }
 
@@ -81,11 +80,17 @@ object NotaClinicaView {
         // DATOS DE LA CONSULTA
         // =====================================================
 
-        print("\nMotivo de consulta (opcional): ")
-        val motivo = scanner.next()
+        val motivo = ConsolaUtil.leerTexto(
+            scanner,
+            "\nMotivo de consulta (opcional): ",
+            obligatorio = false
+        )
 
-        print("Peso en kg (0 si desea omitirlo): ")
-        val pesoIngresado = scanner.nextDouble()
+        val pesoIngresado = ConsolaUtil.leerDecimal(
+            scanner,
+            "Peso en kg (0 si desea omitirlo): ",
+            minimo = 0.0
+        )
 
         val peso = if (pesoIngresado > 0) {
             pesoIngresado
@@ -93,26 +98,32 @@ object NotaClinicaView {
             null
         }
 
-        print("Temperatura (0 si desea omitirla): ")
-        val temperaturaIngresada = scanner.nextDouble()
+        val temperaturaIngresada = ConsolaUtil.leerDecimal(
+            scanner,
+            "Temperatura en °C (0 si desea omitirla): ",
+            minimo = 0.0
+        )
 
-        val temperatura =
-            if (temperaturaIngresada > 0) {
-                temperaturaIngresada
-            } else {
-                null
-            }
+        val temperatura = if (temperaturaIngresada > 0) {
+            temperaturaIngresada
+        } else {
+            null
+        }
 
-        scanner.nextLine()
+        val diagnostico = ConsolaUtil.leerTexto(scanner,
+            "\nDiagnóstico (obligatorio): "
+            )
 
-        print("\nDiagnóstico (obligatorio): ")
-        val diagnostico = scanner.nextLine().trim()
+        val receta = ConsolaUtil.leerTexto(
+                scanner,
+                "Receta médica (obligatoria): "
+            )
 
-        print("Receta médica (obligatoria): ")
-        val receta = scanner.nextLine().trim()
-
-        print("Observaciones (opcional): ")
-        val observaciones = scanner.nextLine().trim()
+        val observaciones = ConsolaUtil.leerTexto(
+            scanner,
+            "Observaciones (opcional): ",
+            obligatorio = false
+        )
 
         try {
 
@@ -217,9 +228,11 @@ object NotaClinicaView {
             )
         }
 
-        print("\nIngrese el ID de la mascota: ")
-
-        val mascotaId = scanner.nextInt()
+        val mascotaId = ConsolaUtil.leerEntero(
+            scanner,
+            "\nIngrese el ID de la mascota: ",
+            minimo = 1
+        )
 
         val mascota =
             mascotas.find {

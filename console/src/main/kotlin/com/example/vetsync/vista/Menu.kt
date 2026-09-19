@@ -4,6 +4,7 @@ import com.example.vetsync.controlador.CitaController
 import com.example.vetsync.controlador.GestorMascotas
 import com.example.vetsync.controlador.ServicioController
 import com.example.vetsync.modelo.Usuario
+import com.example.vetsync.utils.ConsolaUtil
 import java.util.Scanner
 
 object Menu {
@@ -34,7 +35,12 @@ object Menu {
 
             print("Ingrese una opción: ")
 
-            opcion = scanner.nextInt()
+            opcion = ConsolaUtil.leerOpcion(
+                scanner,
+                "Ingrese una opción: ",
+                minimo = 1,
+                maximo = 10
+            )
 
             when (opcion) {
 
@@ -93,9 +99,7 @@ object Menu {
                     CitaView.reprogramarCita(
                         scanner,
                         usuarioActual,
-                        citaController,
-                        mascotaController,
-                        servicioController
+                        citaController
                     )
                 }
 

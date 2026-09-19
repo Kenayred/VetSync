@@ -1,0 +1,49 @@
+[18/09/2026 02:11:11] [ERROR]
+Módulo: Citas
+La fecha debe utilizar el formato dd/MM/yyyy.
+Excepción: IllegalArgumentException
+Detalle: La fecha debe utilizar el formato dd/MM/yyyy.
+
+----------------------------------------
+[18/09/2026 02:12:31] [ERROR]
+Módulo: Citas
+El horario seleccionado ya está ocupado.
+Excepción: CitaNoDisponibleException
+Detalle: El horario seleccionado ya está ocupado.
+
+----------------------------------------
+[18/09/2026 02:23:38] [ERROR]
+Módulo: Citas
+El horario seleccionado ya está ocupado.
+Excepción: CitaNoDisponibleException
+Detalle: El horario seleccionado ya está ocupado.
+
+----------------------------------------
+[18/09/2026 04:00:25] [ERROR]
+Módulo: Citas
+El horario seleccionado ya está ocupado.
+Excepción: CitaNoDisponibleException
+Detalle: El horario seleccionado ya está ocupado.
+
+----------------------------------------
+[18/09/2026 04:37:34] [ERROR]
+Módulo: Registro
+La contraseña debe tener al menos 4 caracteres.
+Excepción: ValidacionException
+Detalle: La contraseña debe tener al menos 4 caracteres.
+
+----------------------------------------
+[18/09/2026 04:47:20] [ERROR]
+Módulo: Registro
+El nombre de usuario 'Laura' ya está registrado.
+Excepción: ValidacionException
+Detalle: El nombre de usuario 'Laura' ya está registrado.
+
+----------------------------------------
+[18/09/2026 04:49:32] [ERROR]
+Módulo: Registro
+El nombre de usuario 'Laura' ya está registrado.
+Excepción: ValidacionException
+Detalle: El nombre de usuario 'Laura' ya está registrado.
+
+----------------------------------------
