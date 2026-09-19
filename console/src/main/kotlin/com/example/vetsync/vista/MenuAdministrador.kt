@@ -9,6 +9,8 @@ import com.example.vetsync.controlador.NotaClinicaController
 import com.example.vetsync.excepciones.OperacionNoPermitidaException
 import com.example.vetsync.utils.Logger
 import com.example.vetsync.utils.ConsolaUtil
+import com.example.vetsync.controlador.ReporteController
+import com.example.vetsync.vista.ReporteView
 import java.util.Scanner
 
 object MenuAdministrador {
@@ -19,7 +21,8 @@ object MenuAdministrador {
         mascotaController: GestorMascotas,
         servicioController: ServicioController,
         citaController: CitaController,
-        notaClinicaController: NotaClinicaController
+        notaClinicaController: NotaClinicaController,
+        reporteController: ReporteController
     ) {
 
         var opcion: Int
@@ -37,14 +40,15 @@ object MenuAdministrador {
             println("4. Agregar nota clínica")
             println("5. Ver historial clínico")
             println("6. Ver servicios")
-            println("7. Cerrar sesión")
+            println("7. Reportes")
+            println("8. Cerrar sesión")
             println("========================================")
 
             opcion = ConsolaUtil.leerOpcion(
                 scanner,
                 "Ingrese una opción: ",
                 minimo = 1,
-                maximo = 7
+                maximo = 8
             )
 
             when (opcion) {
@@ -92,6 +96,13 @@ object MenuAdministrador {
                 }
 
                 7 -> {
+                    ReporteView.mostrarReporte(
+                        scanner,
+                        reporteController
+                    )
+                }
+
+                8 -> {
                     println("Cerrando sesión...")
                 }
 
@@ -100,7 +111,7 @@ object MenuAdministrador {
                 }
             }
 
-        } while (opcion != 7)
+        } while (opcion != 8)
     }
 
     private fun mostrarCitas(
