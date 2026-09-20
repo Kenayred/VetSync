@@ -34,14 +34,11 @@ fun main() {
     )
 
     var opcionInicio: Int
+    ConsolaUtil.limpiarPantalla()
 
     println("🐾 Bienvenido al sistema VetSync 🐾")
-
     // Ciclo externo: Menú de Acceso
     do {
-
-        ConsolaUtil.limpiarPantalla()
-
         println("\n--- 🐾 Menú de Acceso ---")
         println("1. Iniciar sesión")
         println("2. Registrarse")
