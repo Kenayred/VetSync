@@ -2,6 +2,8 @@ package com.example.vetsync.controlador
 
 import com.example.vetsync.modelo.Gestionable
 import com.example.vetsync.modelo.Servicio
+import com.example.vetsync.excepciones.ValidacionException
+import com.example.vetsync.utils.Validador
 
 class ServicioController : Gestionable<Servicio> {
 
@@ -51,14 +53,21 @@ class ServicioController : Gestionable<Servicio> {
     }
 
     override fun agregar(item: Servicio) {
-        validarServicio(item)
-        servicios.add(item)
 
-        println(
-            "Servicio '${item.nombre}' agregado correctamente."
-        )
+        if (buscarPorId(item.id) != null) {
+            throw ValidacionException(
+                "Ya existe un servicio registrado con el ID ${item.id}."
+            )
+        }
+
+        Validador.texto(item.nombre, "Nombre")
+        Validador.texto(item.descripcion, "Descripción")
+        Validador.costo(item.costo)
+
+        servicios.add(item)
     }
 
+    //Evita IDs duplicados
     private fun validarServicio(servicio: Servicio) {
 
         require(servicio.nombre.isNotBlank()) {

@@ -90,9 +90,10 @@ object MenuAdministrador {
                     )
                 }
 
-                6 -> {
-                    servicioController.mostrarServicios()
-                }
+                6 -> ServicioView.gestionarServicios(
+                    scanner,
+                    servicioController
+                )
 
                 7 -> {
                     ReporteView.mostrarReporte(
