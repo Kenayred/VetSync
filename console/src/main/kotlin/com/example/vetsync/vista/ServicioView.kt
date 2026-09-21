@@ -159,9 +159,20 @@ object ServicioView {
 
         println("\n========== ACTUALIZAR SERVICIO ==========")
 
+        val servicios = servicioController.listar();
+
+        println("Lista de Servicios Activos\n")
+
+        servicios.forEach {servicio ->
+            println(
+                "ID: ${servicio.id} | " +
+                "Nombre: ${servicio.nombre}"
+            )
+        }
+
         val id = ConsolaUtil.leerEntero(
             scanner,
-            "Ingrese el ID del servicio: ",
+            "\nIngrese el ID del servicio: ",
             1
         )
 
@@ -248,9 +259,18 @@ object ServicioView {
 
         println("\n========== DESACTIVAR SERVICIO ==========")
 
+        val servicios = servicioController.listar()
+
+        servicios.forEach {servicio ->
+            println(
+                "ID: ${servicio.id} | " +
+                        "Nombre: ${servicio.nombre} "
+            )
+        }
+
         val id = ConsolaUtil.leerEntero(
             scanner,
-            "Ingrese el ID del servicio: ",
+            "\nIngrese el ID del servicio: ",
             1
         )
 
