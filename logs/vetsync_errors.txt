@@ -47,3 +47,24 @@ Excepción: ValidacionException
 Detalle: El nombre de usuario 'Laura' ya está registrado.
 
 ----------------------------------------
+[21/09/2026 21:02:14] [ERROR]
+Módulo: Citas
+La fecha debe utilizar el formato dd/MM/yyyy.
+Excepción: IllegalArgumentException
+Detalle: La fecha debe utilizar el formato dd/MM/yyyy.
+
+----------------------------------------
+[21/09/2026 21:03:01] [ERROR]
+Módulo: Citas
+La fecha de la cita no puede ser anterior a hoy.
+Excepción: IllegalArgumentException
+Detalle: La fecha de la cita no puede ser anterior a hoy.
+
+----------------------------------------
+[21/09/2026 21:06:50] [ERROR]
+Módulo: Citas
+El horario de atención es de 09:00 a 17:00.
+Excepción: IllegalArgumentException
+Detalle: El horario de atención es de 09:00 a 17:00.
+
+----------------------------------------
