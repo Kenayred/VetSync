@@ -1,8 +1,12 @@
 package com.example.vetsync.modelo
 
+import com.google.firebase.database.*
+
 class FirebaseDatabaseManager {
     private val database = FirebaseDatabase.getInstance()
+
     fun insertData(data: Any, path: String, completionListener: DatabaseReference.CompletionListener) {
+
         val myRef = database.getReference(path)
         myRef.setValue(data, completionListener)
     }

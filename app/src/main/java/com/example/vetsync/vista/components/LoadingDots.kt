@@ -25,14 +25,13 @@ fun LoadingDots() {
         modifier = Modifier.padding(16.dp)
     ) {
         dots.forEach { index ->
-            // Animación de escala (crece y se encoge) con un pequeño retraso (staggered) por cada punto
             val scale by infiniteTransition.animateFloat(
                 initialValue = 0.4f,
                 targetValue = 1.3f,
                 animationSpec = infiniteRepeatable(
                     animation = tween(durationMillis = 500, easing = FastOutSlowInEasing),
                     repeatMode = RepeatMode.Reverse,
-                    initialStartOffset = StartOffset(index * 150) // Retraso escalonado para el efecto de onda
+                    initialStartOffset = StartOffset(index * 150)
                 ),
                 label = "dot_scale_$index"
             )

@@ -1,10 +1,12 @@
 package com.example.vetsync.modelo
 
 data class Usuario(
-    override val id: Int,
-    val username: String,
-    val contrasena: String,
-    override val nombre: String,
+    override val id: Int = 0,
+    val username: String = "",
+    val contrasena: String = "",
+    override val nombre: String = "",
+    val correo: String = "",
+    val telefono: String = "", // Opcional
     val rol: RolUsuario = RolUsuario.CLIENTE
 ) : Persona(id, nombre) {
 

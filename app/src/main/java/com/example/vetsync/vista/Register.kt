@@ -1,5 +1,6 @@
 package com.example.vetsync.vista
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -17,12 +18,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vetsync.vista.theme.VerdePrincipal
+import com.example.vetsync.controlador.UsuarioControlador
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun RegisterScreen(
+    controlador: UsuarioControlador = remember { UsuarioControlador() },
     onNavigateToLogin: () -> Unit = {}
 ) {
     var fullName by remember { mutableStateOf("") }
+    var username by remember {mutableStateOf("")}
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -30,6 +35,7 @@ fun RegisterScreen(
     var termsAccepted by remember { mutableStateOf(false) }
 
     // Hacemos la pantalla scrolleable por si el teclado o dispositivos pequeños lo requieren
+    val context = LocalContext.current
     val scrollState = rememberScrollState()
 
     Column(
@@ -66,6 +72,31 @@ fun RegisterScreen(
                 fontSize = 14.sp
             )
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "Username",
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        OutlinedTextField(
+            value = username,
+            onValueChange = { username = it },
+            placeholder = { Text("Ej. Martinez02") },
+            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = VerdePrincipal,
+                focusedLabelColor = VerdePrincipal,
+                cursorColor = VerdePrincipal,
+                focusedLeadingIconColor = VerdePrincipal,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+            )
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -218,7 +249,24 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
-            onClick = {  },
+            onClick = {
+                controlador.registrarUsuario(
+                    username = username,
+                    nombreCompleto = fullName,
+                    correo = email,
+                    telefono = phone,
+                    contrasena = password,
+                    confirmarContrasena = confirmPassword,
+                    terminosAceptados = termsAccepted,
+                    onSuccess = {
+                        Toast.makeText(context, "¡Cuenta creada con éxito!", Toast.LENGTH_SHORT).show()
+                        onNavigateToLogin()
+                    },
+                    onError = { mensajeError ->
+                        Toast.makeText(context, mensajeError, Toast.LENGTH_SHORT).show()
+                    }
+                )
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),

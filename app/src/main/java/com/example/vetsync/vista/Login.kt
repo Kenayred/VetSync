@@ -1,5 +1,6 @@
 package com.example.vetsync.vista
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
@@ -9,19 +10,25 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vetsync.vista.theme.*
+import com.example.vetsync.controlador.UsuarioControlador
+import com.example.vetsync.modelo.SesionUsuario
 
 @Composable
 fun LoginScreen(
-    onNavigateToRegister: () -> Unit = {}
+    controlador: UsuarioControlador = remember { UsuarioControlador() },
+    onNavigateToRegister: () -> Unit = {},
+    onLoginSuccess: () -> Unit = {}
 ) {
-    var email by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var keepSession by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -41,8 +48,8 @@ fun LoginScreen(
 
         // Formulario
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = username,
+            onValueChange = { username = it },
             label = { Text("Correo electrónico") },
             placeholder = { Text("ejemplo@clinica.com") },
             leadingIcon = { Icon(Icons.Default.Email, contentDescription = "Email Icon") },
@@ -95,7 +102,20 @@ fun LoginScreen(
 
         // Botón principal
         Button(
-            onClick = {  },
+            onClick = {
+                controlador.iniciarSesion(
+                    username = username,
+                    password = password,
+                    onSuccess = {
+                        usuarioEncontrado -> SesionUsuario.iniciarSesion(usuarioEncontrado)
+                        onLoginSuccess()
+                        Toast.makeText(context, "¡Ha iniciado sesion!", Toast.LENGTH_SHORT).show()
+                    },
+                    onError = { mensajeError ->
+                        Toast.makeText(context, mensajeError, Toast.LENGTH_SHORT).show()
+                    }
+                )
+            },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal)
         ) {

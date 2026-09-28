@@ -1,8 +1,8 @@
 package com.example.vetsync.modelo
 
 abstract class Persona(
-    open val id: Int,
-    open val nombre: String
+    open val id: Int = 0,
+    open val nombre: String = ""
 ) {
 
     abstract fun obtenerTipo(): String
