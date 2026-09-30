@@ -17,7 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.vetsync.vista.theme.VerdePrincipal
+import com.example.vetsync.vista.theme.*
 import com.example.vetsync.controlador.UsuarioControlador
 import androidx.compose.ui.platform.LocalContext
 

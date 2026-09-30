@@ -1,6 +1,10 @@
 package com.example.vetsync.vista
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,21 +28,16 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.vetsync.vista.components.FondoCrema
-import com.example.vetsync.vista.components.GrisTextoSecundario
-import com.example.vetsync.vista.components.VerdeClaroIcono
-import com.example.vetsync.vista.components.VerdeVetSync
-import com.example.vetsync.vista.theme.*
 import com.example.vetsync.controlador.MascotaControlador
-import com.example.vetsync.modelo.Mascota
-import com.example.vetsync.vista.components.MascotaItemCard
-import androidx.compose.ui.platform.LocalContext
+import com.example.vetsync.modelo.ImagenUtils
 import com.example.vetsync.modelo.SesionUsuario
+import com.example.vetsync.vista.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,19 +45,7 @@ fun AgregarMascotaScreen(
     controlador: MascotaControlador = remember { MascotaControlador() },
     onBackClick: () -> Unit = {},
     onCancelarClick: () -> Unit = {},
-    onSubirFotoClick: () -> Unit = {},
-    onMascotaGuardada: () -> Unit = {},
-    onGuardarClick: (
-        nombre: String,
-        especie: String,
-        raza: String,
-        edad: Int,
-        sexo: String,
-        fechaNacimiento: String,
-        peso: String,
-        colorMarcas: String,
-        observaciones: String
-    ) -> Unit = { _, _, _, _, _, _, _, _, _ -> }
+    onMascotaGuardada: () -> Unit = {}
 ) {
     var nombre by remember { mutableStateOf("") }
     var especie by remember { mutableStateOf("") }
@@ -70,11 +57,23 @@ fun AgregarMascotaScreen(
     var colorMarcas by remember { mutableStateOf("") }
     var observaciones by remember { mutableStateOf("") }
 
+    // Estado para guardar la imagen convertida en Base64
+    var fotoBase64 by remember { mutableStateOf("") }
+
     val opcionesEspecie = listOf("Perro", "Gato", "Ave", "Conejo", "Otro")
     val opcionesSexo = listOf("Macho", "Hembra")
 
     val scrollState = rememberScrollState()
-    val context = LocalContext.current;
+    val context = LocalContext.current
+
+    // Lanzador para abrir la galería del teléfono
+    val selectorImagenLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            fotoBase64 = ImagenUtils.uriABase64(context, uri)
+        }
+    }
 
     Scaffold(
         containerColor = FondoCrema,
@@ -105,7 +104,6 @@ fun AgregarMascotaScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Container Formulario
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
@@ -117,12 +115,14 @@ fun AgregarMascotaScreen(
                         .fillMaxWidth()
                         .padding(18.dp)
                 ) {
-                    //  Recuadro punteado para subir foto
-                    SubirFotoMascotaBox(onClick = onSubirFotoClick)
+                    // Recuadro punteado: abre la galería al tocarlo y muestra la vista previa
+                    SubirFotoMascotaBox(
+                        fotoBase64 = fotoBase64,
+                        onClick = { selectorImagenLauncher.launch("image/*") }
+                    )
 
                     Spacer(modifier = Modifier.height(20.dp))
 
-                    //  Campo: Nombre
                     CampoFormularioMascota(
                         label = "Nombre",
                         value = nombre,
@@ -132,7 +132,6 @@ fun AgregarMascotaScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    //  Dropdown: Especie
                     DropdownFormularioMascota(
                         label = "Especie",
                         selectedValue = especie,
@@ -143,7 +142,6 @@ fun AgregarMascotaScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    //  Campo: Raza
                     CampoFormularioMascota(
                         label = "Raza",
                         value = raza,
@@ -156,13 +154,13 @@ fun AgregarMascotaScreen(
                     CampoFormularioMascota(
                         label = "Edad (Años)",
                         value = edad,
-                        onValueChange = {edad = it},
-                        placeholder = "2"
+                        onValueChange = { edad = it },
+                        placeholder = "2",
+                        keyboardType = KeyboardType.Number
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    //  Dropdown: Sexo
                     DropdownFormularioMascota(
                         label = "Sexo",
                         selectedValue = sexo,
@@ -173,7 +171,6 @@ fun AgregarMascotaScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    //  Campo: Fecha de Nacimiento (Aprox.)
                     CampoFormularioMascota(
                         label = "Fecha de Nacimiento (Aprox.)",
                         value = fechaNacimiento,
@@ -183,7 +180,6 @@ fun AgregarMascotaScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    //  Campo: Peso (kg)
                     CampoFormularioMascota(
                         label = "Peso (kg)",
                         value = peso,
@@ -194,7 +190,6 @@ fun AgregarMascotaScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    //  Campo: Color / Marcas
                     CampoFormularioMascota(
                         label = "Color / Marcas",
                         value = colorMarcas,
@@ -204,7 +199,6 @@ fun AgregarMascotaScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    //  Campo: Observaciones o Condiciones Especiales (Multilínea)
                     CampoFormularioMascota(
                         label = "Observaciones o Condiciones Especiales",
                         value = observaciones,
@@ -223,7 +217,6 @@ fun AgregarMascotaScreen(
 
                     Spacer(modifier = Modifier.height(18.dp))
 
-                    // Botón: Cancelar
                     OutlinedButton(
                         onClick = onCancelarClick,
                         modifier = Modifier
@@ -245,7 +238,6 @@ fun AgregarMascotaScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Botón: Guardar mascota
                     Button(
                         onClick = {
                             controlador.registrarMascota(
@@ -258,12 +250,21 @@ fun AgregarMascotaScreen(
                                 pesoTexto = peso,
                                 colorMarcas = colorMarcas,
                                 observaciones = observaciones,
+                                fotoUrl = fotoBase64, // <-- Enviamos la imagen a Firebase
                                 onSuccess = {
-                                    android.widget.Toast.makeText(context, "¡Mascota registrada con éxito!", android.widget.Toast.LENGTH_SHORT).show()
-                                    onMascotaGuardada() // Regresa al listado de mascotas o al Home
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        "¡Mascota registrada con éxito!",
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
+                                    onMascotaGuardada()
                                 },
                                 onError = { mensajeError ->
-                                    android.widget.Toast.makeText(context, mensajeError, android.widget.Toast.LENGTH_SHORT).show()
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        mensajeError,
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
                                 }
                             )
                         },
@@ -329,9 +330,13 @@ fun AgregarMascotaTopBar(onBackClick: () -> Unit) {
 }
 
 @Composable
-fun SubirFotoMascotaBox(onClick: () -> Unit) {
+fun SubirFotoMascotaBox(
+    fotoBase64: String = "",
+    onClick: () -> Unit
+) {
     val dashEffect = PathEffect.dashPathEffect(floatArrayOf(14f, 10f), 0f)
     val borderColor = Color(0xFFC8D1C9)
+    val imageBitmap = remember(fotoBase64) { ImagenUtils.base64ABitmap(fotoBase64) }
 
     Box(
         modifier = Modifier
@@ -349,37 +354,48 @@ fun SubirFotoMascotaBox(onClick: () -> Unit) {
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .background(VerdeClaroIcono),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Subir foto",
-                    tint = VerdeVetSync,
-                    modifier = Modifier.size(30.dp)
+        if (imageBitmap != null) {
+            // Muestra la foto seleccionada ocupando todo el recuadro
+            Image(
+                bitmap = imageBitmap,
+                contentDescription = "Foto seleccionada",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .background(VerdeClaroIcono),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Subir foto",
+                        tint = VerdeVetSync,
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Subir foto de la mascota",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = VerdeVetSync
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "JPG, PNG hasta 5MB",
+                    fontSize = 11.sp,
+                    color = GrisTextoSecundario
                 )
             }
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "Subir foto de la mascota",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = VerdeVetSync
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = "JPG, PNG hasta 5MB",
-                fontSize = 11.sp,
-                color = GrisTextoSecundario
-            )
         }
     }
 }
+
 
 @Composable
 fun CampoFormularioMascota(

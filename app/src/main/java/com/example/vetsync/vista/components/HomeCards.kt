@@ -21,18 +21,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-// Paleta de colores compartida en el módulo de Home
-val FondoCrema = Color(0xFFFAF8F5)
-val VerdeVetSync = Color(0xFF43614A)
-val VerdeClaroIcono = Color(0xFFD6E6D9)
-val VerdeBotonAcceso = Color(0xFF88A68E)
-val BeigePendiente = Color(0xFFEADCD5)
-val TextoPendiente = Color(0xFF6E4E42)
-val FondoAccesos = Color(0xFFF5EFEA)
-val FondoAlertaCita = Color(0xFFFCF2EE)
-val RojoAlerta = Color(0xFFC92A2A)
-val GrisTextoSecundario = Color(0xFF5C6460)
+import com.example.vetsync.vista.theme.*
 
 @Composable
 fun ProximaCitaCard(
@@ -185,7 +174,7 @@ fun ProximaCitaCard(
 fun MascotaItemCard(
     nombre: String,
     detalle: String,
-    emojiPlaceholder: String,
+    fotoUrl: String = "",
     seleccionada: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -204,20 +193,20 @@ fun MascotaItemCard(
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFFEFECE6))
-                    .border(
-                        width = if (seleccionada) 1.5.dp else 0.dp,
-                        color = if (seleccionada) VerdeVetSync else Color.Transparent,
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = emojiPlaceholder, fontSize = 26.sp)
-            }
+//            Box(
+//                modifier = Modifier
+//                    .size(52.dp)
+//                    .clip(CircleShape)
+//                    .background(Color(0xFFEFECE6))
+//                    .border(
+//                        width = if (seleccionada) 1.5.dp else 0.dp,
+//                        color = if (seleccionada) VerdeVetSync else Color.Transparent,
+//                        shape = CircleShape
+//                    ),
+//                contentAlignment = Alignment.Center
+//            ) {
+//                Text(text = emojiPlaceholder, fontSize = 26.sp)
+//            }
 
             Spacer(modifier = Modifier.width(10.dp))
 

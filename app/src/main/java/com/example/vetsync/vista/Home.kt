@@ -8,8 +8,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.example.vetsync.vista.components.*
-import com.example.vetsync.vista.AgregarMascotaScreen
 import com.example.vetsync.vista.screens.DashboardScreen
+import com.example.vetsync.vista.screens.MisMascotasScreen
+import com.example.vetsync.vista.theme.*
 
 sealed class SubPantallaHome {
     object AgregarMascota : SubPantallaHome()
@@ -22,18 +23,12 @@ fun HomeScreen(
 
     var subPantallaActual by remember { mutableStateOf<SubPantallaHome?>(null) }
 
-    BackHandler(enabled = subPantallaActual != null) {
-        subPantallaActual = null
-    }
-
     when (val pantalla = subPantallaActual) {
         is SubPantallaHome.AgregarMascota -> {
             AgregarMascotaScreen(
                 onBackClick = { subPantallaActual = null },
                 onCancelarClick = { subPantallaActual = null },
-                onGuardarClick = { _, _, _, _, _, _, _, _, _ ->
-                    subPantallaActual = null
-                }
+                onMascotaGuardada = { subPantallaActual =null }
             )
         }
         null -> {
@@ -52,12 +47,17 @@ fun HomeScreen(
                         .fillMaxSize()
                         .padding(paddingValues)
                 ) {
+
                     when (selectedTab) {
                         0 -> DashboardScreen(
                             onAgregarMascotaClick = { subPantallaActual = SubPantallaHome.AgregarMascota },
                             onMisMascotasClick = { selectedTab = 1 },
                         )
-                        1 -> { /* MisMascotasScreen(onAgregarClick = { subPantallaActual = SubPantallaHome.AgregarMascota }) */ }
+                        1 ->
+                            MisMascotasScreen(
+                            onAgregarMascotaClick = { subPantallaActual = SubPantallaHome.AgregarMascota }
+                        )
+
                         2 -> { /* CitasScreen() */ }
                         3 -> { /* NotificacionesScreen() */ }
                         4 -> { /* PerfilScreen() */ }

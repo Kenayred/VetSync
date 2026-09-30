@@ -3,6 +3,7 @@ package com.example.vetsync.vista
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
@@ -50,9 +51,9 @@ fun LoginScreen(
         OutlinedTextField(
             value = username,
             onValueChange = { username = it },
-            label = { Text("Correo electrónico") },
-            placeholder = { Text("ejemplo@clinica.com") },
-            leadingIcon = { Icon(Icons.Default.Email, contentDescription = "Email Icon") },
+            label = { Text("Usuario") },
+            placeholder = { Text("kenay") },
+            leadingIcon = { Icon(Icons.Default.AccountCircle, contentDescription = "Email Icon") },
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = VerdePrincipal,

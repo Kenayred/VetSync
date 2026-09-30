@@ -3,6 +3,10 @@ package com.example.vetsync.controlador
 import com.example.vetsync.modelo.FirebaseDatabaseManager
 import com.example.vetsync.modelo.Mascota
 import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
+import com.example.vetsync.modelo.SesionUsuario
 
 class MascotaControlador {
 
@@ -23,23 +27,19 @@ class MascotaControlador {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        // 1. Validar campos obligatorios
         if (nombre.isBlank() || especie.isBlank() || raza.isBlank() || sexo.isBlank() || fechaNacimiento.isBlank() || pesoTexto.isBlank()) {
             onError("Por favor, completa todos los campos principales de la mascota.")
             return
         }
 
-        // 2. Validar que el peso sea un número válido y mayor a 0
         val pesoConvertido = pesoTexto.trim().replace(",", ".").toDoubleOrNull()
         if (pesoConvertido == null || pesoConvertido <= 0.0) {
             onError("Ingresa un peso válido en kg (ejemplo: 15.5).")
             return
         }
 
-        // 3. Generar ID único para la mascota
         val nuevoId = (System.currentTimeMillis() % Int.MAX_VALUE).toInt()
 
-        // 4. Instanciar el modelo Mascota
         val nuevaMascota = Mascota(
             id = nuevoId,
             idDueno = idUsuario,
@@ -66,6 +66,59 @@ class MascotaControlador {
                     onSuccess()
                 } else {
                     onError("Error al guardar la mascota: ${databaseError.message}")
+                }
+            }
+        )
+    }
+
+    fun obtenerMascotasUsuario(
+        idUsuario: Int = SesionUsuario.idUsuario,
+        onSuccess: (List<Mascota>) -> Unit,
+        onError: (String) -> Unit
+    ){
+
+        dbManager.readData("mascotas", object : ValueEventListener{
+            override fun onDataChange(snapshot: DataSnapshot){
+                val listaMascotas = mutableListOf<Mascota>()
+
+                for (hijo in snapshot.children){
+                    val mascota = hijo.getValue(Mascota::class.java)
+                    if(mascota != null && mascota.idDueno == idUsuario){
+                        listaMascotas.add(mascota)
+                    }
+                }
+                onSuccess(listaMascotas)
+            }
+            override fun  onCancelled(error: DatabaseError){
+                onError("ERror al cargar las mascotas: ${error.message}")
+            }
+        })
+
+    }
+
+    // Agrega esta función dentro de tu clase MascotaControlador:
+    fun actualizarFotoMascota(
+        mascota: Mascota,
+        nuevaFotoBase64: String,
+        onSuccess: (Mascota) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        if (nuevaFotoBase64.isBlank()) {
+            onError("No se pudo procesar la imagen seleccionada.")
+            return
+        }
+
+        val mascotaActualizada = mascota.copy(fotoUrl = nuevaFotoBase64)
+        val path = "mascotas/${mascota.id}"
+
+        dbManager.insertData(
+            data = mascotaActualizada,
+            path = path,
+            completionListener = DatabaseReference.CompletionListener { databaseError, _ ->
+                if (databaseError == null) {
+                    onSuccess(mascotaActualizada)
+                } else {
+                    onError("Error al actualizar la foto: ${databaseError.message}")
                 }
             }
         )

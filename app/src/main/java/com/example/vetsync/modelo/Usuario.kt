@@ -1,13 +1,13 @@
 package com.example.vetsync.modelo
 
 data class Usuario(
-    override val id: Int = 0,
-    val username: String = "",
-    val contrasena: String = "",
-    override val nombre: String = "",
-    val correo: String = "",
-    val telefono: String = "", // Opcional
-    val rol: RolUsuario = RolUsuario.CLIENTE
+    override var id: Int = 0,
+    var username: String = "",
+    var contrasena: String = "",
+    override var nombre: String = "",
+    var correo: String = "",
+    var telefono: String = "", // Opcional
+    var rol: RolUsuario = RolUsuario.CLIENTE
 ) : Persona(id, nombre) {
 
     override fun obtenerTipo(): String {
