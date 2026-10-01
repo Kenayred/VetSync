@@ -10,14 +10,18 @@ import androidx.compose.ui.Modifier
 import com.example.vetsync.vista.components.*
 import com.example.vetsync.vista.screens.DashboardScreen
 import com.example.vetsync.vista.screens.MisMascotasScreen
+import com.example.vetsync.vista.screens.PerfilScreen
 import com.example.vetsync.vista.theme.*
+import com.example.vetsync.modelo.SesionUsuario
+import com.example.vetsync.modelo.Usuario
 
 sealed class SubPantallaHome {
     object AgregarMascota : SubPantallaHome()
 }
 @Composable
 fun HomeScreen(
-    nombreUsuario: String = "Laura"
+    nombreUsuario: String = "Laura",
+    onNavigateToLogin: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -60,7 +64,24 @@ fun HomeScreen(
 
                         2 -> { /* CitasScreen() */ }
                         3 -> { /* NotificacionesScreen() */ }
-                        4 -> { /* PerfilScreen() */ }
+                        4 ->  {
+                            // Validamos que el usuario no sea nulo, si lo es mandamos uno vacío temporal
+                            val usuarioActivo = SesionUsuario.usuarioActual ?: com.example.vetsync.modelo.Usuario()
+
+                            PerfilScreen(
+                                usuario = usuarioActivo,
+                                onLogoutClick = {
+                                    // Limpias la sesión actual
+                                    SesionUsuario.cerrarSesion()
+                                    //SesionUsuario.idUsuario = ""
+                                    // Navegas a la pantalla de inicio de sesión
+                                    onNavigateToLogin()
+                                },
+                                onEditProfileClick = {
+                                    // Aquí puedes crear un SubPantallaHome.EditarPerfil en el futuro
+                                }
+                            )
+                        }
                     }
                 }
             }
