@@ -81,13 +81,13 @@ fun DetalleMascotaScreen(
         }
     }
 
-    val emojiMascota = when (mascota.especie.lowercase()) {
-        "perro", "canino" -> "🐶"
-        "gato", "felino" -> "🐱"
-        "ave" -> "🐦"
-        "conejo" -> "🐰"
-        else -> "🐾"
-    }
+//    val emojiMascota = when (mascota.especie.lowercase()) {
+//        "perro", "canino" -> "🐶"
+//        "gato", "felino" -> "🐱"
+//        "ave" -> "🐦"
+//        "conejo" -> "🐰"
+//        else -> "🐾"
+//    }
 
     Column(
         modifier = Modifier
@@ -139,10 +139,9 @@ fun DetalleMascotaScreen(
                     modifier = Modifier.fillMaxSize()
                 )
             } else {
-                Text(text = emojiMascota, fontSize = 96.sp)
+               // Text(text = emojiMascota, fontSize = 96.sp)
             }
 
-            // Botón para cambiar foto en la esquina inferior izquierda
             Surface(
                 color = Color.White.copy(alpha = 0.92f),
                 shape = RoundedCornerShape(50),
@@ -171,7 +170,6 @@ fun DetalleMascotaScreen(
                 }
             }
 
-            // Etiqueta "• Activo" en la esquina inferior derecha
             Surface(
                 color = Color.White.copy(alpha = 0.92f),
                 shape = RoundedCornerShape(50),
@@ -273,7 +271,7 @@ fun DetalleMascotaScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            val textoAnios = if (mascota.edad == 1) "1 año" else "${mascota.edad} años"
+            val textoAnios = if (mascota.edad.toString() == "1") "1 año" else "${mascota.edad} años"
 
             Row(
                 modifier = Modifier.fillMaxWidth(),

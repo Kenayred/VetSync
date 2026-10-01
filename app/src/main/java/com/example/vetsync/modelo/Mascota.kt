@@ -7,7 +7,7 @@ data class Mascota(
     val nombre: String = "",
     val especie: String = "",
     val raza: String = "",
-    val edad: Int = 0,
+    val edad: String = "",
     val sexo: String = "",
     val fechaNacimiento: String = "",
     val peso: Double = 0.0,

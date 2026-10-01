@@ -38,6 +38,16 @@ import com.example.vetsync.controlador.MascotaControlador
 import com.example.vetsync.modelo.ImagenUtils
 import com.example.vetsync.modelo.SesionUsuario
 import com.example.vetsync.vista.theme.*
+import androidx.compose.material.icons.outlined.DateRange
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.TextButton
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +59,7 @@ fun AgregarMascotaScreen(
 ) {
     var nombre by remember { mutableStateOf("") }
     var especie by remember { mutableStateOf("") }
+    var especiePersonalizada by remember { mutableStateOf("") }
     var raza by remember { mutableStateOf("") }
     var edad by remember { mutableStateOf("") }
     var sexo by remember { mutableStateOf("") }
@@ -140,6 +151,16 @@ fun AgregarMascotaScreen(
                         onOptionSelected = { especie = it }
                     )
 
+                    if(especie == "Otro"){
+                        Spacer(modifier = Modifier.height(14.dp))
+                        CampoFormularioMascota(
+                            label = "Especificar Especie",
+                            value = especiePersonalizada,
+                            onValueChange = { especiePersonalizada = it },
+                            placeholder = "Hamster, Serpiente, etc"
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(14.dp))
 
                     CampoFormularioMascota(
@@ -171,11 +192,11 @@ fun AgregarMascotaScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    CampoFormularioMascota(
-                        label = "Fecha de Nacimiento (Aprox.)",
+                    SelectorFechaMascota(
+                        label = "Fecha de Nacimiento",
                         value = fechaNacimiento,
                         onValueChange = { fechaNacimiento = it },
-                        placeholder = "mm/dd/yyyy"
+                        placeholder = "Selecciona una fecha"
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -240,17 +261,21 @@ fun AgregarMascotaScreen(
 
                     Button(
                         onClick = {
+
+                            val especieFinal = if(especie == "Otro") especiePersonalizada else especie;
+
                             controlador.registrarMascota(
                                 idUsuario = SesionUsuario.idUsuario,
                                 nombre = nombre,
-                                especie = especie,
+                                especie = especieFinal,
                                 raza = raza,
+                                edadTexto = edad,
                                 sexo = sexo,
                                 fechaNacimiento = fechaNacimiento,
                                 pesoTexto = peso,
                                 colorMarcas = colorMarcas,
                                 observaciones = observaciones,
-                                fotoUrl = fotoBase64, // <-- Enviamos la imagen a Firebase
+                                fotoUrl = fotoBase64, // <-- Imagen en base64
                                 onSuccess = {
                                     android.widget.Toast.makeText(
                                         context,
@@ -302,6 +327,7 @@ fun AgregarMascotaTopBar(onBackClick: () -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .statusBarsPadding()
                 .background(FondoCrema)
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -510,6 +536,101 @@ fun DropdownFormularioMascota(
                     )
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SelectorFechaMascota(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String
+) {
+    var mostrarCalendario by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
+
+    if (mostrarCalendario) {
+        DatePickerDialog(
+            onDismissRequest = { mostrarCalendario = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        mostrarCalendario = false
+                        // Convertimos los milisegundos seleccionados a formato de texto "dd/MM/yyyy"
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                            sdf.timeZone = TimeZone.getTimeZone("UTC")
+                            onValueChange(sdf.format(Date(millis)))
+                        }
+                    }
+                ) {
+                    Text("Aceptar", color = VerdeVetSync, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarCalendario = false }) {
+                    Text("Cancelar", color = GrisTextoSecundario)
+                }
+            },
+            colors = DatePickerDefaults.colors(containerColor = Color.White)
+        ) {
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    titleContentColor = VerdeVetSync,
+                    headlineContentColor = VerdeVetSync,
+                    selectedDayContainerColor = VerdeVetSync,
+                    selectedDayContentColor = Color.White,
+                    todayDateBorderColor = VerdeVetSync,
+                    todayContentColor = VerdeVetSync
+                )
+            )
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextoLabelMascota
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = value,
+                onValueChange = {},
+                readOnly = true, // Evita que se abra el teclado numérico
+                placeholder = {
+                    Text(text = placeholder, fontSize = 13.sp, color = PlaceholderMascota)
+                },
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.DateRange,
+                        contentDescription = "Seleccionar fecha",
+                        tint = Color(0xFF4A4A4A)
+                    )
+                },
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 52.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = FondoInputMascota,
+                    unfocusedContainerColor = FondoInputMascota,
+                    focusedBorderColor = VerdeVetSync,
+                    unfocusedBorderColor = BordeInputMascota
+                )
+            )
+            // Esta capa invisible intercepta el clic y abre el calendario
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable { mostrarCalendario = true }
+            )
         }
     }
 }

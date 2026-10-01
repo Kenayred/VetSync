@@ -44,10 +44,9 @@ fun MisMascotasScreen(
     var listaMascotas by remember { mutableStateOf<List<Mascota>>(emptyList()) }
     var cargandoMascotas by remember { mutableStateOf(true) }
 
-    // Estado local: guarda la mascota cuyo perfil se quiere ver (null = mostrar la lista)
     var mascotaSeleccionada by remember { mutableStateOf<Mascota?>(null) }
 
-    // Si el usuario está viendo el perfil y presiona "Atrás" en su teléfono, vuelve a la lista
+    //REGRESAR A LA PAGINA ANTERIOR
     BackHandler(enabled = mascotaSeleccionada != null) {
         mascotaSeleccionada = null
     }
@@ -67,7 +66,6 @@ fun MisMascotasScreen(
         )
     }
 
-    // Si hay una mascota seleccionada, mostramos su pantalla de Detalle/Perfil completo
     if (mascotaSeleccionada != null) {
         DetalleMascotaScreen(
             mascota = mascotaSeleccionada!!,
@@ -168,15 +166,9 @@ fun MascotaPerfilCompletoCard(
     destacada: Boolean = false,
     onVerPerfilClick: () -> Unit = {}
 ) {
-//    val emoji = when (mascota.especie.lowercase()) {
-//        "perro", "canino" -> "🐶"
-//        "gato", "felino" -> "🐱"
-//        "ave" -> "🐦"
-//        "conejo" -> "🐰"
-//        else -> "🐾"
-//    }
 
-    val textoEdad = if (mascota.edad == 1) "1 año" else "${mascota.edad} años"
+
+    val textoEdad = if (mascota.edad.toString() == "1") "1 año" else "${mascota.edad} años"
     val textoPeso = if (mascota.peso % 1.0 == 0.0) {
         "${mascota.peso.toInt()} kg"
     } else {
@@ -194,14 +186,14 @@ fun MascotaPerfilCompletoCard(
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             val bitmapMascota = remember(mascota.fotoUrl) { ImagenUtils.base64ABitmap(mascota.fotoUrl) }
-            if (destacada) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp)
-                        .background(Color(0xFFD0DBD2))
-                )
-            }
+//            if (destacada) {
+//                Box(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .height(4.dp)
+//                        .background(Color(0xFFD0DBD2))
+//                )
+//            }
 
             Column(
                 modifier = Modifier
@@ -242,7 +234,7 @@ fun MascotaPerfilCompletoCard(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "🐾", fontSize = 13.sp)
+                            //Text(text = "", fontSize = 13.sp)
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "${mascota.especie} • ${mascota.raza}",

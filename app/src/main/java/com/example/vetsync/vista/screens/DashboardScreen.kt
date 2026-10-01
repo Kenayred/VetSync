@@ -151,11 +151,12 @@ fun DashboardScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(listaMascotas) { mascot ->
-                        val textoAnios = if (mascot.edad == 1) "1 año" else "${mascot.edad} años"
+                        val textoAnios = if (mascot.edad.toString() == "1") "1 año" else "${mascot.edad} años"
 
                         MascotaItemCard(
                             nombre = mascot.nombre,
                             detalle = "${mascot.especie} • $textoAnios",
+                            fotoUrl = mascot.fotoUrl,
                             seleccionada = mascot.id == mascotaSeleccionadaId,
                             modifier = Modifier
                                 .width(165.dp)

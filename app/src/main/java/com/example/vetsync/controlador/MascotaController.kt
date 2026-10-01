@@ -17,7 +17,7 @@ class MascotaControlador {
         nombre: String,
         especie: String,
         raza: String,
-        edad: Int = 0,
+        edadTexto: String,
         sexo: String,
         fechaNacimiento: String,
         pesoTexto: String,
@@ -27,7 +27,7 @@ class MascotaControlador {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        if (nombre.isBlank() || especie.isBlank() || raza.isBlank() || sexo.isBlank() || fechaNacimiento.isBlank() || pesoTexto.isBlank()) {
+        if (nombre.isBlank() || especie.isBlank() || raza.isBlank() || sexo.isBlank() || fechaNacimiento.isBlank() || pesoTexto.isBlank() || edadTexto.isBlank() ) {
             onError("Por favor, completa todos los campos principales de la mascota.")
             return
         }
@@ -46,7 +46,7 @@ class MascotaControlador {
             nombre = nombre.trim(),
             especie = especie.trim(),
             raza = raza.trim(),
-            edad = edad,
+            edad = edadTexto,
             sexo = sexo.trim(),
             fechaNacimiento = fechaNacimiento.trim(),
             peso = pesoConvertido,
@@ -96,7 +96,6 @@ class MascotaControlador {
 
     }
 
-    // Agrega esta función dentro de tu clase MascotaControlador:
     fun actualizarFotoMascota(
         mascota: Mascota,
         nuevaFotoBase64: String,

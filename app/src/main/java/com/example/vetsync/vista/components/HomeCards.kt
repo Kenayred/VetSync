@@ -1,6 +1,7 @@
 package com.example.vetsync.vista.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,14 +14,17 @@ import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.vetsync.modelo.ImagenUtils
 import com.example.vetsync.vista.theme.*
 
 @Composable
@@ -178,6 +182,8 @@ fun MascotaItemCard(
     seleccionada: Boolean,
     modifier: Modifier = Modifier
 ) {
+    val bitmapMascota = remember(fotoUrl) { ImagenUtils.base64ABitmap(fotoUrl) }
+
     Card(
         modifier = modifier.height(84.dp),
         shape = RoundedCornerShape(14.dp),
@@ -193,20 +199,29 @@ fun MascotaItemCard(
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-//            Box(
-//                modifier = Modifier
-//                    .size(52.dp)
-//                    .clip(CircleShape)
-//                    .background(Color(0xFFEFECE6))
-//                    .border(
-//                        width = if (seleccionada) 1.5.dp else 0.dp,
-//                        color = if (seleccionada) VerdeVetSync else Color.Transparent,
-//                        shape = CircleShape
-//                    ),
-//                contentAlignment = Alignment.Center
-//            ) {
-//                Text(text = emojiPlaceholder, fontSize = 26.sp)
-//            }
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFFEFECE6))
+                    .border(
+                        width = if (seleccionada) 1.5.dp else 0.dp,
+                        color = if (seleccionada) VerdeVetSync else Color.Transparent,
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                if (bitmapMascota != null) {
+                    Image(
+                        bitmap = bitmapMascota,
+                        contentDescription = nombre,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+//                            Text(text = emoji, fontSize = 34.sp)
+                }
+            }
 
             Spacer(modifier = Modifier.width(10.dp))
 
