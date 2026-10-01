@@ -11,8 +11,8 @@ object SesionUsuario {
     val primerNombre: String
         get() = usuarioActual?.nombre?.split(" ")?.firstOrNull() ?: "Usuario"
 
-    val idUsuario: Int
-        get() = usuarioActual?.id ?: 0
+    val idUsuario: String
+        get() = usuarioActual?.id ?: ""
 
     fun iniciarSesion(usuario: Usuario) {
         usuarioActual = usuario

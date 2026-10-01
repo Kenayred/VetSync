@@ -2,8 +2,8 @@ package com.example.vetsync.modelo
 
 
 data class Mascota(
-    val id: Int = 0,
-    val idDueno: Int = 0,
+    val id: String = "",
+    val idDueno: String = "",
     val nombre: String = "",
     val especie: String = "",
     val raza: String = "",

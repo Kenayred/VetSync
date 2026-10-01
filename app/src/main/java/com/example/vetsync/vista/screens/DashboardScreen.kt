@@ -49,7 +49,7 @@ fun DashboardScreen(
     val usuario = SesionUsuario.usuarioActual
     var listaMascotas by remember { mutableStateOf<List<Mascota>>(emptyList()) }
     var cargandoMascotas by remember { mutableStateOf(true) }
-    var mascotaSeleccionadaId by remember { mutableIntStateOf(-1) }
+    var mascotaSeleccionadaId: String by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -104,7 +104,9 @@ fun DashboardScreen(
                 idUsuario = SesionUsuario.idUsuario,
                 onSuccess = { mascotas ->
                     listaMascotas = mascotas
-                    if (mascotas.isNotEmpty() && mascotaSeleccionadaId == -1) {
+                    if (mascotas.isNotEmpty()
+                        //&& mascotaSeleccionadaId == -1
+                        ) {
                         mascotaSeleccionadaId = mascotas.first().id
                     }
                     cargandoMascotas = false
@@ -122,16 +124,16 @@ fun DashboardScreen(
         ) {
             Spacer(modifier = Modifier.height(12.dp))
 
-//            if (cargandoMascotas) {
-//                Box(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .height(84.dp),
-//                    contentAlignment = Alignment.Center
-//                ) {
-//                    LoadingDots()
-//                }
-//            } else
+            if (cargandoMascotas) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(84.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    LoadingDots()
+                }
+            } else
                 if (listaMascotas.isEmpty()) {
                 Box(
                     modifier = Modifier

@@ -1,12 +1,12 @@
 package com.example.vetsync.modelo
 
 data class Usuario(
-    override var id: Int = 0,
+    override var id: String = "",
     var username: String = "",
     var contrasena: String = "",
     override var nombre: String = "",
     var correo: String = "",
-    var telefono: String = "", // Opcional
+    var telefono: String = "",
     var rol: RolUsuario = RolUsuario.CLIENTE
 ) : Persona(id, nombre) {
 
