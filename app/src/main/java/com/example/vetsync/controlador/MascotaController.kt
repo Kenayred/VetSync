@@ -1,6 +1,6 @@
 package com.example.vetsync.controlador
 
-import com.example.vetsync.modelo.FirebaseDatabaseManager
+import com.example.vetsync.modelo.MascotaRepository
 import com.example.vetsync.modelo.Mascota
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.DataSnapshot
@@ -12,7 +12,7 @@ import java.util.UUID
 
 class MascotaControlador {
 
-    private val dbManager = FirebaseDatabaseManager()
+    private val dbManager = MascotaRepository()
 
     fun registrarMascota(
         idUsuario: String = "",
@@ -99,6 +99,22 @@ class MascotaControlador {
             },
             onFailure = { error ->
                 onError(error.message ?: "Error al actualizar la foto en la base de datos.")
+            }
+        )
+    }
+
+    fun eliminarMascota(
+        mascotaId: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ){
+        dbManager.eliminarMascotaa(
+            idMascota = mascotaId,
+            onSuccess = {
+                onSuccess()
+            },
+            onFailure = {
+                    error -> onError(error.message ?: "Error al borrar la mascota")
             }
         )
     }

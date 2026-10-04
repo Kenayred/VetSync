@@ -53,12 +53,12 @@ fun DetalleMascotaScreen(
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     val usuario = SesionUsuario.usuarioActual
+    var mostrarDialogoEliminar by remember { mutableStateOf(false) }
 
-    // Estado local para que la foto cambie al instante en pantalla
+    //CAMBIO DE FOTO LOCAL
     var fotoBase64Actual by remember(mascota.id) { mutableStateOf(mascota.fotoUrl) }
     val bitmapMascota = remember(fotoBase64Actual) { ImagenUtils.base64ABitmap(fotoBase64Actual) }
 
-    // Lanzador para abrir la galería y actualizar en Firebase
     val cambiarFotoLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -80,14 +80,6 @@ fun DetalleMascotaScreen(
             }
         }
     }
-
-//    val emojiMascota = when (mascota.especie.lowercase()) {
-//        "perro", "canino" -> "🐶"
-//        "gato", "felino" -> "🐱"
-//        "ave" -> "🐦"
-//        "conejo" -> "🐰"
-//        else -> "🐾"
-//    }
 
     Column(
         modifier = Modifier
@@ -345,6 +337,73 @@ fun DetalleMascotaScreen(
             PlanPreventivoCard()
 
             Spacer(modifier = Modifier.height(28.dp))
+
+            OutlinedButton(
+                onClick = { mostrarDialogoEliminar = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp),
+                shape = RoundedCornerShape(50),
+                border = BorderStroke(1.dp, Color(0xFFE0DBD4)),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = RojoAlerta,
+                    contentColor = Color(0xFFFFFFFF)
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    modifier = Modifier.size(17.dp)
+                )
+                //Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Eliminar mascota",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+        if (mostrarDialogoEliminar) {
+            AlertDialog(
+                onDismissRequest = { mostrarDialogoEliminar = false },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Filled.Warning,
+                        contentDescription = "Advertencia",
+                        tint = Color(0xFFD32F2F)
+                    )
+                },
+                title = { Text(text = "¿Eliminar a ${mascota.nombre}?") },
+                text = {
+                    Text(text = "Esta acción no se puede deshacer. Todos los datos, historial y citas de esta mascota se borrarán permanentemente.")
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            mostrarDialogoEliminar = false
+                            controlador.eliminarMascota(
+                                mascota.id,
+                                onSuccess = { onBackClick() },
+                                onError = { mensajeError -> Toast.makeText(context, mensajeError, Toast.LENGTH_SHORT).show() }
+                            )
+                        }
+                    ) {
+                        Text("Sí, eliminar", color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { mostrarDialogoEliminar = false }
+                    ) {
+                        Text("Cancelar", color = GrisTextoSecundario)
+                    }
+                },
+                containerColor = Color.White
+            )
+        }
+
         }
     }
 

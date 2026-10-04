@@ -7,7 +7,8 @@ data class Usuario(
     override var nombre: String = "",
     var correo: String = "",
     var telefono: String = "",
-    var rol: RolUsuario = RolUsuario.CLIENTE
+    var rol: RolUsuario = RolUsuario.CLIENTE,
+    var fotoUrl: String = ""
 ) : Persona(id, nombre) {
 
     override fun obtenerTipo(): String {

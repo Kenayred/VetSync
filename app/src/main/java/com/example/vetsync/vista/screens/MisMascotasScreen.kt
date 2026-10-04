@@ -30,6 +30,7 @@ import com.example.vetsync.vista.components.LoadingDots
 import com.example.vetsync.vista.theme.*
 import com.example.vetsync.vista.DetalleMascotaScreen
 import androidx.compose.foundation.Image
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.ui.layout.ContentScale
 import com.example.vetsync.modelo.ImagenUtils
 @Composable
@@ -126,9 +127,7 @@ fun MisMascotasScreen(
                         listaMascotas.forEachIndexed { index, mascota ->
                             MascotaPerfilCompletoCard(
                                 mascota = mascota,
-                                destacada = index == 0,
                                 onVerPerfilClick = {
-                                    // Al tocar el botón "Ver perfil" o la tarjeta, abre DetalleMascotaScreen
                                     mascotaSeleccionada = mascota
                                 }
                             )
@@ -163,8 +162,7 @@ fun MisMascotasScreen(
 @Composable
 fun MascotaPerfilCompletoCard(
     mascota: Mascota,
-    destacada: Boolean = false,
-    onVerPerfilClick: () -> Unit = {}
+    onVerPerfilClick: () -> Unit = {},
 ) {
 
 
@@ -186,14 +184,7 @@ fun MascotaPerfilCompletoCard(
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             val bitmapMascota = remember(mascota.fotoUrl) { ImagenUtils.base64ABitmap(mascota.fotoUrl) }
-//            if (destacada) {
-//                Box(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .height(4.dp)
-//                        .background(Color(0xFFD0DBD2))
-//                )
-//            }
+
 
             Column(
                 modifier = Modifier
@@ -225,7 +216,7 @@ fun MascotaPerfilCompletoCard(
 
                     Spacer(modifier = Modifier.width(16.dp))
 
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = mascota.nombre,
                             fontSize = 22.sp,

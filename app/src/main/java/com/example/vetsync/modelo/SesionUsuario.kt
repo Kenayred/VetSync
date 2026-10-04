@@ -14,6 +14,8 @@ object SesionUsuario {
     val idUsuario: String
         get() = usuarioActual?.id ?: ""
 
+    val fotoPerfil: String
+        get() = usuarioActual?.fotoUrl ?: ""
     fun iniciarSesion(usuario: Usuario) {
         usuarioActual = usuario
     }

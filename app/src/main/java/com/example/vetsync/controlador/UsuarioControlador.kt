@@ -1,14 +1,14 @@
 package com.example.vetsync.controlador
 
 import android.util.Patterns
-import com.example.vetsync.modelo.FirebaseDatabaseManager
+import com.example.vetsync.modelo.UsuarioRepository
 import com.example.vetsync.modelo.Usuario
 import com.example.vetsync.modelo.RolUsuario
 import java.util.UUID
 
 class UsuarioControlador {
 
-    private val dbManager = FirebaseDatabaseManager()
+    private val dbManager = UsuarioRepository()
 
     fun registrarUsuario(
         username: String,
