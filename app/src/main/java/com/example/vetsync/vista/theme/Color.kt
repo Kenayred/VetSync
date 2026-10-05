@@ -37,3 +37,5 @@ val AmarilloAlertaTexto = Color(0xFFB7811F)
 val VerdeAlDiaFondo = Color(0xFFE6F2EA)
 val FondoProximasCitas = Color(0xFFF3EFEA)
 val FondoPlanPreventivo = Color(0xFFFDF6F2)
+
+val GrisBordeCard = Color(0xFFEBEBEB)

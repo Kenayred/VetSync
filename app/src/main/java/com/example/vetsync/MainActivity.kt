@@ -10,10 +10,24 @@ import com.example.vetsync.vista.HomeScreen
 import com.example.vetsync.vista.LoginScreen
 import com.example.vetsync.vista.RegisterScreen
 import com.example.vetsync.vista.screens.LoadingScreen
+import androidx.activity.SystemBarStyle
+import android.graphics.Color
+import androidx.activity.enableEdgeToEdge
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(
+                scrim = android.graphics.Color.TRANSPARENT,
+                darkScrim = android.graphics.Color.TRANSPARENT
+            ),
+            navigationBarStyle = SystemBarStyle.light(
+                scrim = android.graphics.Color.TRANSPARENT,
+                darkScrim = android.graphics.Color.TRANSPARENT
+            )
+        )
 
         setContent {
             MaterialTheme {
@@ -55,7 +69,12 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         "home" -> {
-                            HomeScreen()
+                            HomeScreen(
+                                onNavigateToLogin = {
+                                    pantallaActual = "login"
+                                    isLoading = true
+                                }
+                            )
                         }
                     }
                 }

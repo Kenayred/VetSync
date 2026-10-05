@@ -1,7 +1,7 @@
 package com.example.vetsync.modelo
 
 abstract class Persona(
-    open var id: Int = 0,
+    open var id: String = "",
     open var nombre: String = ""
 ) {
 

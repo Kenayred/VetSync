@@ -1,23 +1,25 @@
 package com.example.vetsync.controlador
 
-import com.example.vetsync.modelo.FirebaseDatabaseManager
+import com.example.vetsync.modelo.MascotaRepository
 import com.example.vetsync.modelo.Mascota
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.example.vetsync.modelo.SesionUsuario
+import java.util.UUID
+
 
 class MascotaControlador {
 
-    private val dbManager = FirebaseDatabaseManager()
+    private val dbManager = MascotaRepository()
 
     fun registrarMascota(
-        idUsuario: Int = 0,
+        idUsuario: String = "",
         nombre: String,
         especie: String,
         raza: String,
-        edad: Int = 0,
+        edadTexto: String,
         sexo: String,
         fechaNacimiento: String,
         pesoTexto: String,
@@ -27,7 +29,7 @@ class MascotaControlador {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        if (nombre.isBlank() || especie.isBlank() || raza.isBlank() || sexo.isBlank() || fechaNacimiento.isBlank() || pesoTexto.isBlank()) {
+        if (nombre.isBlank() || especie.isBlank() || raza.isBlank() || sexo.isBlank() || fechaNacimiento.isBlank() || pesoTexto.isBlank() || edadTexto.isBlank() ) {
             onError("Por favor, completa todos los campos principales de la mascota.")
             return
         }
@@ -38,7 +40,7 @@ class MascotaControlador {
             return
         }
 
-        val nuevoId = (System.currentTimeMillis() % Int.MAX_VALUE).toInt()
+        val nuevoId = UUID.randomUUID().toString()
 
         val nuevaMascota = Mascota(
             id = nuevoId,
@@ -46,7 +48,7 @@ class MascotaControlador {
             nombre = nombre.trim(),
             especie = especie.trim(),
             raza = raza.trim(),
-            edad = edad,
+            edad = edadTexto,
             sexo = sexo.trim(),
             fechaNacimiento = fechaNacimiento.trim(),
             peso = pesoConvertido,
@@ -55,48 +57,27 @@ class MascotaControlador {
             fotoUrl = fotoUrl
         )
 
-
-        val path = "mascotas/$nuevoId"
-
-        dbManager.insertData(
-            data = nuevaMascota,
-            path = path,
-            completionListener = DatabaseReference.CompletionListener { databaseError, _ ->
-                if (databaseError == null) {
-                    onSuccess()
-                } else {
-                    onError("Error al guardar la mascota: ${databaseError.message}")
-                }
-            }
+        dbManager.registrarMascota(
+            mascota = nuevaMascota,
+            onSuccess = { onSuccess() },
+            onFailure = { error -> onError(error.message ?: "Error desconocido") }
         )
     }
 
     fun obtenerMascotasUsuario(
-        idUsuario: Int = SesionUsuario.idUsuario,
+        idUsuario: String = SesionUsuario.idUsuario,
         onSuccess: (List<Mascota>) -> Unit,
         onError: (String) -> Unit
     ){
 
-        dbManager.readData("mascotas", object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot){
-                val listaMascotas = mutableListOf<Mascota>()
-
-                for (hijo in snapshot.children){
-                    val mascota = hijo.getValue(Mascota::class.java)
-                    if(mascota != null && mascota.idDueno == idUsuario){
-                        listaMascotas.add(mascota)
-                    }
-                }
-                onSuccess(listaMascotas)
-            }
-            override fun  onCancelled(error: DatabaseError){
-                onError("ERror al cargar las mascotas: ${error.message}")
-            }
-        })
+        dbManager.obtenerMascotasPorUsuario(
+            idUsuario = idUsuario,
+            onSuccess = { listaMascota-> onSuccess(listaMascota) },
+            onFailure = { error -> onError(error.message ?: "Error desconocido") }
+            )
 
     }
 
-    // Agrega esta función dentro de tu clase MascotaControlador:
     fun actualizarFotoMascota(
         mascota: Mascota,
         nuevaFotoBase64: String,
@@ -109,17 +90,31 @@ class MascotaControlador {
         }
 
         val mascotaActualizada = mascota.copy(fotoUrl = nuevaFotoBase64)
-        val path = "mascotas/${mascota.id}"
 
-        dbManager.insertData(
-            data = mascotaActualizada,
-            path = path,
-            completionListener = DatabaseReference.CompletionListener { databaseError, _ ->
-                if (databaseError == null) {
-                    onSuccess(mascotaActualizada)
-                } else {
-                    onError("Error al actualizar la foto: ${databaseError.message}")
-                }
+        dbManager.actualizarFotoMascota(
+            idMascota = mascota.id,
+            nuevaFotoUrl = nuevaFotoBase64,
+            onSuccess = {
+                onSuccess(mascotaActualizada)
+            },
+            onFailure = { error ->
+                onError(error.message ?: "Error al actualizar la foto en la base de datos.")
+            }
+        )
+    }
+
+    fun eliminarMascota(
+        mascotaId: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ){
+        dbManager.eliminarMascotaa(
+            idMascota = mascotaId,
+            onSuccess = {
+                onSuccess()
+            },
+            onFailure = {
+                    error -> onError(error.message ?: "Error al borrar la mascota")
             }
         )
     }

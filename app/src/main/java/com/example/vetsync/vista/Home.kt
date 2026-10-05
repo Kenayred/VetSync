@@ -10,14 +10,21 @@ import androidx.compose.ui.Modifier
 import com.example.vetsync.vista.components.*
 import com.example.vetsync.vista.screens.DashboardScreen
 import com.example.vetsync.vista.screens.MisMascotasScreen
+import com.example.vetsync.vista.screens.PerfilScreen
 import com.example.vetsync.vista.theme.*
+import com.example.vetsync.modelo.SesionUsuario
+import com.example.vetsync.modelo.Usuario
+import com.example.vetsync.vista.screens.EditarPerfilScreen
+import com.example.vetsync.controlador.UsuarioControlador
 
 sealed class SubPantallaHome {
     object AgregarMascota : SubPantallaHome()
+    object EditarPerfil : SubPantallaHome()
 }
 @Composable
 fun HomeScreen(
-    nombreUsuario: String = "Laura"
+    nombreUsuario: String = "Laura",
+    onNavigateToLogin: () -> Unit = {}
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -31,10 +38,22 @@ fun HomeScreen(
                 onMascotaGuardada = { subPantallaActual =null }
             )
         }
+        is SubPantallaHome.EditarPerfil -> {
+            EditarPerfilScreen(
+                usuario = SesionUsuario.usuarioActual!!,
+                controlador = UsuarioControlador(),
+                onBackClick = { subPantallaActual = null },
+                onPerfilActualizado = {
+                    subPantallaActual = null
+                }
+            )
+        }
         null -> {
             Scaffold(
                 containerColor = FondoCrema,
-                topBar = { HomeTopBar() },
+                topBar = { HomeTopBar(
+                    mostrarFotoPerfil = (selectedTab != 4)
+                ) },
                 bottomBar = {
                     HomeBottomNavigationBar(
                         selectedTab = selectedTab,
@@ -60,7 +79,21 @@ fun HomeScreen(
 
                         2 -> { /* CitasScreen() */ }
                         3 -> { /* NotificacionesScreen() */ }
-                        4 -> { /* PerfilScreen() */ }
+                        4 ->  {
+                            // Validamos que el usuario no sea nulo
+                            val usuarioActivo = SesionUsuario.usuarioActual ?: Usuario()
+
+                            PerfilScreen(
+                                usuario = usuarioActivo,
+                                onLogoutClick = {
+                                    SesionUsuario.cerrarSesion()
+                                    onNavigateToLogin()
+                                },
+                                onEditProfileClick = {
+                                    subPantallaActual = SubPantallaHome.EditarPerfil
+                                }
+                            )
+                        }
                     }
                 }
             }

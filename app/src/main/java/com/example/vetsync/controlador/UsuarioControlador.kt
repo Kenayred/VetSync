@@ -1,14 +1,16 @@
 package com.example.vetsync.controlador
 
 import android.util.Patterns
-import com.example.vetsync.modelo.FirebaseDatabaseManager
+import com.example.vetsync.modelo.UsuarioRepository
 import com.example.vetsync.modelo.Usuario
 import com.example.vetsync.modelo.RolUsuario
-import com.google.firebase.database.DatabaseReference
+import com.example.vetsync.modelo.SesionUsuario
+import java.util.UUID
+import org.mindrot.jbcrypt.BCrypt
 
 class UsuarioControlador {
 
-    private val dbManager = FirebaseDatabaseManager()
+    private val dbManager = UsuarioRepository()
 
     fun registrarUsuario(
         username: String,
@@ -18,10 +20,10 @@ class UsuarioControlador {
         contrasena: String,
         confirmarContrasena: String,
         terminosAceptados: Boolean,
+        fotoUrl: String,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        // Validaciones
         if (username.isBlank() || nombreCompleto.isBlank() || correo.isBlank() || contrasena.isBlank()) {
             onError("Por favor, completa todos los campos obligatorios.")
             return
@@ -31,45 +33,133 @@ class UsuarioControlador {
             onError("Ingresa un correo electrónico válido.")
             return
         }
-
         if (contrasena.length < 6) {
             onError("La contraseña debe tener al menos 6 caracteres.")
             return
         }
-
         if (contrasena != confirmarContrasena) {
             onError("Las contraseñas no coinciden.")
             return
         }
-
         if (!terminosAceptados) {
             onError("Debes aceptar los términos y condiciones.")
             return
         }
 
-        val nuevoId = (System.currentTimeMillis() % Int.MAX_VALUE).toInt()
+        dbManager.verificarCorreoExistente(
+            correo = correo,
+            onDisponible = {
+                val nuevoId = UUID.randomUUID().toString()
+                val contrasenaHasheada = BCrypt.hashpw(contrasena, BCrypt.gensalt())
 
-        val nuevoUsuario = Usuario(
-            id = nuevoId,
-            username = username.trim(),
-            contrasena = contrasena,
-            nombre = nombreCompleto.trim(),
-            correo = correo.trim(),
-            telefono = telefono.trim(),
-            rol = RolUsuario.CLIENTE
+                val nuevoUsuario = Usuario(
+                    id = nuevoId,
+                    username = username.trim(),
+                    contrasena = contrasenaHasheada,
+                    nombre = nombreCompleto.trim(),
+                    correo = correo.trim(),
+                    telefono = telefono.trim(),
+                    rol = RolUsuario.CLIENTE,
+                    fotoUrl = fotoUrl
+                )
+
+                dbManager.guardarUsuario(
+                    usuario = nuevoUsuario,
+                    onSuccess = { onSuccess() },
+                    onError = { error -> onError(error) }
+                )
+            },
+            onOcupado = {
+                onError("Este correo electrónico ya está registrado.")
+            },
+            onError = { errorMensaje ->
+                onError(errorMensaje)
+            }
+        )
+    }
+
+    fun actualizarPerfil(
+        nuevoNombre: String,
+        nuevoUsername: String,
+        nuevoTelefono: String,
+        nuevoCorreo: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val usuarioActual = SesionUsuario.usuarioActual
+
+        if (usuarioActual == null) {
+            onError("No hay una sesión activa.")
+            return
+        }
+
+        // Validaciones básicas
+        if (nuevoNombre.isBlank() || nuevoUsername.isBlank() || nuevoCorreo.isBlank()) {
+            onError("El nombre, username y correo son obligatorios.")
+            return
+        }
+
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(nuevoCorreo.trim()).matches()) {
+            onError("Ingresa un correo electrónico válido.")
+            return
+        }
+
+        val actualizaciones = mapOf(
+            "nombre" to nuevoNombre.trim(),
+            "username" to nuevoUsername.trim(),
+            "telefono" to nuevoTelefono.trim(),
+            "correo" to nuevoCorreo.trim()
         )
 
-        val path = "usuarios/$nuevoId"
+        dbManager.actualizarDatosUsuario(
+            idUsuario = usuarioActual.id,
+            datosActualizados = actualizaciones,
+            onSuccess = {
+                //Update de compose para actualizar datos al instante
+                val usuarioModificado = usuarioActual.copy(
+                    nombre = nuevoNombre.trim(),
+                    username = nuevoUsername.trim(),
+                    telefono = nuevoTelefono.trim(),
+                    correo = nuevoCorreo.trim()
+                )
+                SesionUsuario.iniciarSesion(usuarioModificado)
 
-        dbManager.insertData(
-            data = nuevoUsuario,
-            path = path,
-            completionListener = DatabaseReference.CompletionListener { databaseError, _ ->
-                if (databaseError == null) {
-                    onSuccess()
-                } else {
-                    onError("Error al registrar: ${databaseError.message}")
-                }
+                onSuccess()
+            },
+            onFailure = { error ->
+                onError(error.message ?: "Error al actualizar el perfil.")
+            }
+        )
+    }
+
+    fun actualizarFotoDePerfil(
+        nuevaFotoBase64: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val usuarioActual = SesionUsuario.usuarioActual
+
+        if (usuarioActual == null) {
+            onError("No hay una sesión activa.")
+            return
+        }
+
+        if (nuevaFotoBase64.isBlank()) {
+            onError("La imagen seleccionada no es válida.")
+            return
+        }
+
+        dbManager.actualizarFotoPerfil(
+            idUsuario = usuarioActual.id,
+            nuevaFotoUrl = nuevaFotoBase64,
+            onSuccess = {
+                val usuarioModificado = usuarioActual.copy(fotoUrl = nuevaFotoBase64)
+                SesionUsuario.iniciarSesion(usuarioModificado)
+
+                onSuccess()
+            },
+            onFailure = { error ->
+                onError(error.message ?: "Error al actualizar la foto en la base de datos.")
             }
         )
     }
@@ -85,33 +175,11 @@ class UsuarioControlador {
             return
         }
 
-        dbManager.readData("usuarios", object : com.google.firebase.database.ValueEventListener {
-            override fun onDataChange(snapshot: com.google.firebase.database.DataSnapshot) {
-                var usuarioEncontrado: Usuario? = null
-
-                for (hijo in snapshot.children) {
-                    val usuario = hijo.getValue(Usuario::class.java)
-                    if (usuario != null) {
-                        val coincideIdentificador = usuario.username.equals(username.trim(), ignoreCase = true) ||
-                                usuario.correo.equals(username.trim(), ignoreCase = true)
-
-                        if (coincideIdentificador && usuario.contrasena == password) {
-                            usuarioEncontrado = usuario
-                            break
-                        }
-                    }
-                }
-
-                if (usuarioEncontrado != null) {
-                    onSuccess(usuarioEncontrado)
-                } else {
-                    onError("Credenciales incorrectas o usuario no registrado.")
-                }
-            }
-
-            override fun onCancelled(error: com.google.firebase.database.DatabaseError) {
-                onError("Error de conexión: ${error.message}")
-            }
-        })
+        dbManager.buscarUsuario(
+            credencial = username.trim(),
+            contrasena = password,
+            onSuccess = { usuarioEncontrado -> onSuccess(usuarioEncontrado) },
+            onError = { error -> onError(error) }
+        )
     }
 }

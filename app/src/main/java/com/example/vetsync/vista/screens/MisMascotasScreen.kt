@@ -30,6 +30,7 @@ import com.example.vetsync.vista.components.LoadingDots
 import com.example.vetsync.vista.theme.*
 import com.example.vetsync.vista.DetalleMascotaScreen
 import androidx.compose.foundation.Image
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.ui.layout.ContentScale
 import com.example.vetsync.modelo.ImagenUtils
 @Composable
@@ -44,15 +45,15 @@ fun MisMascotasScreen(
     var listaMascotas by remember { mutableStateOf<List<Mascota>>(emptyList()) }
     var cargandoMascotas by remember { mutableStateOf(true) }
 
-    // Estado local: guarda la mascota cuyo perfil se quiere ver (null = mostrar la lista)
     var mascotaSeleccionada by remember { mutableStateOf<Mascota?>(null) }
+    var actualizarLista by  remember { mutableIntStateOf(0) }
 
-    // Si el usuario está viendo el perfil y presiona "Atrás" en su teléfono, vuelve a la lista
+    //REGRESAR A LA PAGINA ANTERIOR
     BackHandler(enabled = mascotaSeleccionada != null) {
         mascotaSeleccionada = null
     }
 
-    LaunchedEffect(SesionUsuario.idUsuario) {
+    LaunchedEffect(SesionUsuario.idUsuario, actualizarLista) {
         cargandoMascotas = true
         controladorMascota.obtenerMascotasUsuario(
             idUsuario = SesionUsuario.idUsuario,
@@ -67,7 +68,6 @@ fun MisMascotasScreen(
         )
     }
 
-    // Si hay una mascota seleccionada, mostramos su pantalla de Detalle/Perfil completo
     if (mascotaSeleccionada != null) {
         DetalleMascotaScreen(
             mascota = mascotaSeleccionada!!,
@@ -75,10 +75,14 @@ fun MisMascotasScreen(
             onMascotaActualizada = { mascotaConNuevaFoto ->
                 mascotaSeleccionada = mascotaConNuevaFoto
             },
+            // 3. NUEVO: Le pasamos un evento específico para cuando se elimine
+            onMascotaEliminada = {
+                mascotaSeleccionada = null // Esto oculta el detalle y regresa a la vista de mascotas
+                actualizarLista++          // Esto suma 1 al gatillo y obliga a Firestore a descargar la lista limpia
+            },
             onAgendarCitaClick = onAgendarCitaClick
         )
     } else {
-        // Si es null, mostramos el listado de "Mis mascotas"
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
@@ -128,9 +132,7 @@ fun MisMascotasScreen(
                         listaMascotas.forEachIndexed { index, mascota ->
                             MascotaPerfilCompletoCard(
                                 mascota = mascota,
-                                destacada = index == 0,
                                 onVerPerfilClick = {
-                                    // Al tocar el botón "Ver perfil" o la tarjeta, abre DetalleMascotaScreen
                                     mascotaSeleccionada = mascota
                                 }
                             )
@@ -165,18 +167,11 @@ fun MisMascotasScreen(
 @Composable
 fun MascotaPerfilCompletoCard(
     mascota: Mascota,
-    destacada: Boolean = false,
-    onVerPerfilClick: () -> Unit = {}
+    onVerPerfilClick: () -> Unit = {},
 ) {
-//    val emoji = when (mascota.especie.lowercase()) {
-//        "perro", "canino" -> "🐶"
-//        "gato", "felino" -> "🐱"
-//        "ave" -> "🐦"
-//        "conejo" -> "🐰"
-//        else -> "🐾"
-//    }
 
-    val textoEdad = if (mascota.edad == 1) "1 año" else "${mascota.edad} años"
+
+    val textoEdad = if (mascota.edad.toString() == "1") "1 año" else "${mascota.edad} años"
     val textoPeso = if (mascota.peso % 1.0 == 0.0) {
         "${mascota.peso.toInt()} kg"
     } else {
@@ -194,14 +189,7 @@ fun MascotaPerfilCompletoCard(
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             val bitmapMascota = remember(mascota.fotoUrl) { ImagenUtils.base64ABitmap(mascota.fotoUrl) }
-            if (destacada) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp)
-                        .background(Color(0xFFD0DBD2))
-                )
-            }
+
 
             Column(
                 modifier = Modifier
@@ -233,7 +221,7 @@ fun MascotaPerfilCompletoCard(
 
                     Spacer(modifier = Modifier.width(16.dp))
 
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = mascota.nombre,
                             fontSize = 22.sp,
@@ -242,7 +230,7 @@ fun MascotaPerfilCompletoCard(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "🐾", fontSize = 13.sp)
+                            //Text(text = "", fontSize = 13.sp)
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "${mascota.especie} • ${mascota.raza}",

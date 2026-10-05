@@ -38,6 +38,16 @@ import com.example.vetsync.controlador.MascotaControlador
 import com.example.vetsync.modelo.ImagenUtils
 import com.example.vetsync.modelo.SesionUsuario
 import com.example.vetsync.vista.theme.*
+import androidx.compose.material.icons.outlined.DateRange
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.TextButton
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,12 +58,20 @@ fun AgregarMascotaScreen(
     onMascotaGuardada: () -> Unit = {}
 ) {
     var nombre by remember { mutableStateOf("") }
+    var nombreError by remember { mutableStateOf(false) }
     var especie by remember { mutableStateOf("") }
+    var especieError by remember { mutableStateOf(false) }
+    var especiePersonalizada by remember { mutableStateOf("") }
     var raza by remember { mutableStateOf("") }
+    var razaError by remember { mutableStateOf(false) }
     var edad by remember { mutableStateOf("") }
+    var edadError by remember { mutableStateOf(false) }
     var sexo by remember { mutableStateOf("") }
+    var sexoError by remember { mutableStateOf(false) }
     var fechaNacimiento by remember { mutableStateOf("") }
+    var fechaNacError by remember { mutableStateOf(false) }
     var peso by remember { mutableStateOf("") }
+    var pesoError by remember { mutableStateOf(false) }
     var colorMarcas by remember { mutableStateOf("") }
     var observaciones by remember { mutableStateOf("") }
 
@@ -66,7 +84,6 @@ fun AgregarMascotaScreen(
     val scrollState = rememberScrollState()
     val context = LocalContext.current
 
-    // Lanzador para abrir la galería del teléfono
     val selectorImagenLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -115,7 +132,6 @@ fun AgregarMascotaScreen(
                         .fillMaxWidth()
                         .padding(18.dp)
                 ) {
-                    // Recuadro punteado: abre la galería al tocarlo y muestra la vista previa
                     SubirFotoMascotaBox(
                         fotoBase64 = fotoBase64,
                         onClick = { selectorImagenLauncher.launch("image/*") }
@@ -127,18 +143,47 @@ fun AgregarMascotaScreen(
                         label = "Nombre",
                         value = nombre,
                         onValueChange = { nombre = it },
+                        isError = nombreError,
                         placeholder = "Ej. Firulais"
                     )
+                    if(nombreError){
+                        Text(
+                            text = "El nombre es obligatorio",
+                            color = RojoAlerta,
+                            fontSize = 12.sp,
+                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp)
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
                     DropdownFormularioMascota(
                         label = "Especie",
                         selectedValue = especie,
+                        isError = especieError,
                         placeholder = "Selecciona especie",
                         opciones = opcionesEspecie,
                         onOptionSelected = { especie = it }
                     )
+
+                    if(especieError){
+                        Text(
+                            text = "La especie es obligatoria",
+                            color = RojoAlerta,
+                            fontSize = 12.sp,
+                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp)
+                        )
+                    }
+
+                    if(especie == "Otro"){
+                        Spacer(modifier = Modifier.height(14.dp))
+                        CampoFormularioMascota(
+                            label = "Especificar Especie",
+                            value = especiePersonalizada,
+                            onValueChange = { especiePersonalizada = it },
+                            placeholder = "Hamster, Serpiente, etc"
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
@@ -146,8 +191,18 @@ fun AgregarMascotaScreen(
                         label = "Raza",
                         value = raza,
                         onValueChange = { raza = it },
+                        isError = razaError,
                         placeholder = "Ej. Golden Retriever"
                     )
+
+                    if(razaError){
+                        Text(
+                            text = "La raza es obligatoria",
+                            color = RojoAlerta,
+                            fontSize = 12.sp,
+                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp)
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
@@ -155,9 +210,19 @@ fun AgregarMascotaScreen(
                         label = "Edad (Años)",
                         value = edad,
                         onValueChange = { edad = it },
+                        isError = edadError,
                         placeholder = "2",
                         keyboardType = KeyboardType.Number
                     )
+
+                    if(edadError){
+                        Text(
+                            text = "La edad es obligatoria",
+                            color = RojoAlerta,
+                            fontSize = 12.sp,
+                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp)
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
@@ -165,18 +230,38 @@ fun AgregarMascotaScreen(
                         label = "Sexo",
                         selectedValue = sexo,
                         placeholder = "Selecciona sexo",
+                        isError = sexoError,
                         opciones = opcionesSexo,
                         onOptionSelected = { sexo = it }
                     )
 
+                    if(sexoError){
+                        Text(
+                            text = "El sexo es obligatorio",
+                            color = RojoAlerta,
+                            fontSize = 12.sp,
+                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp)
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    CampoFormularioMascota(
-                        label = "Fecha de Nacimiento (Aprox.)",
+                    SelectorFechaMascota(
+                        label = "Fecha de Nacimiento",
                         value = fechaNacimiento,
+                        isError = fechaNacError,
                         onValueChange = { fechaNacimiento = it },
-                        placeholder = "mm/dd/yyyy"
+                        placeholder = "Selecciona una fecha"
                     )
+
+                    if(fechaNacError){
+                        Text(
+                            text = "La fecha de Nacimiento es obligatoria",
+                            color = RojoAlerta,
+                            fontSize = 12.sp,
+                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp)
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
@@ -184,9 +269,19 @@ fun AgregarMascotaScreen(
                         label = "Peso (kg)",
                         value = peso,
                         onValueChange = { peso = it },
+                        isError = pesoError,
                         placeholder = "Ej. 15.5",
                         keyboardType = KeyboardType.Decimal
                     )
+
+                    if(pesoError){
+                        Text(
+                            text = "El peso es obligatorio",
+                            color = RojoAlerta,
+                            fontSize = 12.sp,
+                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp)
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
@@ -240,33 +335,77 @@ fun AgregarMascotaScreen(
 
                     Button(
                         onClick = {
-                            controlador.registrarMascota(
-                                idUsuario = SesionUsuario.idUsuario,
-                                nombre = nombre,
-                                especie = especie,
-                                raza = raza,
-                                sexo = sexo,
-                                fechaNacimiento = fechaNacimiento,
-                                pesoTexto = peso,
-                                colorMarcas = colorMarcas,
-                                observaciones = observaciones,
-                                fotoUrl = fotoBase64, // <-- Enviamos la imagen a Firebase
-                                onSuccess = {
-                                    android.widget.Toast.makeText(
-                                        context,
-                                        "¡Mascota registrada con éxito!",
-                                        android.widget.Toast.LENGTH_SHORT
-                                    ).show()
-                                    onMascotaGuardada()
-                                },
-                                onError = { mensajeError ->
-                                    android.widget.Toast.makeText(
-                                        context,
-                                        mensajeError,
-                                        android.widget.Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            )
+                            var errorVisual = false
+                            nombreError = false
+                            especieError =false
+                            razaError = false
+                            edadError = false
+                            sexoError = false
+                            fechaNacError = false
+                            pesoError = false
+
+                            if(nombre.isBlank()){
+                                nombreError = true
+                                errorVisual = true
+                            }
+                            if(especie.isBlank()){
+                                especieError = true
+                                errorVisual = true
+                            }
+                            if(raza.isBlank()){
+                                razaError = true
+                                errorVisual = true
+                            }
+                            if(edad.isBlank()){
+                                edadError = true
+                                errorVisual = true
+                            }
+                            if(sexo.isBlank()){
+                                sexoError = true
+                                errorVisual = true
+                            }
+                            if(fechaNacimiento.isBlank()){
+                                fechaNacError = true
+                                errorVisual = true
+                            }
+                            if(peso.isBlank()){
+                                pesoError = true
+                                errorVisual = true
+                            }
+
+                            if(!errorVisual){
+                                val especieFinal = if(especie == "Otro") especiePersonalizada else especie;
+
+                                controlador.registrarMascota(
+                                    idUsuario = SesionUsuario.idUsuario,
+                                    nombre = nombre,
+                                    especie = especieFinal,
+                                    raza = raza,
+                                    edadTexto = edad,
+                                    sexo = sexo,
+                                    fechaNacimiento = fechaNacimiento,
+                                    pesoTexto = peso,
+                                    colorMarcas = colorMarcas,
+                                    observaciones = observaciones,
+                                    fotoUrl = fotoBase64, // <-- Imagen en base64
+                                    onSuccess = {
+                                        android.widget.Toast.makeText(
+                                            context,
+                                            "¡Mascota registrada con éxito!",
+                                            android.widget.Toast.LENGTH_SHORT
+                                        ).show()
+                                        onMascotaGuardada()
+                                    },
+                                    onError = { mensajeError ->
+                                        android.widget.Toast.makeText(
+                                            context,
+                                            mensajeError,
+                                            android.widget.Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                )
+                            }
+
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -302,6 +441,7 @@ fun AgregarMascotaTopBar(onBackClick: () -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .statusBarsPadding()
                 .background(FondoCrema)
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -355,7 +495,6 @@ fun SubirFotoMascotaBox(
         contentAlignment = Alignment.Center
     ) {
         if (imageBitmap != null) {
-            // Muestra la foto seleccionada ocupando todo el recuadro
             Image(
                 bitmap = imageBitmap,
                 contentDescription = "Foto seleccionada",
@@ -402,6 +541,7 @@ fun CampoFormularioMascota(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
+    isError: Boolean = false,
     placeholder: String,
     keyboardType: KeyboardType = KeyboardType.Text,
     singleLine: Boolean = true,
@@ -425,6 +565,7 @@ fun CampoFormularioMascota(
                     color = PlaceholderMascota
                 )
             },
+            isError = isError,
             singleLine = singleLine,
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
             shape = RoundedCornerShape(12.dp),
@@ -436,7 +577,8 @@ fun CampoFormularioMascota(
                 unfocusedContainerColor = FondoInputMascota,
                 focusedBorderColor = VerdeVetSync,
                 unfocusedBorderColor = BordeInputMascota,
-                cursorColor = VerdeVetSync
+                cursorColor = VerdeVetSync,
+                errorBorderColor = RojoAlerta
             )
         )
     }
@@ -447,6 +589,7 @@ fun CampoFormularioMascota(
 fun DropdownFormularioMascota(
     label: String,
     selectedValue: String,
+    isError: Boolean = false,
     placeholder: String,
     opciones: List<String>,
     onOptionSelected: (String) -> Unit
@@ -469,6 +612,7 @@ fun DropdownFormularioMascota(
                 value = selectedValue,
                 onValueChange = {},
                 readOnly = true,
+                isError = isError,
                 placeholder = {
                     Text(
                         text = placeholder,
@@ -491,7 +635,8 @@ fun DropdownFormularioMascota(
                     focusedContainerColor = FondoInputMascota,
                     unfocusedContainerColor = FondoInputMascota,
                     focusedBorderColor = VerdeVetSync,
-                    unfocusedBorderColor = BordeInputMascota
+                    unfocusedBorderColor = BordeInputMascota,
+                    errorBorderColor = RojoAlerta
                 )
             )
 
@@ -510,6 +655,103 @@ fun DropdownFormularioMascota(
                     )
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SelectorFechaMascota(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    isError: Boolean = false,
+    placeholder: String
+) {
+    var mostrarCalendario by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
+
+    if (mostrarCalendario) {
+        DatePickerDialog(
+            onDismissRequest = { mostrarCalendario = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        mostrarCalendario = false
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                            sdf.timeZone = TimeZone.getTimeZone("UTC")
+                            onValueChange(sdf.format(Date(millis)))
+                        }
+                    }
+                ) {
+                    Text("Aceptar", color = VerdeVetSync, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarCalendario = false }) {
+                    Text("Cancelar", color = GrisTextoSecundario)
+                }
+            },
+            colors = DatePickerDefaults.colors(containerColor = Color.White)
+        ) {
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    titleContentColor = VerdeVetSync,
+                    headlineContentColor = VerdeVetSync,
+                    selectedDayContainerColor = VerdeVetSync,
+                    selectedDayContentColor = Color.White,
+                    todayDateBorderColor = VerdeVetSync,
+                    todayContentColor = VerdeVetSync
+                )
+            )
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = TextoLabelMascota
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = value,
+                onValueChange = {},
+                readOnly = true,
+                isError = isError,
+                placeholder = {
+                    Text(text = placeholder, fontSize = 13.sp, color = PlaceholderMascota)
+                },
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.DateRange,
+                        contentDescription = "Seleccionar fecha",
+                        tint = Color(0xFF4A4A4A)
+                    )
+                },
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 52.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = FondoInputMascota,
+                    unfocusedContainerColor = FondoInputMascota,
+                    focusedBorderColor = VerdeVetSync,
+                    unfocusedBorderColor = BordeInputMascota,
+                    errorBorderColor = RojoAlerta
+                )
+            )
+            // Esta capa invisible intercepta el clic y abre el calendario
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable { mostrarCalendario = true }
+            )
         }
     }
 }

@@ -24,16 +24,32 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vetsync.vista.theme.*
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.Image
+import androidx.compose.runtime.remember
+import androidx.compose.ui.layout.ContentScale
+import com.example.vetsync.modelo.ImagenUtils
+import com.example.vetsync.modelo.SesionUsuario
 @Composable
-fun HomeTopBar() {
+fun HomeTopBar(mostrarFotoPerfil: Boolean = true) {
+
+    val usuario = SesionUsuario.usuarioActual
+    val fotoUrl = usuario?.fotoUrl ?: ""
+
+    val bitmapPerfil = remember(fotoUrl) {
+        if (fotoUrl.isNotEmpty()) ImagenUtils.base64ABitmap(fotoUrl) else null
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .statusBarsPadding()
             .padding(horizontal = 20.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
+            if(mostrarFotoPerfil){
             Box(
                 modifier = Modifier
                     .size(36.dp)
@@ -42,12 +58,24 @@ fun HomeTopBar() {
                     .border(1.dp, VerdeVetSync.copy(alpha = 0.4f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Perfil",
-                    tint = VerdeVetSync,
-                    modifier = Modifier.size(22.dp)
-                )
+
+                    if (bitmapPerfil != null) {
+                        Image(
+                            bitmap = bitmapPerfil,
+                            contentDescription = "Foto de perfil",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Perfil",
+                            tint = VerdeVetSync,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
+            }
             }
             Spacer(modifier = Modifier.width(10.dp))
             Text(
