@@ -48,7 +48,8 @@ fun DetalleMascotaScreen(
     onBackClick: () -> Unit = {},
     onMascotaActualizada: (Mascota) -> Unit = {},
     onAgendarCitaClick: () -> Unit = {},
-    onVerHistorialClick: () -> Unit = {}
+    onVerHistorialClick: () -> Unit = {},
+    onMascotaEliminada:() -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -113,7 +114,6 @@ fun DetalleMascotaScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // 1. Imagen principal de la mascota (Tocar la foto o el botón editar abre la galería)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -385,7 +385,7 @@ fun DetalleMascotaScreen(
                             mostrarDialogoEliminar = false
                             controlador.eliminarMascota(
                                 mascota.id,
-                                onSuccess = { onBackClick() },
+                                onSuccess = { onMascotaEliminada() },
                                 onError = { mensajeError -> Toast.makeText(context, mensajeError, Toast.LENGTH_SHORT).show() }
                             )
                         }

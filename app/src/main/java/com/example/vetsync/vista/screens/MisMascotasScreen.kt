@@ -46,13 +46,14 @@ fun MisMascotasScreen(
     var cargandoMascotas by remember { mutableStateOf(true) }
 
     var mascotaSeleccionada by remember { mutableStateOf<Mascota?>(null) }
+    var actualizarLista by  remember { mutableIntStateOf(0) }
 
     //REGRESAR A LA PAGINA ANTERIOR
     BackHandler(enabled = mascotaSeleccionada != null) {
         mascotaSeleccionada = null
     }
 
-    LaunchedEffect(SesionUsuario.idUsuario) {
+    LaunchedEffect(SesionUsuario.idUsuario, actualizarLista) {
         cargandoMascotas = true
         controladorMascota.obtenerMascotasUsuario(
             idUsuario = SesionUsuario.idUsuario,
@@ -74,10 +75,14 @@ fun MisMascotasScreen(
             onMascotaActualizada = { mascotaConNuevaFoto ->
                 mascotaSeleccionada = mascotaConNuevaFoto
             },
+            // 3. NUEVO: Le pasamos un evento específico para cuando se elimine
+            onMascotaEliminada = {
+                mascotaSeleccionada = null // Esto oculta el detalle y regresa a la vista de mascotas
+                actualizarLista++          // Esto suma 1 al gatillo y obliga a Firestore a descargar la lista limpia
+            },
             onAgendarCitaClick = onAgendarCitaClick
         )
     } else {
-        // Si es null, mostramos el listado de "Mis mascotas"
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier

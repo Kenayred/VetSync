@@ -27,16 +27,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.vetsync.R // Asegúrate de que apunte a tus recursos
+import com.example.vetsync.R
 import com.example.vetsync.modelo.Usuario
-
-// Colores base (Ajusta los hexadecimales a tu tema actual si difieren)
-val FondoCrema = Color(0xFFFCF9F7)
-val VerdeVetSync = Color(0xFF4C735B)
-val VerdeClaroBadge = Color(0xFFD4E5D9)
-val GrisTextoSecundario = Color(0xFF6B6B6B)
-val GrisBordeCard = Color(0xFFEBEBEB)
-val RojoAlerta = Color(0xFFD32F2F)
+import com.example.vetsync.vista.theme.*
+import com.example.vetsync.modelo.ImagenUtils
 
 @Composable
 fun PerfilScreen(
@@ -59,7 +53,7 @@ fun PerfilScreen(
         ) {
             Spacer(modifier = Modifier.height(10.dp))
 
-            PerfilPrincipalCard(usuario, onEditProfileClick)
+            PerfilPrincipalCard(usuario = usuario, onEditProfileClick = onEditProfileClick)
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(
@@ -166,15 +160,37 @@ fun PerfilPrincipalCard(usuario: Usuario, onEditProfileClick: () -> Unit) {
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Image(
-                painter = painterResource(id = android.R.drawable.ic_menu_gallery),
-                contentDescription = "Foto de perfil",
+            // 1. Decodificamos la imagen recordando el estado para evitar lag
+            val bitmapPerfil = remember(usuario.fotoUrl) {
+                ImagenUtils.base64ABitmap(usuario.fotoUrl)
+            }
+
+            // 2. Contenedor de la foto con el borde verde característico
+            Box(
                 modifier = Modifier
                     .size(90.dp)
                     .clip(CircleShape)
+                    .background(Color(0xFFEBEBEB)) // Fondo sutil por si no hay foto
                     .border(2.dp, VerdeVetSync, CircleShape),
-                contentScale = ContentScale.Crop
-            )
+                contentAlignment = Alignment.Center
+            ) {
+                if (bitmapPerfil != null) {
+                    Image(
+                        bitmap = bitmapPerfil,
+                        contentDescription = "Foto de perfil de ${usuario.nombre}",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Outlined.Person,
+                        contentDescription = "Avatar por defecto",
+                        modifier = Modifier.size(50.dp),
+                        tint = Color.Gray
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(text = usuario.nombre, fontSize = 22.sp, fontWeight = FontWeight.Bold)
@@ -183,7 +199,7 @@ fun PerfilPrincipalCard(usuario: Usuario, onEditProfileClick: () -> Unit) {
 
             Box(
                 modifier = Modifier
-                    .background(VerdeClaroBadge, RoundedCornerShape(12.dp))
+                    .background(VerdeClaroIcono, RoundedCornerShape(12.dp))
                     .padding(horizontal = 12.dp, vertical = 4.dp)
             ) {
                 Text(text = "Cliente", fontSize = 12.sp, color = VerdeVetSync, fontWeight = FontWeight.Medium)
@@ -201,7 +217,6 @@ fun PerfilPrincipalCard(usuario: Usuario, onEditProfileClick: () -> Unit) {
         }
     }
 }
-
 @Composable
 fun EstadisticaCard(modifier: Modifier = Modifier,
                     icono: @Composable () -> Unit,

@@ -69,7 +69,12 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         "home" -> {
-                            HomeScreen()
+                            HomeScreen(
+                                onNavigateToLogin = {
+                                    pantallaActual = "login"
+                                    isLoading = true
+                                }
+                            )
                         }
                     }
                 }

@@ -14,9 +14,12 @@ import com.example.vetsync.vista.screens.PerfilScreen
 import com.example.vetsync.vista.theme.*
 import com.example.vetsync.modelo.SesionUsuario
 import com.example.vetsync.modelo.Usuario
+import com.example.vetsync.vista.screens.EditarPerfilScreen
+import com.example.vetsync.controlador.UsuarioControlador
 
 sealed class SubPantallaHome {
     object AgregarMascota : SubPantallaHome()
+    object EditarPerfil : SubPantallaHome()
 }
 @Composable
 fun HomeScreen(
@@ -35,10 +38,22 @@ fun HomeScreen(
                 onMascotaGuardada = { subPantallaActual =null }
             )
         }
+        is SubPantallaHome.EditarPerfil -> {
+            EditarPerfilScreen(
+                usuario = SesionUsuario.usuarioActual!!,
+                controlador = UsuarioControlador(),
+                onBackClick = { subPantallaActual = null },
+                onPerfilActualizado = {
+                    subPantallaActual = null
+                }
+            )
+        }
         null -> {
             Scaffold(
                 containerColor = FondoCrema,
-                topBar = { HomeTopBar() },
+                topBar = { HomeTopBar(
+                    mostrarFotoPerfil = (selectedTab != 4)
+                ) },
                 bottomBar = {
                     HomeBottomNavigationBar(
                         selectedTab = selectedTab,
@@ -65,20 +80,17 @@ fun HomeScreen(
                         2 -> { /* CitasScreen() */ }
                         3 -> { /* NotificacionesScreen() */ }
                         4 ->  {
-                            // Validamos que el usuario no sea nulo, si lo es mandamos uno vacío temporal
-                            val usuarioActivo = SesionUsuario.usuarioActual ?: com.example.vetsync.modelo.Usuario()
+                            // Validamos que el usuario no sea nulo
+                            val usuarioActivo = SesionUsuario.usuarioActual ?: Usuario()
 
                             PerfilScreen(
                                 usuario = usuarioActivo,
                                 onLogoutClick = {
-                                    // Limpias la sesión actual
                                     SesionUsuario.cerrarSesion()
-                                    //SesionUsuario.idUsuario = ""
-                                    // Navegas a la pantalla de inicio de sesión
                                     onNavigateToLogin()
                                 },
                                 onEditProfileClick = {
-                                    // Aquí puedes crear un SubPantallaHome.EditarPerfil en el futuro
+                                    subPantallaActual = SubPantallaHome.EditarPerfil
                                 }
                             )
                         }
