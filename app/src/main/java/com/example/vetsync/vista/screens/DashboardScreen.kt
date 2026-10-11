@@ -193,7 +193,7 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        CitaPorConfirmarCard()
+
 
         Spacer(modifier = Modifier.height(20.dp))
     }

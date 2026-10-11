@@ -37,7 +37,8 @@ import com.example.vetsync.modelo.ImagenUtils
 fun MisMascotasScreen(
     controladorMascota: MascotaControlador = remember { MascotaControlador() },
     onAgregarMascotaClick: () -> Unit = {},
-    onAgendarCitaClick: () -> Unit = {}
+    onAgendarCitaClick: (Mascota) -> Unit = {},
+    onHistorialClick: (Mascota?) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -71,16 +72,24 @@ fun MisMascotasScreen(
     if (mascotaSeleccionada != null) {
         DetalleMascotaScreen(
             mascota = mascotaSeleccionada!!,
-            onBackClick = { mascotaSeleccionada = null },
+            onBackClick = {
+                mascotaSeleccionada = null
+            },
             onMascotaActualizada = { mascotaConNuevaFoto ->
                 mascotaSeleccionada = mascotaConNuevaFoto
             },
-            // 3. NUEVO: Le pasamos un evento específico para cuando se elimine
             onMascotaEliminada = {
-                mascotaSeleccionada = null // Esto oculta el detalle y regresa a la vista de mascotas
-                actualizarLista++          // Esto suma 1 al gatillo y obliga a Firestore a descargar la lista limpia
+                mascotaSeleccionada = null
+                actualizarLista++
             },
-            onAgendarCitaClick = onAgendarCitaClick
+            onAgendarCitaClick = {
+                mascotaSeleccionada?.let { mascota ->
+                    onAgendarCitaClick(mascota)
+                }
+            },
+            onVerHistorialClick = {
+                onHistorialClick(mascotaSeleccionada)
+            }
         )
     } else {
         Box(modifier = Modifier.fillMaxSize()) {

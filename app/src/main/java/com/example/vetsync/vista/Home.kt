@@ -18,10 +18,21 @@ import com.example.vetsync.vista.screens.EditarPerfilScreen
 import com.example.vetsync.controlador.UsuarioControlador
 import com.example.vetsync.vista.screens.CitasScreen
 import com.example.vetsync.vista.screens.NotificacionesScreen
+import com.example.vetsync.modelo.Mascota
+import com.example.vetsync.vista.screens.AgendarCitaScreen
+import com.example.vetsync.vista.screens.HistorialClinicoScreen
 
 sealed class SubPantallaHome {
     object AgregarMascota : SubPantallaHome()
     object EditarPerfil : SubPantallaHome()
+
+    data class AgendarCita(
+        val mascota: Mascota? = null
+    ) : SubPantallaHome()
+
+    data class HistorialClinico(
+        val mascota: Mascota? = null
+    ) : SubPantallaHome()
 }
 @Composable
 fun HomeScreen(
@@ -46,6 +57,23 @@ fun HomeScreen(
                 controlador = UsuarioControlador(),
                 onBackClick = { subPantallaActual = null },
                 onPerfilActualizado = {
+                    subPantallaActual = null
+                }
+            )
+        }
+        is SubPantallaHome.AgendarCita -> {
+            AgendarCitaScreen(
+                mascota = pantalla.mascota,
+                onBackClick = {
+                    subPantallaActual = null
+                }
+            )
+        }
+
+        is SubPantallaHome.HistorialClinico -> {
+            HistorialClinicoScreen(
+                mascota = pantalla.mascota,
+                onBackClick = {
                     subPantallaActual = null
                 }
             )
@@ -76,12 +104,29 @@ fun HomeScreen(
 
                     when (selectedTab) {
                         0 -> DashboardScreen(
-                            onAgregarMascotaClick = { subPantallaActual = SubPantallaHome.AgregarMascota },
-                            onMisMascotasClick = { selectedTab = 1 },
+                            onAgregarMascotaClick = {
+                                subPantallaActual = SubPantallaHome.AgregarMascota
+                            },
+                            onMisMascotasClick = {
+                                selectedTab = 1
+                            },
+                            onAgendarCitaClick = {
+                                subPantallaActual = SubPantallaHome.AgendarCita()
+                            },
+                            onHistorialClick = {
+                                subPantallaActual = SubPantallaHome.HistorialClinico()
+                            }
                         )
-                        1 ->
-                            MisMascotasScreen(
-                            onAgregarMascotaClick = { subPantallaActual = SubPantallaHome.AgregarMascota }
+                        1 -> MisMascotasScreen(
+                            onAgregarMascotaClick = {
+                                subPantallaActual = SubPantallaHome.AgregarMascota
+                            },
+                            onAgendarCitaClick = { mascota ->
+                                subPantallaActual = SubPantallaHome.AgendarCita(mascota)
+                            },
+                            onHistorialClick = { mascota ->
+                                subPantallaActual = SubPantallaHome.HistorialClinico(mascota)
+                            }
                         )
 
                         2 -> {
