@@ -2,10 +2,6 @@ package com.example.vetsync.controlador
 
 import com.example.vetsync.modelo.MascotaRepository
 import com.example.vetsync.modelo.Mascota
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.ValueEventListener
 import com.example.vetsync.modelo.SesionUsuario
 import java.util.UUID
 

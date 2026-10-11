@@ -30,8 +30,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.layout.ContentScale
 import com.example.vetsync.modelo.ImagenUtils
 import com.example.vetsync.modelo.SesionUsuario
+import androidx.compose.material3.IconButton
+
 @Composable
-fun HomeTopBar(mostrarFotoPerfil: Boolean = true) {
+fun HomeTopBar(
+    mostrarFotoPerfil: Boolean = true,
+    onNotificationsClick: () -> Unit = {}
+) {
 
     val usuario = SesionUsuario.usuarioActual
     val fotoUrl = usuario?.fotoUrl ?: ""
@@ -86,19 +91,27 @@ fun HomeTopBar(mostrarFotoPerfil: Boolean = true) {
             )
         }
 
-        Box(contentAlignment = Alignment.TopEnd) {
-            Icon(
-                imageVector = Icons.Outlined.Notifications,
-                contentDescription = "Notificaciones",
-                tint = Color(0xFF2B2B2B),
-                modifier = Modifier.size(26.dp)
-            )
+        IconButton(
+            onClick = onNotificationsClick
+        ) {
             Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(RojoAlerta)
-            )
+                contentAlignment = Alignment.TopEnd
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Notifications,
+                    contentDescription = "Abrir notificaciones",
+                    tint = Color(0xFF2B2B2B),
+                    modifier = Modifier.size(26.dp)
+                )
+
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .offset(x = 2.dp, y = (-1).dp)
+                        .clip(CircleShape)
+                        .background(RojoAlerta)
+                )
+            }
         }
     }
 }

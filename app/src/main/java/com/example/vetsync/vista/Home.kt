@@ -16,6 +16,8 @@ import com.example.vetsync.modelo.SesionUsuario
 import com.example.vetsync.modelo.Usuario
 import com.example.vetsync.vista.screens.EditarPerfilScreen
 import com.example.vetsync.controlador.UsuarioControlador
+import com.example.vetsync.vista.screens.CitasScreen
+import com.example.vetsync.vista.screens.NotificacionesScreen
 
 sealed class SubPantallaHome {
     object AgregarMascota : SubPantallaHome()
@@ -51,9 +53,14 @@ fun HomeScreen(
         null -> {
             Scaffold(
                 containerColor = FondoCrema,
-                topBar = { HomeTopBar(
-                    mostrarFotoPerfil = (selectedTab != 4)
-                ) },
+                topBar = {
+                    HomeTopBar(
+                        mostrarFotoPerfil = (selectedTab != 4),
+                        onNotificationsClick = {
+                            selectedTab = 3
+                        }
+                    )
+                },
                 bottomBar = {
                     HomeBottomNavigationBar(
                         selectedTab = selectedTab,
@@ -77,8 +84,13 @@ fun HomeScreen(
                             onAgregarMascotaClick = { subPantallaActual = SubPantallaHome.AgregarMascota }
                         )
 
-                        2 -> { /* CitasScreen() */ }
-                        3 -> { /* NotificacionesScreen() */ }
+                        2 -> {
+                            CitasScreen()
+                        }
+
+                        3 -> {
+                            NotificacionesScreen()
+                        }
                         4 ->  {
                             // Validamos que el usuario no sea nulo
                             val usuarioActivo = SesionUsuario.usuarioActual ?: Usuario()

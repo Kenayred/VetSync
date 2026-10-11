@@ -22,4 +22,3 @@ dependencyResolutionManagement {
 rootProject.name = "VetSync"
 include(":app")
 include(":console")
-include(":console")
