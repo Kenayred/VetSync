@@ -48,6 +48,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import androidx.compose.material3.SelectableDates
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,6 +64,7 @@ fun AgregarMascotaScreen(
     var especie by remember { mutableStateOf("") }
     var especieError by remember { mutableStateOf(false) }
     var especiePersonalizada by remember { mutableStateOf("") }
+    var especiePersonalizadaError by remember {mutableStateOf(false) }
     var raza by remember { mutableStateOf("") }
     var razaError by remember { mutableStateOf(false) }
     var edad by remember { mutableStateOf("") }
@@ -163,7 +166,15 @@ fun AgregarMascotaScreen(
                         isError = especieError,
                         placeholder = "Selecciona especie",
                         opciones = opcionesEspecie,
-                        onOptionSelected = { especie = it }
+                        onOptionSelected = {
+                            especie = it
+                            especieError = false
+
+                            if (it != "Otro") {
+                                especiePersonalizada = ""
+                                especiePersonalizadaError = false
+                            }
+                        }
                     )
 
                     if(especieError){
@@ -178,11 +189,29 @@ fun AgregarMascotaScreen(
                     if(especie == "Otro"){
                         Spacer(modifier = Modifier.height(14.dp))
                         CampoFormularioMascota(
-                            label = "Especificar Especie",
+                            label = "Especificar especie",
                             value = especiePersonalizada,
-                            onValueChange = { especiePersonalizada = it },
-                            placeholder = "Hamster, Serpiente, etc"
+                            onValueChange = {
+                                especiePersonalizada = it
+
+                                if (it.isNotBlank()) {
+                                    especiePersonalizadaError = false
+                                }
+                            },
+                            isError = especiePersonalizadaError,
+                            placeholder = "Hámster, serpiente, etc."
                         )
+
+                        if (especiePersonalizadaError) {
+                            Text(
+                                text = "Debes especificar la especie",
+                                color = RojoAlerta,
+                                fontSize = 12.sp,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 16.dp, top = 4.dp)
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -217,7 +246,7 @@ fun AgregarMascotaScreen(
 
                     if(edadError){
                         Text(
-                            text = "La edad es obligatoria",
+                            text = "La edad es obligatoria. Ingresa una edad igual o mayor que 0.",
                             color = RojoAlerta,
                             fontSize = 12.sp,
                             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp)
@@ -338,6 +367,7 @@ fun AgregarMascotaScreen(
                             var errorVisual = false
                             nombreError = false
                             especieError =false
+                            especiePersonalizadaError = false
                             razaError = false
                             edadError = false
                             sexoError = false
@@ -356,7 +386,9 @@ fun AgregarMascotaScreen(
                                 razaError = true
                                 errorVisual = true
                             }
-                            if(edad.isBlank()){
+                            val edadConvertida = edad.trim().toIntOrNull()
+
+                            if (edadConvertida == null || edadConvertida < 0) {
                                 edadError = true
                                 errorVisual = true
                             }
@@ -373,8 +405,20 @@ fun AgregarMascotaScreen(
                                 errorVisual = true
                             }
 
+                            if (
+                                especie == "Otro" &&
+                                especiePersonalizada.isBlank()
+                            ) {
+                                especiePersonalizadaError = true
+                                errorVisual = true
+                            }
+
                             if(!errorVisual){
-                                val especieFinal = if(especie == "Otro") especiePersonalizada else especie;
+                                val especieFinal = if (especie == "Otro") {
+                                    especiePersonalizada.trim()
+                                } else {
+                                    especie.trim()
+                                }
 
                                 controlador.registrarMascota(
                                     idUsuario = SesionUsuario.idUsuario,
@@ -669,7 +713,22 @@ fun SelectorFechaMascota(
     placeholder: String
 ) {
     var mostrarCalendario by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState()
+    val datePickerState = rememberDatePickerState(
+        selectableDates = object : SelectableDates {
+
+            override fun isSelectableDate(
+                utcTimeMillis: Long
+            ): Boolean {
+                return utcTimeMillis <= System.currentTimeMillis()
+            }
+
+            override fun isSelectableYear(
+                year: Int
+            ): Boolean {
+                return year <= LocalDate.now().year
+            }
+        }
+    )
 
     if (mostrarCalendario) {
         DatePickerDialog(

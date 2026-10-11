@@ -35,6 +35,30 @@ class UsuarioRepository {
                 onError(e.message ?: "Error al verificar la disponibilidad del correo.")
             }
     }
+
+    fun verificarUsernameExistente(
+        username: String,
+        onDisponible: () -> Unit,
+        onOcupado: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        db.collection("usuarios")
+            .whereEqualTo("username", username.trim())
+            .get()
+            .addOnSuccessListener { snapshot ->
+                if (snapshot.isEmpty) {
+                    onDisponible()
+                } else {
+                    onOcupado()
+                }
+            }
+            .addOnFailureListener { e ->
+                onError(
+                    e.message
+                        ?: "Error al verificar la disponibilidad del nombre de usuario."
+                )
+            }
+    }
     fun buscarUsuario(credencial: String, contrasena: String, onSuccess: (Usuario) -> Unit, onError: (String) -> Unit) {
         db.collection("usuarios")
             .where(

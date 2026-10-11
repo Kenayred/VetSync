@@ -24,56 +24,114 @@ class UsuarioControlador {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        if (username.isBlank() || nombreCompleto.isBlank() || correo.isBlank() || contrasena.isBlank()) {
+        val usernameLimpio = username.trim()
+        val nombreLimpio = nombreCompleto.trim()
+        val correoLimpio = correo.trim()
+        val telefonoLimpio = telefono.trim()
+
+        // 1. Validar campos obligatorios.
+        if (
+            usernameLimpio.isBlank() ||
+            nombreLimpio.isBlank() ||
+            correoLimpio.isBlank() ||
+            contrasena.isBlank()
+        ) {
             onError("Por favor, completa todos los campos obligatorios.")
             return
         }
 
-        if (!Patterns.EMAIL_ADDRESS.matcher(correo.trim()).matches()) {
+        // 2. Validar longitud del nombre.
+        if (nombreLimpio.length < 3) {
+            onError("El nombre completo debe tener al menos 3 caracteres.")
+            return
+        }
+
+        // 3. Validar formato del nombre de usuario.
+        val formatoUsername = Regex("^[\\p{L}\\p{N}._-]{3,20}$")
+
+        if (!formatoUsername.matches(usernameLimpio)) {
+            onError(
+                "El nombre de usuario debe tener entre 3 y 20 caracteres " +
+                        "y solo puede incluir letras, números, puntos, guiones " +
+                        "o guiones bajos."
+            )
+            return
+        }
+
+        // 4. Validar el correo.
+        if (!Patterns.EMAIL_ADDRESS.matcher(correoLimpio).matches()) {
             onError("Ingresa un correo electrónico válido.")
             return
         }
+
+        // 5. Validar contraseña.
         if (contrasena.length < 6) {
             onError("La contraseña debe tener al menos 6 caracteres.")
             return
         }
+
+        // 6. Comprobar que las contraseñas coincidan.
         if (contrasena != confirmarContrasena) {
             onError("Las contraseñas no coinciden.")
             return
         }
+
+        // 7. Comprobar aceptación de términos.
         if (!terminosAceptados) {
             onError("Debes aceptar los términos y condiciones.")
             return
         }
 
+        // 8. Comprobar que el correo esté disponible.
         dbManager.verificarCorreoExistente(
-            correo = correo,
+            correo = correoLimpio,
             onDisponible = {
-                val nuevoId = UUID.randomUUID().toString()
-                val contrasenaHasheada = BCrypt.hashpw(contrasena, BCrypt.gensalt())
 
-                val nuevoUsuario = Usuario(
-                    id = nuevoId,
-                    username = username.trim(),
-                    contrasena = contrasenaHasheada,
-                    nombre = nombreCompleto.trim(),
-                    correo = correo.trim(),
-                    telefono = telefono.trim(),
-                    rol = RolUsuario.CLIENTE,
-                    fotoUrl = fotoUrl
-                )
+                // 9. Comprobar que el nombre de usuario esté disponible.
+                dbManager.verificarUsernameExistente(
+                    username = usernameLimpio,
+                    onDisponible = {
 
-                dbManager.guardarUsuario(
-                    usuario = nuevoUsuario,
-                    onSuccess = { onSuccess() },
-                    onError = { error -> onError(error) }
+                        val nuevoId = UUID.randomUUID().toString()
+                        val contrasenaHasheada =
+                            BCrypt.hashpw(contrasena, BCrypt.gensalt())
+
+                        val nuevoUsuario = Usuario(
+                            id = nuevoId,
+                            username = usernameLimpio,
+                            contrasena = contrasenaHasheada,
+                            nombre = nombreLimpio,
+                            correo = correoLimpio,
+                            telefono = telefonoLimpio,
+                            rol = RolUsuario.CLIENTE,
+                            fotoUrl = fotoUrl
+                        )
+
+                        dbManager.guardarUsuario(
+                            usuario = nuevoUsuario,
+                            onSuccess = {
+                                onSuccess()
+                            },
+                            onError = { mensaje ->
+                                onError(mensaje)
+                            }
+                        )
+                    },
+                    onOcupado = {
+                        onError(
+                            "Este nombre de usuario ya está registrado."
+                        )
+                    },
+                    onError = { mensaje ->
+                        onError(mensaje)
+                    }
                 )
             },
             onOcupado = {
                 onError("Este correo electrónico ya está registrado.")
             },
-            onError = { errorMensaje ->
-                onError(errorMensaje)
+            onError = { mensaje ->
+                onError(mensaje)
             }
         )
     }

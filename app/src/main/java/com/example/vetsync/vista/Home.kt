@@ -43,6 +43,16 @@ fun HomeScreen(
 
     var subPantallaActual by remember { mutableStateOf<SubPantallaHome?>(null) }
 
+    BackHandler(
+        enabled = subPantallaActual != null || selectedTab != 0
+    ) {
+        if (subPantallaActual != null) {
+            subPantallaActual = null
+        } else {
+            selectedTab = 0
+        }
+    }
+
     when (val pantalla = subPantallaActual) {
         is SubPantallaHome.AgregarMascota -> {
             AgregarMascotaScreen(

@@ -29,6 +29,8 @@ fun LoginScreen(
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var keepSession by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMensaje by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
 
     Column(
@@ -50,7 +52,9 @@ fun LoginScreen(
         // Formulario
         OutlinedTextField(
             value = username,
-            onValueChange = { username = it },
+            onValueChange = { username = it
+                errorMensaje = null},
+            enabled = !isLoading,
             label = { Text("Usuario") },
             placeholder = { Text("kenay") },
             leadingIcon = { Icon(Icons.Default.AccountCircle, contentDescription = "Email Icon") },
@@ -67,7 +71,9 @@ fun LoginScreen(
 
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = { password = it
+                errorMensaje = null },
+            enabled = !isLoading,
             label = { Text("Contraseña") },
             leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Lock Icon") },
             visualTransformation = PasswordVisualTransformation(),
@@ -79,6 +85,17 @@ fun LoginScreen(
                 focusedLeadingIconColor = VerdePrincipal
             )
         )
+
+        if (errorMensaje != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = errorMensaje.orEmpty(),
+                color = RojoAlerta,
+                fontSize = 13.sp,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
         // Opciones adicionales
         TextButton(
@@ -104,23 +121,52 @@ fun LoginScreen(
         // Botón principal
         Button(
             onClick = {
+                errorMensaje = null
+                isLoading = true
+
                 controlador.iniciarSesion(
-                    username = username,
+                    username = username.trim(),
                     password = password,
-                    onSuccess = {
-                        usuarioEncontrado -> SesionUsuario.iniciarSesion(usuarioEncontrado)
+
+                    onSuccess = { usuarioEncontrado ->
+                        isLoading = false
+
+                        SesionUsuario.iniciarSesion(usuarioEncontrado)
                         onLoginSuccess()
-                        Toast.makeText(context, "¡Ha iniciado sesion!", Toast.LENGTH_SHORT).show()
+
+                        Toast.makeText(
+                            context,
+                            "¡Ha iniciado sesión!",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     },
+
                     onError = { mensajeError ->
-                        Toast.makeText(context, mensajeError, Toast.LENGTH_SHORT).show()
+                        isLoading = false
+                        errorMensaje = mensajeError
                     }
                 )
             },
-            modifier = Modifier.fillMaxWidth().height(50.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal)
+            enabled = !isLoading,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = VerdePrincipal
+            )
         ) {
-            Text("Iniciar sesión", fontSize = 16.sp)
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(22.dp),
+                    color = Color.White,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    text = "Iniciar sesión",
+                    fontSize = 16.sp
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))

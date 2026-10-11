@@ -4,11 +4,36 @@ import com.example.vetsync.modelo.MascotaRepository
 import com.example.vetsync.modelo.Mascota
 import com.example.vetsync.modelo.SesionUsuario
 import java.util.UUID
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+import java.time.format.ResolverStyle
+import java.util.Locale
 
 
 class MascotaControlador {
 
     private val dbManager = MascotaRepository()
+
+    private val formatoFechaNacimiento =
+        DateTimeFormatter
+            .ofPattern("dd/MM/uuuu", Locale.getDefault())
+            .withResolverStyle(ResolverStyle.STRICT)
+
+    private fun esFechaNacimientoValida(
+        fechaTexto: String
+    ): Boolean {
+        return try {
+            val fecha = LocalDate.parse(
+                fechaTexto.trim(),
+                formatoFechaNacimiento
+            )
+
+            !fecha.isAfter(LocalDate.now())
+        } catch (e: DateTimeParseException) {
+            false
+        }
+    }
 
     fun registrarMascota(
         idUsuario: String = "",
@@ -25,13 +50,44 @@ class MascotaControlador {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        if (nombre.isBlank() || especie.isBlank() || raza.isBlank() || sexo.isBlank() || fechaNacimiento.isBlank() || pesoTexto.isBlank() || edadTexto.isBlank() ) {
-            onError("Por favor, completa todos los campos principales de la mascota.")
+        if (idUsuario.isBlank()) {
+            onError("No se encontró una sesión activa. Inicia sesión nuevamente.")
             return
         }
 
-        val pesoConvertido = pesoTexto.trim().replace(",", ".").toDoubleOrNull()
-        if (pesoConvertido == null || pesoConvertido <= 0.0) {
+        if (
+            nombre.isBlank() ||
+            especie.isBlank() ||
+            raza.isBlank() ||
+            sexo.isBlank()
+        ) {
+            onError("Completa el nombre, la especie, la raza y el sexo de la mascota.")
+            return
+        }
+
+        val edadConvertida = edadTexto.trim().toIntOrNull()
+
+        if (edadConvertida == null || edadConvertida < 0) {
+            onError("La edad debe ser un número entero igual o mayor que cero.")
+            return
+        }
+
+        if (fechaNacimiento.isBlank()) {
+            onError("Selecciona la fecha de nacimiento de la mascota.")
+            return
+        }
+
+        if (!esFechaNacimientoValida(fechaNacimiento)) {
+            onError("La fecha de nacimiento no es válida o está en el futuro.")
+            return
+        }
+
+        val pesoConvertido = pesoTexto
+            .trim()
+            .replace(",", ".")
+            .toDoubleOrNull()
+
+        if (pesoConvertido == null || !pesoConvertido.isFinite() || pesoConvertido <= 0.0) {
             onError("Ingresa un peso válido en kg (ejemplo: 15.5).")
             return
         }
@@ -44,7 +100,7 @@ class MascotaControlador {
             nombre = nombre.trim(),
             especie = especie.trim(),
             raza = raza.trim(),
-            edad = edadTexto,
+            edad = edadConvertida.toString(),
             sexo = sexo.trim(),
             fechaNacimiento = fechaNacimiento.trim(),
             peso = pesoConvertido,
