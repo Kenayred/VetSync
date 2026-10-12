@@ -151,41 +151,111 @@ class UsuarioControlador {
             return
         }
 
-        // Validaciones básicas
-        if (nuevoNombre.isBlank() || nuevoUsername.isBlank() || nuevoCorreo.isBlank()) {
-            onError("El nombre, username y correo son obligatorios.")
+        val nombreLimpio = nuevoNombre.trim()
+        val usernameLimpio = nuevoUsername.trim()
+        val telefonoLimpio = nuevoTelefono.trim()
+        val correoLimpio = nuevoCorreo.trim()
+
+        // 1. Validar los campos obligatorios.
+        if (
+            nombreLimpio.isBlank() ||
+            usernameLimpio.isBlank() ||
+            correoLimpio.isBlank()
+        ) {
+            onError("El nombre, el nombre de usuario y el correo son obligatorios.")
             return
         }
 
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(nuevoCorreo.trim()).matches()) {
+        // 2. Validar la longitud del nombre.
+        if (nombreLimpio.length < 3) {
+            onError("El nombre completo debe tener al menos 3 caracteres.")
+            return
+        }
+
+        // 3. Validar el formato del nombre de usuario.
+        val formatoUsername = Regex("^[\\p{L}\\p{N}._-]{3,20}$")
+
+        if (!formatoUsername.matches(usernameLimpio)) {
+            onError(
+                "El nombre de usuario debe tener entre 3 y 20 caracteres " +
+                        "y solo puede incluir letras, números, puntos, guiones " +
+                        "o guiones bajos."
+            )
+            return
+        }
+
+        // 4. Validar el formato del correo electrónico.
+        if (!Patterns.EMAIL_ADDRESS.matcher(correoLimpio).matches()) {
             onError("Ingresa un correo electrónico válido.")
             return
         }
 
-        val actualizaciones = mapOf(
-            "nombre" to nuevoNombre.trim(),
-            "username" to nuevoUsername.trim(),
-            "telefono" to nuevoTelefono.trim(),
-            "correo" to nuevoCorreo.trim()
-        )
+        // 5. Comprobar que el correo no pertenezca a otro usuario.
+        dbManager.verificarCorreoExistente(
+            correo = correoLimpio,
+            idUsuarioExcluir = usuarioActual.id,
+            onDisponible = {
 
-        dbManager.actualizarDatosUsuario(
-            idUsuario = usuarioActual.id,
-            datosActualizados = actualizaciones,
-            onSuccess = {
-                //Update de compose para actualizar datos al instante
-                val usuarioModificado = usuarioActual.copy(
-                    nombre = nuevoNombre.trim(),
-                    username = nuevoUsername.trim(),
-                    telefono = nuevoTelefono.trim(),
-                    correo = nuevoCorreo.trim()
+                // 6. Comprobar que el nombre de usuario esté disponible.
+                dbManager.verificarUsernameExistente(
+                    username = usernameLimpio,
+                    idUsuarioExcluir = usuarioActual.id,
+                    onDisponible = {
+
+                        val actualizaciones = mapOf(
+                            "nombre" to nombreLimpio,
+                            "username" to usernameLimpio,
+                            "telefono" to telefonoLimpio,
+                            "correo" to correoLimpio
+                        )
+
+                        // 7. Guardar los cambios en Firestore.
+                        dbManager.actualizarDatosUsuario(
+                            idUsuario = usuarioActual.id,
+                            datosActualizados = actualizaciones,
+
+                            onSuccess = {
+                                val usuarioModificado = usuarioActual.copy(
+                                    nombre = nombreLimpio,
+                                    username = usernameLimpio,
+                                    telefono = telefonoLimpio,
+                                    correo = correoLimpio
+                                )
+
+                                SesionUsuario.iniciarSesion(usuarioModificado)
+
+                                onSuccess()
+                            },
+
+                            onFailure = { error ->
+                                onError(
+                                    error.message
+                                        ?: "Error al actualizar el perfil."
+                                )
+                            }
+                        )
+                    },
+
+                    onOcupado = {
+                        onError(
+                            "Este nombre de usuario ya está registrado por otra cuenta."
+                        )
+                    },
+
+                    onError = { mensaje ->
+                        onError(mensaje)
+                    }
                 )
-                SesionUsuario.iniciarSesion(usuarioModificado)
-
-                onSuccess()
             },
-            onFailure = { error ->
-                onError(error.message ?: "Error al actualizar el perfil.")
+
+            onOcupado = {
+                onError(
+                    "Este correo electrónico ya está registrado por otra cuenta."
+                )
+            },
+
+            onError = { mensaje ->
+                onError(mensaje)
             }
         )
     }
