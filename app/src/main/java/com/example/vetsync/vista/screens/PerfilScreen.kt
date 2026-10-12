@@ -31,6 +31,7 @@ import com.example.vetsync.R
 import com.example.vetsync.modelo.Usuario
 import com.example.vetsync.vista.theme.*
 import com.example.vetsync.modelo.ImagenUtils
+import com.example.vetsync.controlador.MascotaControlador
 
 @Composable
 fun PerfilScreen(
@@ -38,6 +39,48 @@ fun PerfilScreen(
     onLogoutClick: () -> Unit,
     onEditProfileClick: () -> Unit
 ) {
+    val controladorMascota = remember {
+        MascotaControlador()
+    }
+
+    var cantidadMascotas by remember(usuario.id) {
+        mutableStateOf<Int?>(null)
+    }
+
+    var cargandoMascotas by remember(usuario.id) {
+        mutableStateOf(true)
+    }
+
+    var errorCargaMascotas by remember(usuario.id) {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(usuario.id) {
+        if (usuario.id.isBlank()) {
+            cantidadMascotas = null
+            cargandoMascotas = false
+            errorCargaMascotas = true
+            return@LaunchedEffect
+        }
+
+        cargandoMascotas = true
+        errorCargaMascotas = false
+
+        controladorMascota.obtenerMascotasUsuario(
+            idUsuario = usuario.id,
+
+            onSuccess = { mascotas ->
+                cantidadMascotas = mascotas.size
+                cargandoMascotas = false
+            },
+
+            onError = {
+                cantidadMascotas = null
+                cargandoMascotas = false
+                errorCargaMascotas = true
+            }
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -56,51 +99,49 @@ fun PerfilScreen(
             PerfilPrincipalCard(usuario = usuario, onEditProfileClick = onEditProfileClick)
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                EstadisticaCard(
-                    modifier = Modifier.weight(1f),
-                    icono = {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo_vetsync),
-                            contentDescription = "Logo secundario de VetSync",
-                            modifier = Modifier.size(28.dp) // Usamos 28.dp para que quede del mismo tamaño que los otros
-                        )
-                    },
-                    valor = "2",
-                    etiqueta = "Mascotas registradas"
-                )
-                EstadisticaCard(
-                    modifier = Modifier.weight(1f),
-                    icono = {
-                        Icon(
-                            imageVector = Icons.Filled.DateRange,
-                            contentDescription = null,
-                            tint = VerdeVetSync,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    },
-                    valor = "1",
-                    etiqueta = "Próxima cita"
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Resumen de tu cuenta",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E221F),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             EstadisticaCard(
                 modifier = Modifier.fillMaxWidth(),
-                icono ={
-                    Icon(
-                        imageVector = Icons.Outlined.Refresh,
-                        contentDescription = null,
-                        tint = VerdeVetSync,
+
+                icono = {
+                    Image(
+                        painter = painterResource(
+                            id = R.drawable.logo_vetsync
+                        ),
+                        contentDescription = "Logo de VetSync",
                         modifier = Modifier.size(28.dp)
                     )
                 },
-                valor = "5",
-                etiqueta = "Citas completadas"
+
+                valor = when {
+                    cargandoMascotas -> "…"
+                    errorCargaMascotas -> "—"
+                    else -> cantidadMascotas?.toString() ?: "—"
+                },
+
+                etiqueta = "Mascotas registradas"
             )
+
+            if (errorCargaMascotas) {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "No se pudo cargar la cantidad de mascotas.",
+                    fontSize = 12.sp,
+                    color = RojoAlerta,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             InformacionPersonalCard(usuario)
