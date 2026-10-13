@@ -298,7 +298,7 @@ fun MascotaPerfilCompletoCard(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "ESTADO",
+                    text = "REGISTRO",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
                     color = GrisTextoSecundario,
@@ -326,7 +326,7 @@ fun MascotaPerfilCompletoCard(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Todo al día",
+                            text = "Mascota Registrada",
                             fontSize = 13.sp,
                             color = Color(0xFF4A5D4E)
                         )

@@ -76,6 +76,10 @@ fun HomeScreen(
                 mascota = pantalla.mascota,
                 onBackClick = {
                     subPantallaActual = null
+                },
+                onCitaCreada = {
+                    subPantallaActual = null
+                    selectedTab = 2
                 }
             )
         }
@@ -140,7 +144,11 @@ fun HomeScreen(
                         )
 
                         2 -> {
-                            CitasScreen()
+                            CitasScreen(
+                                onAgendarCitaClick = {
+                                    subPantallaActual = SubPantallaHome.AgendarCita()
+                                }
+                            )
                         }
 
                         3 -> {

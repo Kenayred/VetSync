@@ -193,7 +193,7 @@ fun DetalleMascotaScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = mascota.nombre.ifBlank { "Max" },
+                text = mascota.nombre.ifBlank { "Nombre no registrado" },
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1E221F)
@@ -203,7 +203,7 @@ fun DetalleMascotaScreen(
                 Text(text = "🐾", fontSize = 13.sp)
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = mascota.raza.ifBlank { "Golden Retriever" },
+                    text = mascota.raza.ifBlank { "Raza no registrada" },
                     fontSize = 14.sp,
                     color = GrisTextoSecundario
                 )
@@ -295,7 +295,7 @@ fun DetalleMascotaScreen(
             ) {
                 AtributoMascotaCard(
                     titulo = "Sexo",
-                    valor = mascota.sexo.ifBlank { "Macho" },
+                    valor = mascota.sexo.ifBlank { "No especificado" },
                     icono = Icons.Outlined.FavoriteBorder,
                     fondoIcono = Color(0xFFEAEDE9),
                     tintIcono = VerdeVetSync,
@@ -303,7 +303,7 @@ fun DetalleMascotaScreen(
                 )
                 AtributoMascotaCard(
                     titulo = "Especie",
-                    valor = mascota.especie.ifBlank { "Canino" },
+                    valor = mascota.especie.ifBlank { "No especificada" },
                     icono = Icons.Outlined.Star,
                     fondoIcono = VerdeClaroIcono,
                     tintIcono = VerdeVetSync,
@@ -313,12 +313,23 @@ fun DetalleMascotaScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            InformacionGeneralSection(
-                propietario = usuario?.nombre ?: "Laura Méndez",
-                telefono = usuario?.telefono?.ifBlank { "+503 6000 1234" } ?: "+503 6000 1234",
-                colorMarcas = mascota.colorMarcas.ifBlank { "Sin especificar" },
-                alergiasObservaciones = mascota.observaciones.ifBlank { "Ninguna registrada" }
-            )
+        InformacionGeneralSection(
+            propietario = usuario
+                ?.nombre
+                ?.takeIf { it.isNotBlank() }
+                ?: "No disponible",
+
+            telefono = usuario
+                ?.telefono
+                ?.takeIf { it.isNotBlank() }
+                ?: "No registrado",
+
+            colorMarcas = mascota.colorMarcas
+                .ifBlank { "Sin especificar" },
+
+            alergiasObservaciones = mascota.observaciones
+                .ifBlank { "Ninguna registrada" }
+        )
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -334,7 +345,7 @@ fun DetalleMascotaScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            PlanPreventivoCard()
+            //PlanPreventivoCard()
 
             Spacer(modifier = Modifier.height(28.dp))
 
@@ -377,7 +388,7 @@ fun DetalleMascotaScreen(
                 },
                 title = { Text(text = "¿Eliminar a ${mascota.nombre}?") },
                 text = {
-                    Text(text = "Esta acción no se puede deshacer. Todos los datos, historial y citas de esta mascota se borrarán permanentemente.")
+                    Text(text = "Esta acción eliminará permanentemente el registro de esta mascota. No podrás deshacerla.")
                 },
                 confirmButton = {
                     TextButton(
