@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,6 +33,11 @@ import com.example.vetsync.modelo.Usuario
 import com.example.vetsync.vista.theme.*
 import com.example.vetsync.modelo.ImagenUtils
 import com.example.vetsync.controlador.MascotaControlador
+import com.example.vetsync.controlador.CitaControlador
+import com.example.vetsync.modelo.Cita
+import com.example.vetsync.modelo.EstadoCita
+import java.time.LocalDate
+import java.time.LocalTime
 
 @Composable
 fun PerfilScreen(
@@ -41,6 +47,26 @@ fun PerfilScreen(
 ) {
     val controladorMascota = remember {
         MascotaControlador()
+    }
+
+    val controladorCitas = remember {
+        CitaControlador()
+    }
+
+    var cantidadCitasProximas by remember(usuario.id) {
+        mutableStateOf<Int?>(null)
+    }
+
+    var cantidadCitasCompletadas by remember(usuario.id) {
+        mutableStateOf<Int?>(null)
+    }
+
+    var cargandoCitas by remember(usuario.id) {
+        mutableStateOf(true)
+    }
+
+    var errorCargaCitas by remember(usuario.id) {
+        mutableStateOf(false)
     }
 
     var cantidadMascotas by remember(usuario.id) {
@@ -60,27 +86,64 @@ fun PerfilScreen(
             cantidadMascotas = null
             cargandoMascotas = false
             errorCargaMascotas = true
+
+            cantidadCitasProximas = null
+            cantidadCitasCompletadas = null
+            cargandoCitas = false
+            errorCargaCitas = true
+
             return@LaunchedEffect
         }
 
+        // Cargar las mascotas registradas.
         cargandoMascotas = true
         errorCargaMascotas = false
 
         controladorMascota.obtenerMascotasUsuario(
             idUsuario = usuario.id,
-
             onSuccess = { mascotas ->
                 cantidadMascotas = mascotas.size
                 cargandoMascotas = false
             },
-
             onError = {
                 cantidadMascotas = null
                 cargandoMascotas = false
                 errorCargaMascotas = true
             }
         )
+
+        // Cargar las citas del cliente.
+        cargandoCitas = true
+        errorCargaCitas = false
+
+        controladorCitas.obtenerCitasUsuario(
+            onSuccess = { citas ->
+                val hoy = LocalDate.now()
+                val horaActual = LocalTime.now()
+
+                cantidadCitasProximas = citas.count { cita ->
+                    esCitaProxima(
+                        cita = cita,
+                        hoy = hoy,
+                        horaActual = horaActual
+                    )
+                }
+
+                cantidadCitasCompletadas = citas.count {
+                    it.estado == EstadoCita.COMPLETADA
+                }
+
+                cargandoCitas = false
+            },
+            onError = {
+                cantidadCitasProximas = null
+                cantidadCitasCompletadas = null
+                cargandoCitas = false
+                errorCargaCitas = true
+            }
+        )
     }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -109,26 +172,67 @@ fun PerfilScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Primera fila: mascotas y próxima cita.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                EstadisticaCard(
+                    modifier = Modifier.weight(1f),
+                    icono = {
+                        Icon(
+                            imageVector = Icons.Outlined.Pets,
+                            contentDescription = "Mascotas registradas",
+                            modifier = Modifier.size(28.dp),
+                            tint = VerdeVetSync
+                        )
+                    },
+                    valor = when {
+                        cargandoMascotas -> "…"
+                        errorCargaMascotas -> "—"
+                        else -> cantidadMascotas?.toString() ?: "—"
+                    },
+                    etiqueta = "Mascotas registradas"
+                )
+
+                EstadisticaCard(
+                    modifier = Modifier.weight(1f),
+                    icono = {
+                        Icon(
+                            imageVector = Icons.Outlined.DateRange,
+                            contentDescription = "Próximas citas",
+                            modifier = Modifier.size(28.dp),
+                            tint = Color(0xFF8B5B45)
+                        )
+                    },
+                    valor = when {
+                        cargandoCitas -> "…"
+                        errorCargaCitas -> "—"
+                        else -> cantidadCitasProximas?.toString() ?: "—"
+                    },
+                    etiqueta = "Próxima cita"
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Segunda fila: citas completadas.
             EstadisticaCard(
                 modifier = Modifier.fillMaxWidth(),
-
                 icono = {
-                    Image(
-                        painter = painterResource(
-                            id = R.drawable.logo_vetsync
-                        ),
-                        contentDescription = "Logo de VetSync",
-                        modifier = Modifier.size(28.dp)
+                    Icon(
+                        imageVector = Icons.Filled.History,
+                        contentDescription = "Citas completadas",
+                        modifier = Modifier.size(28.dp),
+                        tint = VerdeVetSync
                     )
                 },
-
                 valor = when {
-                    cargandoMascotas -> "…"
-                    errorCargaMascotas -> "—"
-                    else -> cantidadMascotas?.toString() ?: "—"
+                    cargandoCitas -> "…"
+                    errorCargaCitas -> "—"
+                    else -> cantidadCitasCompletadas?.toString() ?: "—"
                 },
-
-                etiqueta = "Mascotas registradas"
+                etiqueta = "Citas completadas"
             )
 
             if (errorCargaMascotas) {
@@ -136,6 +240,17 @@ fun PerfilScreen(
 
                 Text(
                     text = "No se pudo cargar la cantidad de mascotas.",
+                    fontSize = 12.sp,
+                    color = RojoAlerta,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            if (errorCargaCitas) {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "No se pudo cargar el resumen de citas.",
                     fontSize = 12.sp,
                     color = RojoAlerta,
                     modifier = Modifier.fillMaxWidth()
@@ -191,6 +306,30 @@ fun PerfilScreen(
 //        )
 //    }
 //}
+
+private fun esCitaProxima(
+    cita: Cita,
+    hoy: LocalDate,
+    horaActual: LocalTime
+): Boolean {
+    if (
+        cita.estado != EstadoCita.PENDIENTE &&
+        cita.estado != EstadoCita.CONFIRMADA
+    ) {
+        return false
+    }
+
+    return runCatching {
+        val fechaCita = LocalDate.parse(cita.fecha)
+        val horaCita = LocalTime.parse(cita.hora)
+
+        fechaCita.isAfter(hoy) ||
+                (
+                        fechaCita.isEqual(hoy) &&
+                                horaCita.isAfter(horaActual)
+                        )
+    }.getOrDefault(false)
+}
 
 @Composable
 fun PerfilPrincipalCard(usuario: Usuario, onEditProfileClick: () -> Unit) {

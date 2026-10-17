@@ -164,198 +164,242 @@ fun CitasScreen(
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(FondoCrema)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 18.dp, vertical = 12.dp)
-        ) {
-            // Encabezado de la pantalla.
-            Text(
-                text = "VetSync",
-                fontSize = 19.sp,
-                fontWeight = FontWeight.Bold,
-                color = VerdeVetSync
-            )
+    if (citaSeleccionada != null) {
+        val citaDetalle = citaSeleccionada!!
 
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Text(
-                text = "Mis citas",
-                fontSize = 29.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF252925)
-            )
-
-            Spacer(modifier = Modifier.height(5.dp))
-
-            Text(
-                text = "Gestiona los servicios programados para tus mascotas.",
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
-                color = GrisTextoSecundario
-            )
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            // Filtros de estado.
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterChip(
-                    selected = filtroSeleccionado == null,
-                    onClick = {
-                        filtroSeleccionado = null
-                    },
-                    label = {
-                        Text("Todas")
-                    },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = VerdeVetSync,
-                        selectedLabelColor = Color.White
-                    )
-                )
-
-                EstadoCita.values().forEach { estado ->
-                    FilterChip(
-                        selected = filtroSeleccionado == estado,
-                        onClick = {
-                            filtroSeleccionado = estado
-                        },
-                        label = {
-                            Text(estado.etiqueta)
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = VerdeVetSync,
-                            selectedLabelColor = Color.White
-                        )
-                    )
-                }
+        DetalleCitaScreen(
+            cita = citaDetalle,
+            mascota = mascotasPorId[citaDetalle.mascotaId],
+            onVolver = {
+                citaSeleccionada = null
+            },
+            onReprogramar = {
+                citaSeleccionada = null
+                citaParaReprogramar = citaDetalle
+            },
+            onCancelar = {
+                citaSeleccionada = null
+                citaParaCancelar = citaDetalle
             }
+        )
+    } else {
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(FondoCrema)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 18.dp, vertical = 12.dp)
+                ) {
+                    // Encabezado de la pantalla.
+                    Text(
+                        text = "Mis citas",
+                        fontSize = 29.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF252925)
+                    )
 
-            when {
-                cargando -> {
-                    Box(
+                    Spacer(modifier = Modifier.height(5.dp))
+
+                    Text(
+                        text = "Gestiona los servicios programados para tus mascotas.",
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
+                        color = GrisTextoSecundario
+                    )
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    // Filtros de estado.
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f),
-                        contentAlignment = Alignment.Center
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            CircularProgressIndicator(
-                                color = VerdeVetSync
+                        FilterChip(
+                            selected = filtroSeleccionado == null,
+                            onClick = {
+                                filtroSeleccionado = null
+                            },
+                            label = {
+                                Text("Todas")
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = VerdeVetSync,
+                                selectedLabelColor = Color.White
                             )
+                        )
 
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            Text(
-                                text = "Cargando tus citas...",
-                                color = GrisTextoSecundario
-                            )
-                        }
-                    }
-                }
-
-                errorCarga != null -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = errorCarga.orEmpty(),
-                                color = MaterialTheme.colorScheme.error
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            OutlinedButton(
+                        EstadoCita.values().forEach { estado ->
+                            FilterChip(
+                                selected = filtroSeleccionado == estado,
                                 onClick = {
-                                    cargarCitas()
-                                }
-                            ) {
-                                Text("Intentar nuevamente")
-                            }
+                                    filtroSeleccionado = estado
+                                },
+                                label = {
+                                    Text(estado.etiqueta)
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = VerdeVetSync,
+                                    selectedLabelColor = Color.White
+                                )
+                            )
                         }
                     }
-                }
 
-                citasFiltradas.isEmpty() -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    when {
+                        cargando -> {
                             Box(
                                 modifier = Modifier
-                                    .size(72.dp)
-                                    .clip(CircleShape)
-                                    .background(VerdeClaroIcono),
+                                    .fillMaxWidth()
+                                    .weight(1f),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Add,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(32.dp),
-                                    tint = VerdeVetSync
-                                )
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    CircularProgressIndicator(
+                                        color = VerdeVetSync
+                                    )
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    Text(
+                                        text = "Cargando tus citas...",
+                                        color = GrisTextoSecundario
+                                    )
+                                }
                             }
+                        }
 
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Text(
-                                text = if (filtroSeleccionado == null) {
-                                    "Todavía no tienes citas"
-                                } else {
-                                    "No hay citas con este estado"
-                                },
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF252925)
-                            )
-
-                            Spacer(modifier = Modifier.height(6.dp))
-
-                            Text(
-                                text = if (filtroSeleccionado == null) {
-                                    "Agenda una visita para tu mascota."
-                                } else {
-                                    "Prueba otro filtro para consultar tus citas."
-                                },
-                                fontSize = 13.sp,
-                                color = GrisTextoSecundario
-                            )
-
-                            if (filtroSeleccionado != null) {
-                                Spacer(modifier = Modifier.height(10.dp))
-
-                                TextButton(
-                                    onClick = {
-                                        filtroSeleccionado = null
-                                    }
+                        errorCarga != null -> {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Text(
-                                        "Ver todas las citas",
-                                        color = VerdeVetSync
+                                        text = errorCarga.orEmpty(),
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+
+                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                    OutlinedButton(
+                                        onClick = {
+                                            cargarCitas()
+                                        }
+                                    ) {
+                                        Text("Intentar nuevamente")
+                                    }
+                                }
+                            }
+                        }
+
+                        citasFiltradas.isEmpty() -> {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(72.dp)
+                                            .clip(CircleShape)
+                                            .background(VerdeClaroIcono),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Add,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(32.dp),
+                                            tint = VerdeVetSync
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
+                                    Text(
+                                        text = if (filtroSeleccionado == null) {
+                                            "Todavía no tienes citas"
+                                        } else {
+                                            "No hay citas con este estado"
+                                        },
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF252925)
+                                    )
+
+                                    Spacer(modifier = Modifier.height(6.dp))
+
+                                    Text(
+                                        text = if (filtroSeleccionado == null) {
+                                            "Agenda una visita para tu mascota."
+                                        } else {
+                                            "Prueba otro filtro para consultar tus citas."
+                                        },
+                                        fontSize = 13.sp,
+                                        color = GrisTextoSecundario
+                                    )
+
+                                    if (filtroSeleccionado != null) {
+                                        Spacer(modifier = Modifier.height(10.dp))
+
+                                        TextButton(
+                                            onClick = {
+                                                filtroSeleccionado = null
+                                            }
+                                        ) {
+                                            Text(
+                                                "Ver todas las citas",
+                                                color = VerdeVetSync
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        else -> {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                contentPadding = PaddingValues(
+                                    bottom = 86.dp
+                                )
+                            ) {
+                                items(
+                                    items = citasFiltradas,
+                                    key = { it.id }
+                                ) { cita ->
+                                    TarjetaCitaCliente(
+                                        cita = cita,
+                                        mascota = mascotasPorId[cita.mascotaId],
+                                        onVerDetalles = {
+                                            citaSeleccionada = cita
+                                        },
+                                        onReprogramar = {
+                                            citaParaReprogramar = cita
+                                        },
+                                        onCancelar = {
+                                            citaParaCancelar = cita
+                                        }
                                     )
                                 }
                             }
@@ -363,190 +407,39 @@ fun CitasScreen(
                     }
                 }
 
-                else -> {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(
-                            bottom = 86.dp
-                        )
-                    ) {
-                        items(
-                            items = citasFiltradas,
-                            key = { it.id }
-                        ) { cita ->
-                            TarjetaCitaCliente(
-                                cita = cita,
-                                mascota = mascotasPorId[cita.mascotaId],
-                                onVerDetalles = {
-                                    citaSeleccionada = cita
-                                },
-                                onReprogramar = {
-                                    citaParaReprogramar = cita
-                                },
-                                onCancelar = {
-                                    citaParaCancelar = cita
-                                }
-                            )
-                        }
-                    }
+                // El botón queda por encima de la lista.
+                Button(
+                    onClick = onAgendarCitaClick,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 18.dp, bottom = 10.dp)
+                        .height(50.dp),
+                    shape = RoundedCornerShape(17.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = VerdeVetSync
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 5.dp
+                    ),
+                    contentPadding = PaddingValues(
+                        horizontal = 18.dp,
+                        vertical = 8.dp
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    Text(
+                        text = "Nueva cita",
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
-        }
-
-        // El botón queda por encima de la lista.
-        // La navegación inferior sigue siendo responsabilidad de Home.kt.
-        Button(
-            onClick = onAgendarCitaClick,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 18.dp, bottom = 10.dp)
-                .height(50.dp),
-            shape = RoundedCornerShape(17.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = VerdeVetSync
-            ),
-            elevation = ButtonDefaults.buttonElevation(
-                defaultElevation = 5.dp
-            ),
-            contentPadding = PaddingValues(
-                horizontal = 18.dp,
-                vertical = 8.dp
-            )
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp)
-            )
-
-            Spacer(modifier = Modifier.width(6.dp))
-
-            Text(
-                text = "Nueva cita",
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-    }
-
-    // Diálogo de detalles.
-    citaSeleccionada?.let { cita ->
-        AlertDialog(
-            onDismissRequest = {
-                citaSeleccionada = null
-            },
-            title = {
-                Text(
-                    text = "Detalles de la cita",
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Column(
-                    modifier = Modifier.verticalScroll(
-                        rememberScrollState()
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Text(
-                        text = cita.nombreServicio,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    EstadoCitaBadge(cita.estado)
-
-                    DividerCita()
-
-                    Text(
-                        text = "Mascota",
-                        fontWeight = FontWeight.SemiBold,
-                        color = GrisTextoSecundario
-                    )
-
-                    Text(cita.nombreMascota)
-
-                    mascotasPorId[cita.mascotaId]?.let { mascota ->
-                        if (
-                            mascota.especie.isNotBlank() ||
-                            mascota.raza.isNotBlank()
-                        ) {
-                            Text(
-                                text = listOf(
-                                    mascota.especie,
-                                    mascota.raza
-                                ).filter { it.isNotBlank() }
-                                    .joinToString(" · "),
-                                color = GrisTextoSecundario,
-                                fontSize = 13.sp
-                            )
-                        }
-                    }
-
-                    DividerCita()
-
-                    Text(
-                        text = "Fecha y hora",
-                        fontWeight = FontWeight.SemiBold,
-                        color = GrisTextoSecundario
-                    )
-
-                    Text(formatearFechaCita(cita.fecha))
-                    Text("Hora: ${cita.hora}")
-
-                    DividerCita()
-
-                    Text(
-                        text = "Veterinario",
-                        fontWeight = FontWeight.SemiBold,
-                        color = GrisTextoSecundario
-                    )
-
-                    Text(cita.veterinario)
-
-                    DividerCita()
-
-                    Text(
-                        text = "Costo estimado",
-                        fontWeight = FontWeight.SemiBold,
-                        color = GrisTextoSecundario
-                    )
-
-                    Text(
-                        text = formatearCosto(cita.costo),
-                        fontWeight = FontWeight.Bold,
-                        color = VerdeVetSync
-                    )
-
-                    if (cita.motivo.isNotBlank()) {
-                        DividerCita()
-
-                        Text(
-                            text = "Motivo de consulta",
-                            fontWeight = FontWeight.SemiBold,
-                            color = GrisTextoSecundario
-                        )
-
-                        Text(cita.motivo)
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        citaSeleccionada = null
-                    }
-                ) {
-                    Text(
-                        "Cerrar",
-                        color = VerdeVetSync
-                    )
-                }
-            },
-            containerColor = FondoCrema
-        )
     }
 
     // Confirmación de cancelación.
@@ -956,4 +849,438 @@ private fun formatearCosto(
     costo: Double
 ): String {
     return "$" + String.format(Locale.US, "%.2f", costo)
+}
+
+@Composable
+private fun DetalleCitaScreen(
+    cita: Cita,
+    mascota: Mascota?,
+    onVolver: () -> Unit,
+    onReprogramar: () -> Unit,
+    onCancelar: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(FondoCrema)
+            .padding(horizontal = 18.dp, vertical = 10.dp)
+    ) {
+        // Encabezado.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextButton(
+                onClick = onVolver,
+                contentPadding = PaddingValues(
+                    horizontal = 4.dp,
+                    vertical = 8.dp
+                )
+            ) {
+                Text(
+                    text = "←",
+                    fontSize = 25.sp,
+                    color = VerdeVetSync
+                )
+            }
+
+            Text(
+                text = "Detalle de cita",
+                fontSize = 23.sp,
+                fontWeight = FontWeight.Bold,
+                color = VerdeVetSync
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Contenido desplazable.
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+        ) {
+            Text(
+                text = cita.nombreServicio,
+                fontSize = 25.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF252925)
+            )
+
+            Spacer(modifier = Modifier.height(5.dp))
+
+            Text(
+                text = "Ref. #${cita.id.takeLast(8).uppercase(Locale.ROOT)}",
+                fontSize = 12.sp,
+                color = GrisTextoSecundario
+            )
+
+            Spacer(modifier = Modifier.height(9.dp))
+
+            EstadoCitaBadge(cita.estado)
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            // Tarjeta del paciente.
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 1.dp
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Paciente",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF252925)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(13.dp)
+                    ) {
+                        FotoMascotaCita(
+                            mascota = mascota,
+                            nombre = cita.nombreMascota
+                        )
+
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = cita.nombreMascota,
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF252925)
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            val descripcionMascota = mascota?.let {
+                                listOf(
+                                    it.especie,
+                                    it.raza
+                                ).filter { dato ->
+                                    dato.isNotBlank()
+                                }.joinToString(" · ")
+                            }.orEmpty()
+
+                            Text(
+                                text = descripcionMascota.ifBlank {
+                                    "Mascota registrada"
+                                },
+                                fontSize = 13.sp,
+                                color = GrisTextoSecundario
+                            )
+
+                            if (mascota?.edad?.isNotBlank() == true) {
+                                Spacer(
+                                    modifier = Modifier.height(3.dp)
+                                )
+
+                                Text(
+                                    text = "Edad: ${mascota.edad}",
+                                    fontSize = 12.sp,
+                                    color = GrisTextoSecundario
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Tarjeta del veterinario.
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 1.dp
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(VerdeClaroIcono),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "V",
+                            fontSize = 19.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = VerdeVetSync
+                        )
+                    }
+
+                    Column {
+                        Text(
+                            text = "Veterinario",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF252925)
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = cita.veterinario,
+                            fontSize = 13.sp,
+                            color = GrisTextoSecundario
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Fecha, hora y motivo.
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 1.dp
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Fecha y hora",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF252925)
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = "Fecha",
+                                fontSize = 12.sp,
+                                color = GrisTextoSecundario
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text(
+                                text = formatearFechaCita(cita.fecha),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF252925)
+                            )
+                        }
+
+                        Column(
+                            modifier = Modifier.weight(0.8f)
+                        ) {
+                            Text(
+                                text = "Hora",
+                                fontSize = 12.sp,
+                                color = GrisTextoSecundario
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text(
+                                text = cita.hora,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF252925)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(15.dp))
+
+                    DividerCita()
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "Motivo de visita",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF252925)
+                    )
+
+                    Spacer(modifier = Modifier.height(5.dp))
+
+                    Text(
+                        text = cita.motivo.ifBlank {
+                            "No se indicó un motivo de consulta."
+                        },
+                        fontSize = 13.sp,
+                        lineHeight = 19.sp,
+                        color = GrisTextoSecundario
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Desglose del costo guardado en la cita.
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 1.dp
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Desglose estimado",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF252925)
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Text(
+                            text = cita.nombreServicio,
+                            modifier = Modifier.weight(1f),
+                            fontSize = 13.sp,
+                            color = GrisTextoSecundario
+                        )
+
+                        Spacer(modifier = Modifier.width(10.dp))
+
+                        Text(
+                            text = formatearCosto(cita.costo),
+                            fontSize = 13.sp,
+                            color = Color(0xFF252925)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    DividerCita()
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Total estimado",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF252925)
+                        )
+
+                        Text(
+                            text = formatearCosto(cita.costo),
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = VerdeVetSync
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = "El costo corresponde a la tarifa guardada " +
+                                "para el servicio solicitado.",
+                        fontSize = 11.sp,
+                        lineHeight = 16.sp,
+                        color = GrisTextoSecundario
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+        }
+
+        // Acciones disponibles según el estado.
+        if (cita.estado == EstadoCita.PENDIENTE) {
+            Button(
+                onClick = onCancelar,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFFDEDC),
+                    contentColor = RojoAlerta
+                )
+            ) {
+                Text(
+                    text = "⊗  Cancelar cita",
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(9.dp))
+
+            Button(
+                onClick = onReprogramar,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = VerdeVetSync
+                )
+            ) {
+                Text(
+                    text = "Reprogramar cita",
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        } else {
+            OutlinedButton(
+                onClick = onVolver,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Text("Volver a mis citas")
+            }
+        }
+    }
 }
