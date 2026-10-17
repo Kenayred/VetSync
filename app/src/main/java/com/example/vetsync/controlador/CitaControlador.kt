@@ -202,6 +202,177 @@ class CitaControlador {
     }
 
     // --------------------------------------------------
+    // REPROGRAMAR UNA CITA
+    // --------------------------------------------------
+
+    fun reprogramarCita(
+        idCita: String,
+        nuevaFecha: String,
+        nuevaHora: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val propietarioId = SesionUsuario.idUsuario
+
+        if (propietarioId.isBlank()) {
+            onError("No se pudo identificar al usuario actual.")
+            return
+        }
+
+        if (idCita.isBlank()) {
+            onError("La cita seleccionada no es válida.")
+            return
+        }
+
+        val errorValidacion = validarFechaHoraReprogramacion(
+            fecha = nuevaFecha,
+            hora = nuevaHora
+        )
+
+        if (errorValidacion != null) {
+            onError(errorValidacion)
+            return
+        }
+
+        citaRepository.obtenerCitasPorPropietario(
+            idPropietario = propietarioId,
+            onSuccess = { citas ->
+                val citaOriginal = citas.firstOrNull {
+                    it.id == idCita
+                }
+
+                when {
+                    citaOriginal == null -> {
+                        onError("No se encontró la cita seleccionada.")
+                    }
+
+                    citaOriginal.estado != EstadoCita.PENDIENTE -> {
+                        onError(
+                            "Solo se pueden reprogramar citas pendientes."
+                        )
+                    }
+
+                    citaOriginal.fecha == nuevaFecha &&
+                            citaOriginal.hora == nuevaHora -> {
+                        onError(
+                            "Selecciona una fecha u hora diferente."
+                        )
+                    }
+
+                    else -> {
+                        citaRepository.verificarHorarioDisponible(
+                            fecha = nuevaFecha,
+                            hora = nuevaHora,
+                            idCitaExcluir = idCita,
+                            onResult = { disponible ->
+                                if (!disponible) {
+                                    onError(
+                                        "Ese horario ya está ocupado. " +
+                                                "Selecciona otro."
+                                    )
+                                } else {
+                                    citaRepository.actualizarHorario(
+                                        idCita = idCita,
+                                        nuevaFecha = nuevaFecha,
+                                        nuevaHora = nuevaHora,
+                                        onSuccess = {
+                                            onSuccess()
+                                        },
+                                        onFailure = { error ->
+                                            onError(
+                                                error.message
+                                                    ?: "No se pudo reprogramar la cita."
+                                            )
+                                        }
+                                    )
+                                }
+                            },
+                            onFailure = { error ->
+                                onError(
+                                    error.message
+                                        ?: "No se pudo comprobar la disponibilidad."
+                                )
+                            }
+                        )
+                    }
+                }
+            },
+            onFailure = { error ->
+                onError(
+                    error.message
+                        ?: "No se pudo consultar la cita del usuario."
+                )
+            }
+        )
+    }
+
+    private fun validarFechaHoraReprogramacion(
+        fecha: String,
+        hora: String
+    ): String? {
+        val fechaLocal = try {
+            LocalDate.parse(
+                fecha,
+                DateTimeFormatter.ISO_LOCAL_DATE
+            )
+        } catch (e: Exception) {
+            return "La fecha debe tener el formato AAAA-MM-DD."
+        }
+
+        val horaLocal = try {
+            if (!hora.matches(Regex("""\d{2}:\d{2}"""))) {
+                return "La hora debe tener el formato HH:mm."
+            }
+
+            LocalTime.parse(
+                hora,
+                DateTimeFormatter.ofPattern("HH:mm")
+            )
+        } catch (e: Exception) {
+            return "La hora seleccionada no es válida."
+        }
+
+        val hoy = LocalDate.now()
+
+        if (fechaLocal.isBefore(hoy)) {
+            return "No puedes seleccionar una fecha pasada."
+        }
+
+        if (fechaLocal.dayOfWeek == DayOfWeek.SUNDAY) {
+            return "La clínica permanece cerrada los domingos."
+        }
+
+        val horaMaxima = if (
+            fechaLocal.dayOfWeek == DayOfWeek.SATURDAY
+        ) {
+            15
+        } else {
+            16
+        }
+
+        if (horaLocal.minute != 0 ||
+            horaLocal.hour !in 9..horaMaxima
+        ) {
+            return if (
+                fechaLocal.dayOfWeek == DayOfWeek.SATURDAY
+            ) {
+                "El sábado puedes seleccionar horarios de 09:00 a 15:00."
+            } else {
+                "Puedes seleccionar horarios de 09:00 a 16:00."
+            }
+        }
+
+        if (
+            fechaLocal == hoy &&
+            !horaLocal.isAfter(LocalTime.now())
+        ) {
+            return "Selecciona una hora futura."
+        }
+
+        return null
+    }
+
+    // --------------------------------------------------
     // CONSULTAR LAS CITAS DEL USUARIO
     // --------------------------------------------------
 
@@ -231,6 +402,10 @@ class CitaControlador {
             }
         )
     }
+
+    // --------------------------------------------------
+    // CANCELAR UNA CITA
+    // --------------------------------------------------
 
     fun cancelarCita(
         idCita: String,

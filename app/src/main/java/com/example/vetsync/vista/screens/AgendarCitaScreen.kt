@@ -1,8 +1,12 @@
 package com.example.vetsync.vista.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -11,8 +15,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,6 +36,14 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+private val etapasReserva = listOf(
+    "Mascota",
+    "Servicio",
+    "Fecha",
+    "Horario",
+    "Confirmar"
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AgendarCitaScreen(
@@ -45,9 +57,6 @@ fun AgendarCitaScreen(
     onBackClick: () -> Unit = {},
     onCitaCreada: () -> Unit = {}
 ) {
-    val context = LocalContext.current
-
-    // Datos recuperados de Firestore.
     var mascotas by remember {
         mutableStateOf<List<Mascota>>(emptyList())
     }
@@ -64,7 +73,11 @@ fun AgendarCitaScreen(
     var errorMensaje by remember { mutableStateOf<String?>(null) }
     var errorDisponibilidad by remember { mutableStateOf<String?>(null) }
 
-    // Selecciones del formulario.
+    var intentoCarga by remember { mutableStateOf(0) }
+    var intentoDisponibilidad by remember { mutableStateOf(0) }
+
+    var pasoActual by remember { mutableStateOf(0) }
+
     var mascotaSeleccionadaId by remember(mascota?.id) {
         mutableStateOf(mascota?.id.orEmpty())
     }
@@ -83,25 +96,35 @@ fun AgendarCitaScreen(
 
     var motivo by remember { mutableStateOf("") }
 
-    // Menús y calendario.
-    var menuMascotasAbierto by remember { mutableStateOf(false) }
-    var menuServiciosAbierto by remember { mutableStateOf(false) }
     var mostrarCalendario by remember { mutableStateOf(false) }
 
-    // Disponibilidad para la fecha seleccionada.
     var horariosOcupados by remember {
         mutableStateOf<Set<String>>(emptySet())
     }
 
     var cargandoHorarios by remember { mutableStateOf(false) }
 
+    var citaCreada by remember {
+        mutableStateOf<Cita?>(null)
+    }
+
     val formatoFecha = DateTimeFormatter.ISO_LOCAL_DATE
-    val formatoFechaVisible =
-        DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.getDefault())
+
+    val formatoFechaVisible = DateTimeFormatter.ofPattern(
+        "EEEE, d 'de' MMMM 'de' yyyy",
+        Locale("es", "SV")
+    )
+
+    val mascotaSeleccionada = mascotas.find {
+        it.id == mascotaSeleccionadaId
+    }
+
+    val servicioSeleccionado = servicios.find {
+        it.id == servicioSeleccionadoId && it.activo
+    }
 
     val datePickerState = rememberDatePickerState(
         selectableDates = object : SelectableDates {
-
             override fun isSelectableDate(
                 utcTimeMillis: Long
             ): Boolean {
@@ -119,16 +142,13 @@ fun AgendarCitaScreen(
         }
     )
 
-    // --------------------------------------------------
-    // CARGAR MASCOTAS Y SERVICIOS
-    // --------------------------------------------------
-
-    LaunchedEffect(SesionUsuario.idUsuario) {
+    // Cargar las mascotas del usuario y los servicios desde Firestore.
+    LaunchedEffect(SesionUsuario.idUsuario, intentoCarga) {
         val idUsuario = SesionUsuario.idUsuario
 
+        errorCarga = null
         cargandoMascotas = true
         cargandoServicios = true
-        errorCarga = null
 
         if (idUsuario.isBlank()) {
             errorCarga = "No hay una sesión activa."
@@ -139,25 +159,21 @@ fun AgendarCitaScreen(
 
         controladorMascotas.obtenerMascotasUsuario(
             idUsuario = idUsuario,
-
             onSuccess = { resultado ->
                 mascotas = resultado
 
-                val mascotaInicial = mascota?.id
-                    ?.takeIf { id ->
-                        resultado.any { it.id == id }
-                    }
+                val mascotaInicial = mascota?.id?.takeIf { id ->
+                    resultado.any { it.id == id }
+                }
 
-                mascotaSeleccionadaId =
-                    mascotaInicial
-                        ?: resultado.firstOrNull()?.id.orEmpty()
+                mascotaSeleccionadaId = mascotaInicial
+                    ?: resultado.firstOrNull()?.id.orEmpty()
 
                 cargandoMascotas = false
             },
-
             onError = { error ->
-                cargandoMascotas = false
                 errorCarga = error
+                cargandoMascotas = false
             }
         )
 
@@ -165,29 +181,25 @@ fun AgendarCitaScreen(
             onSuccess = { resultado ->
                 servicios = resultado
 
+                // No se selecciona automáticamente el servicio.
                 if (resultado.none {
                         it.id == servicioSeleccionadoId
                     }
                 ) {
-                    servicioSeleccionadoId =
-                        resultado.firstOrNull()?.id.orEmpty()
+                    servicioSeleccionadoId = ""
                 }
 
                 cargandoServicios = false
             },
-
             onError = { error ->
-                cargandoServicios = false
                 errorCarga = error
+                cargandoServicios = false
             }
         )
     }
 
-    // --------------------------------------------------
-    // CONSULTAR HORARIOS OCUPADOS
-    // --------------------------------------------------
-
-    LaunchedEffect(fechaSeleccionada) {
+    // Consultar nuevamente la disponibilidad cuando cambia la fecha.
+    LaunchedEffect(fechaSeleccionada, intentoDisponibilidad) {
         val fecha = fechaSeleccionada
 
         horaSeleccionada = ""
@@ -203,36 +215,29 @@ fun AgendarCitaScreen(
 
         controladorCitas.obtenerCitasPorFecha(
             fecha = fecha.format(formatoFecha),
-
             onSuccess = { citas ->
-                horariosOcupados = citas
-                    .filter {
-                        it.estado == EstadoCita.PENDIENTE ||
-                                it.estado == EstadoCita.CONFIRMADA
-                    }
-                    .map { it.hora }
-                    .toSet()
+                if (fechaSeleccionada == fecha) {
+                    horariosOcupados = citas
+                        .filter {
+                            it.estado == EstadoCita.PENDIENTE ||
+                                    it.estado == EstadoCita.CONFIRMADA
+                        }
+                        .map { it.hora }
+                        .toSet()
 
-                cargandoHorarios = false
+                    cargandoHorarios = false
+                }
             },
-
             onError = { error ->
-                errorDisponibilidad = error
-                cargandoHorarios = false
+                if (fechaSeleccionada == fecha) {
+                    errorDisponibilidad = error
+                    cargandoHorarios = false
+                }
             }
         )
     }
 
-    val mascotaSeleccionada = mascotas.find {
-        it.id == mascotaSeleccionadaId
-    }
-
-    val servicioSeleccionado = servicios.find {
-        it.id == servicioSeleccionadoId && it.activo
-    }
-
-    // Los horarios representan horas de inicio.
-    // Todavía no hemos definido una duración por servicio.
+    // Horarios de inicio permitidos por la clínica.
     val horariosDelDia = when (fechaSeleccionada?.dayOfWeek) {
         DayOfWeek.SATURDAY -> (9 until 16).toList()
         DayOfWeek.SUNDAY, null -> emptyList()
@@ -240,461 +245,98 @@ fun AgendarCitaScreen(
     }.map { hora ->
         hora.toString().padStart(2, '0') + ":00"
     }.filter { hora ->
-        val horaLocal = LocalTime.parse(hora)
-
         fechaSeleccionada != LocalDate.now() ||
-                horaLocal.isAfter(LocalTime.now())
+                LocalTime.parse(hora).isAfter(LocalTime.now())
     }
 
     val horariosDisponibles = horariosDelDia.filter {
         it !in horariosOcupados
     }
 
-    // --------------------------------------------------
-    // INTERFAZ
-    // --------------------------------------------------
+    fun continuarPaso() {
+        errorMensaje = null
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(FondoCrema)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 12.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Regresar",
-                    tint = VerdeVetSync
-                )
-            }
-
-            Text(
-                text = "Agendar cita",
-                fontSize = 25.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E221F)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        Text(
-            text = "Selecciona tu mascota y encuentra un horario disponible.",
-            fontSize = 14.sp,
-            color = GrisTextoSecundario,
-            lineHeight = 20.sp
-        )
-
-        Spacer(modifier = Modifier.height(22.dp))
-
-        if (cargandoMascotas || cargandoServicios) {
-            LinearProgressIndicator(
-                modifier = Modifier.fillMaxWidth(),
-                color = VerdeVetSync
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        if (errorCarga != null) {
-            Text(
-                text = errorCarga.orEmpty(),
-                color = RojoAlerta,
-                fontSize = 13.sp
-            )
-        }
-
-        if (!cargandoMascotas && mascotas.isEmpty()) {
-            Text(
-                text = "Primero debes registrar una mascota para solicitar una cita.",
-                color = GrisTextoSecundario,
-                fontSize = 14.sp
-            )
-        }
-
-        // MASCOTA
-        Text(
-            text = "Mascota",
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF3B3A38)
-        )
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        ExposedDropdownMenuBox(
-            expanded = menuMascotasAbierto,
-            onExpandedChange = {
-                if (!guardandoCita) {
-                    menuMascotasAbierto = !menuMascotasAbierto
+        when (pasoActual) {
+            0 -> {
+                if (mascotaSeleccionada == null) {
+                    errorMensaje = "Selecciona una mascota."
+                } else {
+                    pasoActual = 1
                 }
             }
-        ) {
-            OutlinedTextField(
-                value = mascotaSeleccionada?.let {
-                    "${it.nombre} · ${it.especie}"
-                }.orEmpty(),
-                onValueChange = {},
-                readOnly = true,
-                enabled = !guardandoCita && mascotas.isNotEmpty(),
-                label = { Text("Seleccionar mascota") },
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(
-                        expanded = menuMascotasAbierto
-                    )
-                },
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = VerdeVetSync,
-                    focusedLabelColor = VerdeVetSync
-                )
-            )
 
-            ExposedDropdownMenu(
-                expanded = menuMascotasAbierto,
-                onDismissRequest = {
-                    menuMascotasAbierto = false
-                }
-            ) {
-                mascotas.forEach { item ->
-                    DropdownMenuItem(
-                        text = {
-                            Text("${item.nombre} · ${item.especie} · ${item.raza}")
-                        },
-                        onClick = {
-                            mascotaSeleccionadaId = item.id
-                            menuMascotasAbierto = false
-                            errorMensaje = null
-                        }
-                    )
+            1 -> {
+                if (servicioSeleccionado == null) {
+                    errorMensaje = "Selecciona un servicio."
+                } else {
+                    pasoActual = 2
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(18.dp))
-
-        // SERVICIO
-        Text(
-            text = "Servicio veterinario",
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF3B3A38)
-        )
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        ExposedDropdownMenuBox(
-            expanded = menuServiciosAbierto,
-            onExpandedChange = {
-                if (!guardandoCita) {
-                    menuServiciosAbierto = !menuServiciosAbierto
+            2 -> {
+                if (fechaSeleccionada == null) {
+                    errorMensaje = "Selecciona una fecha."
+                } else {
+                    pasoActual = 3
                 }
             }
-        ) {
-            OutlinedTextField(
-                value = servicioSeleccionado?.nombre.orEmpty(),
-                onValueChange = {},
-                readOnly = true,
-                enabled = !guardandoCita && servicios.isNotEmpty(),
-                label = { Text("Seleccionar servicio") },
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(
-                        expanded = menuServiciosAbierto
-                    )
-                },
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = VerdeVetSync,
-                    focusedLabelColor = VerdeVetSync
-                )
-            )
 
-            ExposedDropdownMenu(
-                expanded = menuServiciosAbierto,
-                onDismissRequest = {
-                    menuServiciosAbierto = false
-                }
-            ) {
-                servicios.filter { it.activo }.forEach { item ->
-                    DropdownMenuItem(
-                        text = {
-                            Column {
-                                Text(item.nombre)
-
-                                Text(
-                                    text = item.descripcion,
-                                    color = GrisTextoSecundario,
-                                    fontSize = 12.sp
-                                )
-
-                                Text(
-                                    text = "$${String.format(Locale.US, "%.2f", item.costo)}",
-                                    color = VerdeVetSync,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        },
-                        onClick = {
-                            servicioSeleccionadoId = item.id
-                            menuServiciosAbierto = false
-                            errorMensaje = null
-                        }
-                    )
-                }
-            }
-        }
-
-        servicioSeleccionado?.let { servicio ->
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Costo del servicio: $${
-                    String.format(Locale.US, "%.2f", servicio.costo)
-                }",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = VerdeVetSync
-            )
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // FECHA
-        Text(
-            text = "Fecha de la cita",
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF3B3A38)
-        )
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        OutlinedButton(
-            onClick = {
-                mostrarCalendario = true
-                errorMensaje = null
-            },
-            enabled = !guardandoCita,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.DateRange,
-                contentDescription = null
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Text(
-                text = fechaSeleccionada?.format(formatoFechaVisible)
-                    ?: "Seleccionar fecha"
-            )
-        }
-
-        if (mostrarCalendario) {
-            DatePickerDialog(
-                onDismissRequest = {
-                    mostrarCalendario = false
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            datePickerState.selectedDateMillis?.let { millis ->
-                                fechaSeleccionada = Instant
-                                    .ofEpochMilli(millis)
-                                    .atZone(ZoneOffset.UTC)
-                                    .toLocalDate()
-                            }
-
-                            mostrarCalendario = false
-                        }
-                    ) {
-                        Text("Aceptar", color = VerdeVetSync)
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = {
-                            mostrarCalendario = false
-                        }
-                    ) {
-                        Text("Cancelar")
-                    }
-                }
-            ) {
-                DatePicker(state = datePickerState)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // HORARIOS
-        Text(
-            text = "Horario disponible",
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF3B3A38)
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        when {
-            fechaSeleccionada == null -> {
-                Text(
-                    text = "Selecciona una fecha para consultar los horarios.",
-                    fontSize = 13.sp,
-                    color = GrisTextoSecundario
-                )
-            }
-
-            cargandoHorarios -> {
-                LinearProgressIndicator(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = VerdeVetSync
-                )
-            }
-
-            errorDisponibilidad != null -> {
-                Text(
-                    text = errorDisponibilidad.orEmpty(),
-                    color = RojoAlerta,
-                    fontSize = 13.sp
-                )
-            }
-
-            horariosDisponibles.isEmpty() -> {
-                Text(
-                    text = if (horariosDelDia.isEmpty()) {
-                        "No hay horarios disponibles para esta fecha."
-                    } else {
-                        "Todos los horarios de esta fecha están ocupados."
-                    },
-                    fontSize = 13.sp,
-                    color = GrisTextoSecundario
-                )
-            }
-
-            else -> {
-                horariosDisponibles.chunked(3).forEach { fila ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        fila.forEach { horario ->
-                            FilterChip(
-                                selected = horaSeleccionada == horario,
-                                onClick = {
-                                    horaSeleccionada = horario
-                                    errorMensaje = null
-                                },
-                                label = {
-                                    Text(horario)
-                                },
-                                modifier = Modifier.weight(1f),
-                                enabled = !guardandoCita
-                            )
-                        }
-
-                        repeat(3 - fila.size) {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = "Lunes a viernes: 09:00–17:00 · " +
-                            "Sábados: 09:00–16:00 · Domingos: cerrado.",
-                    fontSize = 11.sp,
-                    color = GrisTextoSecundario,
-                    lineHeight = 16.sp
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // MOTIVO
-        OutlinedTextField(
-            value = motivo,
-            onValueChange = {
-                if (it.length <= 250) {
-                    motivo = it
-                    errorMensaje = null
-                }
-            },
-            enabled = !guardandoCita,
-            label = { Text("Motivo de consulta (opcional)") },
-            placeholder = { Text("Describe brevemente el motivo de la visita") },
-            modifier = Modifier.fillMaxWidth(),
-            minLines = 3,
-            maxLines = 4,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = VerdeVetSync,
-                focusedLabelColor = VerdeVetSync
-            )
-        )
-
-        Text(
-            text = "${motivo.length}/250 caracteres",
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentWidth(Alignment.End),
-            fontSize = 11.sp,
-            color = GrisTextoSecundario
-        )
-
-        if (errorMensaje != null) {
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = errorMensaje.orEmpty(),
-                color = RojoAlerta,
-                fontSize = 13.sp,
-                lineHeight = 18.sp
-            )
-        }
-
-        Spacer(modifier = Modifier.height(22.dp))
-
-        // CONFIRMAR SOLICITUD
-        Button(
-            onClick = {
-                errorMensaje = null
-
+            3 -> {
                 when {
-                    mascotaSeleccionadaId.isBlank() -> {
-                        errorMensaje = "Selecciona una mascota."
-                    }
-
-                    servicioSeleccionadoId.isBlank() -> {
-                        errorMensaje = "Selecciona un servicio."
-                    }
-
                     fechaSeleccionada == null -> {
                         errorMensaje = "Selecciona una fecha."
+                    }
+
+                    errorDisponibilidad != null -> {
+                        errorMensaje =
+                            "No se pudo verificar la disponibilidad. " +
+                                    "Vuelve a consultar los horarios."
                     }
 
                     horaSeleccionada.isBlank() -> {
                         errorMensaje = "Selecciona un horario disponible."
                     }
 
-                    errorDisponibilidad != null -> {
+                    horaSeleccionada in horariosOcupados -> {
                         errorMensaje =
-                            "No se pudo verificar el horario. " +
-                                    "Vuelve a seleccionar la fecha."
+                            "Ese horario ya no está disponible."
                     }
 
-                    horaSeleccionada in horariosOcupados -> {
+                    else -> {
+                        pasoActual = 4
+                    }
+                }
+            }
+
+            4 -> {
+                val mascotaActual = mascotaSeleccionada
+                val servicioActual = servicioSeleccionado
+                val fechaActual = fechaSeleccionada
+                val horaActual = horaSeleccionada
+
+                when {
+                    mascotaActual == null -> {
+                        errorMensaje = "Selecciona una mascota."
+                    }
+
+                    servicioActual == null -> {
+                        errorMensaje = "Selecciona un servicio."
+                    }
+
+                    fechaActual == null -> {
+                        errorMensaje = "Selecciona una fecha."
+                    }
+
+                    horaActual.isBlank() -> {
+                        errorMensaje = "Selecciona un horario."
+                    }
+
+                    errorDisponibilidad != null -> {
+                        errorMensaje =
+                            "No se puede confirmar sin verificar el horario."
+                    }
+
+                    horaActual in horariosOcupados -> {
                         errorMensaje =
                             "Ese horario acaba de ocuparse. Selecciona otro."
                     }
@@ -703,58 +345,1267 @@ fun AgendarCitaScreen(
                         guardandoCita = true
 
                         controladorCitas.registrarCita(
-                            mascotaId = mascotaSeleccionadaId,
-                            servicioId = servicioSeleccionadoId,
-                            fecha = fechaSeleccionada!!.format(formatoFecha),
-                            hora = horaSeleccionada,
+                            mascotaId = mascotaActual.id,
+                            servicioId = servicioActual.id,
+                            fecha = fechaActual.format(formatoFecha),
+                            hora = horaActual,
                             motivo = motivo.trim(),
-
-                            onSuccess = { cita ->
+                            onSuccess = { resultado ->
+                                citaCreada = resultado
                                 guardandoCita = false
-
-                                android.widget.Toast.makeText(
-                                    context,
-                                    "Cita solicitada correctamente.",
-                                    android.widget.Toast.LENGTH_SHORT
-                                ).show()
-
-                                onCitaCreada()
                             },
-
-                            onError = { mensaje ->
+                            onError = { error ->
+                                errorMensaje = error
                                 guardandoCita = false
-                                errorMensaje = mensaje
                             }
                         )
                     }
                 }
-            },
-            enabled = !guardandoCita &&
-                    !cargandoMascotas &&
-                    !cargandoServicios &&
-                    !cargandoHorarios,
+            }
+        }
+    }
+
+    val citaConfirmadaVisualmente = citaCreada
+
+    if (citaConfirmadaVisualmente != null) {
+        PantallaCitaSolicitada(
+            cita = citaConfirmadaVisualmente,
+            onVerCitas = onCitaCreada,
+            onVolver = onBackClick
+        )
+    } else {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = VerdeVetSync
+                .fillMaxSize()
+                .background(FondoCrema)
+                .padding(horizontal = 20.dp, vertical = 12.dp)
+        ) {
+            // Encabezado.
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                IconButton(
+                    onClick = {
+                        if (guardandoCita) return@IconButton
+
+                        if (pasoActual > 0) {
+                            pasoActual--
+                            errorMensaje = null
+                        } else {
+                            onBackClick()
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Regresar",
+                        tint = VerdeVetSync
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Nueva cita",
+                        fontSize = 23.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E221F)
+                    )
+
+                    Text(
+                        text = "Cuida la salud de tu mascota",
+                        fontSize = 12.sp,
+                        color = GrisTextoSecundario
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Indicador de los cinco pasos.
+            IndicadorEtapasReserva(pasoActual)
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            if (cargandoMascotas || cargandoServicios) {
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = VerdeVetSync
+                )
+            }
+
+            if (errorCarga != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = errorCarga.orEmpty(),
+                            color = RojoAlerta
+                        )
+
+                        TextButton(
+                            onClick = {
+                                intentoCarga++
+                            }
+                        ) {
+                            Text("Intentar nuevamente")
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            // Contenido del paso actual.
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                when (pasoActual) {
+                    0 -> {
+                        Text(
+                            text = "Seleccionar mascota",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF252925)
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = "¿Para quién es la cita de hoy?",
+                            fontSize = 14.sp,
+                            color = GrisTextoSecundario
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        if (!cargandoMascotas && mascotas.isEmpty()) {
+                            MensajePaso(
+                                texto = "Todavía no tienes mascotas registradas. " +
+                                        "Registra una mascota antes de solicitar una cita."
+                            )
+                        }
+
+                        mascotas.forEach { item ->
+                            val seleccionada =
+                                item.id == mascotaSeleccionadaId
+
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 10.dp)
+                                    .clickable(enabled = !guardandoCita) {
+                                        mascotaSeleccionadaId = item.id
+                                        errorMensaje = null
+                                    },
+                                shape = RoundedCornerShape(15.dp),
+                                border = BorderStroke(
+                                    width = if (seleccionada) 1.5.dp else 1.dp,
+                                    color = if (seleccionada) {
+                                        VerdeVetSync
+                                    } else {
+                                        Color(0xFFE7E2DC)
+                                    }
+                                ),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (seleccionada) {
+                                        Color(0xFFF0F5EF)
+                                    } else {
+                                        Color.White
+                                    }
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .clip(CircleShape)
+                                            .background(VerdeClaroIcono),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = item.nombre
+                                                .firstOrNull()
+                                                ?.uppercase()
+                                                ?: "?",
+                                            color = VerdeVetSync,
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+
+                                    Column(
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(
+                                            text = item.nombre,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 16.sp,
+                                            color = Color(0xFF252925)
+                                        )
+
+                                        Spacer(
+                                            modifier = Modifier.height(3.dp)
+                                        )
+
+                                        Text(
+                                            text = "${item.especie} · ${item.raza}",
+                                            fontSize = 13.sp,
+                                            color = GrisTextoSecundario
+                                        )
+
+                                        if (item.edad.isNotBlank()) {
+                                            Text(
+                                                text = "Edad: ${item.edad}",
+                                                fontSize = 12.sp,
+                                                color = GrisTextoSecundario
+                                            )
+                                        }
+                                    }
+
+                                    RadioButton(
+                                        selected = seleccionada,
+                                        onClick = {
+                                            mascotaSeleccionadaId = item.id
+                                            errorMensaje = null
+                                        },
+                                        enabled = !guardandoCita,
+                                        colors = RadioButtonDefaults.colors(
+                                            selectedColor = VerdeVetSync
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    1 -> {
+                        Text(
+                            text = "Seleccionar servicio",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF252925)
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = "Elige el motivo de la visita de tu mascota.",
+                            fontSize = 14.sp,
+                            color = GrisTextoSecundario
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        servicios.filter { it.activo }.forEach { item ->
+                            val seleccionada =
+                                item.id == servicioSeleccionadoId
+
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 10.dp)
+                                    .clickable(enabled = !guardandoCita) {
+                                        servicioSeleccionadoId = item.id
+                                        errorMensaje = null
+                                    },
+                                shape = RoundedCornerShape(15.dp),
+                                border = BorderStroke(
+                                    width = if (seleccionada) 1.5.dp else 1.dp,
+                                    color = if (seleccionada) {
+                                        VerdeVetSync
+                                    } else {
+                                        Color(0xFFE7E2DC)
+                                    }
+                                ),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (seleccionada) {
+                                        Color(0xFFF0F5EF)
+                                    } else {
+                                        Color.White
+                                    }
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(42.dp)
+                                            .clip(CircleShape)
+                                            .background(VerdeClaroIcono),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector =
+                                                Icons.Outlined.DateRange,
+                                            contentDescription = null,
+                                            tint = VerdeVetSync
+                                        )
+                                    }
+
+                                    Column(
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(
+                                            text = item.nombre,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 15.sp,
+                                            color = Color(0xFF252925)
+                                        )
+
+                                        if (item.descripcion.isNotBlank()) {
+                                            Spacer(
+                                                modifier = Modifier.height(3.dp)
+                                            )
+
+                                            Text(
+                                                text = item.descripcion,
+                                                fontSize = 12.sp,
+                                                color = GrisTextoSecundario
+                                            )
+                                        }
+                                    }
+
+                                    Text(
+                                        text = formatearCosto(item.costo),
+                                        fontWeight = FontWeight.Bold,
+                                        color = VerdeVetSync,
+                                        fontSize = 14.sp
+                                    )
+                                }
+                            }
+                        }
+
+                        if (!cargandoServicios && servicios.none { it.activo }) {
+                            MensajePaso(
+                                texto = "No hay servicios disponibles en este momento."
+                            )
+                        }
+
+                        servicioSeleccionado?.let { seleccionado ->
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            Card(
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFFEFF4EE)
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Costo del servicio",
+                                        modifier = Modifier.weight(1f),
+                                        color = GrisTextoSecundario
+                                    )
+
+                                    Text(
+                                        text = formatearCosto(seleccionado.costo),
+                                        fontWeight = FontWeight.Bold,
+                                        color = VerdeVetSync
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    2 -> {
+                        Text(
+                            text = "Seleccionar fecha",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF252925)
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = mascotaSeleccionada?.let {
+                                "Elige un día para la consulta de ${it.nombre}."
+                            } ?: "Elige el día de la consulta.",
+                            fontSize = 14.sp,
+                            color = GrisTextoSecundario
+                        )
+
+                        Spacer(modifier = Modifier.height(18.dp))
+
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.White
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(18.dp)
+                            ) {
+                                Text(
+                                    text = "Fecha de la cita",
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF252925)
+                                )
+
+                                Spacer(
+                                    modifier = Modifier.height(10.dp)
+                                )
+
+                                OutlinedButton(
+                                    onClick = {
+                                        mostrarCalendario = true
+                                        errorMensaje = null
+                                    },
+                                    enabled = !guardandoCita,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(
+                                        imageVector =
+                                            Icons.Outlined.DateRange,
+                                        contentDescription = null
+                                    )
+
+                                    Spacer(
+                                        modifier = Modifier.width(8.dp)
+                                    )
+
+                                    Text(
+                                        text = fechaSeleccionada?.format(
+                                            formatoFechaVisible
+                                        ) ?: "Elegir fecha en el calendario"
+                                    )
+                                }
+
+                                Spacer(
+                                    modifier = Modifier.height(12.dp)
+                                )
+
+                                Text(
+                                    text = "Lunes a viernes: 09:00–17:00. " +
+                                            "Sábados: 09:00–16:00. " +
+                                            "Domingos: cerrado.",
+                                    fontSize = 12.sp,
+                                    color = GrisTextoSecundario,
+                                    lineHeight = 18.sp
+                                )
+                            }
+                        }
+                    }
+
+                    3 -> {
+                        Text(
+                            text = "Seleccionar horario",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF252925)
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = fechaSeleccionada?.format(
+                                formatoFechaVisible
+                            ) ?: "Selecciona la fecha de tu consulta.",
+                            fontSize = 14.sp,
+                            color = GrisTextoSecundario
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        when {
+                            fechaSeleccionada == null -> {
+                                MensajePaso(
+                                    texto = "Vuelve al paso Fecha y selecciona un día."
+                                )
+                            }
+
+                            cargandoHorarios -> {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(24.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        color = VerdeVetSync
+                                    )
+                                }
+
+                                Text(
+                                    text = "Consultando disponibilidad...",
+                                    color = GrisTextoSecundario
+                                )
+                            }
+
+                            errorDisponibilidad != null -> {
+                                MensajePaso(
+                                    texto = errorDisponibilidad.orEmpty(),
+                                    esError = true
+                                )
+
+                                OutlinedButton(
+                                    onClick = {
+                                        intentoDisponibilidad++
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Consultar nuevamente")
+                                }
+                            }
+
+                            horariosDelDia.isEmpty() -> {
+                                MensajePaso(
+                                    texto = "No quedan horarios de inicio disponibles para esta fecha."
+                                )
+                            }
+
+                            else -> {
+                                listOf(
+                                    "Mañana" to horariosDelDia.filter {
+                                        LocalTime.parse(it).hour < 13
+                                    },
+                                    "Tarde" to horariosDelDia.filter {
+                                        LocalTime.parse(it).hour >= 13
+                                    }
+                                ).forEach { (titulo, horarios) ->
+                                    if (horarios.isNotEmpty()) {
+                                        Text(
+                                            text = titulo,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFF252925)
+                                        )
+
+                                        Spacer(
+                                            modifier = Modifier.height(8.dp)
+                                        )
+
+                                        horarios.chunked(3).forEach { fila ->
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement =
+                                                    Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                fila.forEach { hora ->
+                                                    val ocupado =
+                                                        hora in horariosOcupados
+
+                                                    FilterChip(
+                                                        selected =
+                                                            horaSeleccionada == hora,
+                                                        onClick = {
+                                                            horaSeleccionada = hora
+                                                            errorMensaje = null
+                                                        },
+                                                        enabled = !ocupado &&
+                                                                !guardandoCita,
+                                                        label = {
+                                                            Text(
+                                                                if (ocupado) {
+                                                                    "$hora · Ocupado"
+                                                                } else {
+                                                                    hora
+                                                                }
+                                                            )
+                                                        },
+                                                        modifier =
+                                                            Modifier.weight(1f),
+                                                        colors =
+                                                            FilterChipDefaults.filterChipColors(
+                                                                selectedContainerColor =
+                                                                    VerdeVetSync,
+                                                                selectedLabelColor =
+                                                                    Color.White
+                                                            )
+                                                    )
+                                                }
+
+                                                repeat(3 - fila.size) {
+                                                    Spacer(
+                                                        modifier =
+                                                            Modifier.weight(1f)
+                                                    )
+                                                }
+                                            }
+
+                                            Spacer(
+                                                modifier = Modifier.height(6.dp)
+                                            )
+                                        }
+
+                                        Spacer(
+                                            modifier = Modifier.height(10.dp)
+                                        )
+                                    }
+                                }
+
+                                Text(
+                                    text = "Los horarios ocupados no se pueden seleccionar.",
+                                    fontSize = 12.sp,
+                                    color = GrisTextoSecundario
+                                )
+                            }
+                        }
+                    }
+
+                    4 -> {
+                        Text(
+                            text = "Confirmar cita",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF252925)
+                        )
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        Text(
+                            text = "Revisa los datos antes de enviar tu solicitud.",
+                            fontSize = 14.sp,
+                            color = GrisTextoSecundario
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        TarjetaResumen(
+                            titulo = "Mascota",
+                            valor = mascotaSeleccionada?.nombre
+                                ?: "Sin seleccionar",
+                            detalle = mascotaSeleccionada?.let {
+                                "${it.especie} · ${it.raza}"
+                            }.orEmpty(),
+                            onEditar = {
+                                pasoActual = 0
+                                errorMensaje = null
+                            }
+                        )
+
+                        TarjetaResumen(
+                            titulo = "Servicio",
+                            valor = servicioSeleccionado?.nombre
+                                ?: "Sin seleccionar",
+                            detalle = servicioSeleccionado?.descripcion.orEmpty(),
+                            onEditar = {
+                                pasoActual = 1
+                                errorMensaje = null
+                            }
+                        )
+
+                        TarjetaResumen(
+                            titulo = "Fecha y hora",
+                            valor = fechaSeleccionada?.format(
+                                formatoFechaVisible
+                            ) ?: "Sin fecha",
+                            detalle = horaSeleccionada.ifBlank {
+                                "Sin horario"
+                            },
+                            onEditar = {
+                                pasoActual = 2
+                                errorMensaje = null
+                            }
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        OutlinedTextField(
+                            value = motivo,
+                            onValueChange = {
+                                if (it.length <= 250) {
+                                    motivo = it
+                                    errorMensaje = null
+                                }
+                            },
+                            enabled = !guardandoCita,
+                            label = {
+                                Text("Motivo de consulta (opcional)")
+                            },
+                            placeholder = {
+                                Text("Describe brevemente el motivo de la visita")
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 3,
+                            maxLines = 4,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = VerdeVetSync,
+                                focusedLabelColor = VerdeVetSync
+                            )
+                        )
+
+                        Text(
+                            text = "${motivo.length}/250 caracteres",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentWidth(Alignment.End),
+                            fontSize = 11.sp,
+                            color = GrisTextoSecundario
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color(0xFFF0E9E4)
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(18.dp)
+                            ) {
+                                Text(
+                                    text = "Costo estimado",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp,
+                                    color = Color(0xFF252925)
+                                )
+
+                                Spacer(
+                                    modifier = Modifier.height(12.dp)
+                                )
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement =
+                                        Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = servicioSeleccionado?.nombre
+                                            ?: "Servicio"
+                                    )
+
+                                    Text(
+                                        text = formatearCosto(
+                                            servicioSeleccionado?.costo ?: 0.0
+                                        ),
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+
+                                Spacer(
+                                    modifier = Modifier.height(12.dp)
+                                )
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement =
+                                        Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = "Total estimado",
+                                        fontWeight = FontWeight.Bold
+                                    )
+
+                                    Text(
+                                        text = formatearCosto(
+                                            servicioSeleccionado?.costo ?: 0.0
+                                        ),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 19.sp,
+                                        color = VerdeVetSync
+                                    )
+                                }
+
+                                Spacer(
+                                    modifier = Modifier.height(8.dp)
+                                )
+
+                                Text(
+                                    text = "Se utiliza la tarifa vigente del servicio. " +
+                                            "Los costos adicionales, si los hubiera, " +
+                                            "se informarán durante la atención.",
+                                    fontSize = 11.sp,
+                                    lineHeight = 16.sp,
+                                    color = GrisTextoSecundario
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = BeigePendiente
+                            ) {
+                                Text(
+                                    text = "Pendiente de confirmación",
+                                    modifier = Modifier.padding(
+                                        horizontal = 12.dp,
+                                        vertical = 7.dp
+                                    ),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = TextoPendiente
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (errorMensaje != null) {
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = errorMensaje.orEmpty(),
+                        color = RojoAlerta,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+
+            // Botones del asistente.
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (pasoActual > 0) {
+                    OutlinedButton(
+                        onClick = {
+                            if (!guardandoCita) {
+                                pasoActual--
+                                errorMensaje = null
+                            }
+                        },
+                        enabled = !guardandoCita,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text("Atrás")
+                    }
+                } else {
+                    OutlinedButton(
+                        onClick = onBackClick,
+                        enabled = !guardandoCita,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text("Cancelar")
+                    }
+                }
+
+                Button(
+                    onClick = { continuarPaso() },
+                    enabled = !guardandoCita &&
+                            !cargandoMascotas &&
+                            !cargandoServicios &&
+                            !cargandoHorarios,
+                    modifier = Modifier
+                        .weight(1.5f)
+                        .height(50.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = VerdeVetSync
+                    )
+                ) {
+                    if (guardandoCita) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(21.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = when (pasoActual) {
+                                0, 1, 2, 3 -> "Siguiente →"
+                                else -> "Confirmar cita"
+                            },
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // Calendario modal del paso Fecha.
+    if (mostrarCalendario && citaConfirmadaVisualmente == null) {
+        DatePickerDialog(
+            onDismissRequest = {
+                mostrarCalendario = false
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            fechaSeleccionada = Instant
+                                .ofEpochMilli(millis)
+                                .atZone(ZoneOffset.UTC)
+                                .toLocalDate()
+                        }
+
+                        mostrarCalendario = false
+                    }
+                ) {
+                    Text("Aceptar", color = VerdeVetSync)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        mostrarCalendario = false
+                    }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+}
+
+@Composable
+private fun IndicadorEtapasReserva(
+    pasoActual: Int
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top
+    ) {
+        etapasReserva.forEachIndexed { indice, titulo ->
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(29.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (indice <= pasoActual) {
+                                VerdeVetSync
+                            } else {
+                                Color(0xFFE4E1DD)
+                            }
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (indice < pasoActual) {
+                            "✓"
+                        } else {
+                            (indice + 1).toString()
+                        },
+                        color = if (indice <= pasoActual) {
+                            Color.White
+                        } else {
+                            GrisTextoSecundario
+                        },
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(5.dp))
+
+                Text(
+                    text = titulo,
+                    fontSize = 10.sp,
+                    fontWeight = if (indice == pasoActual) {
+                        FontWeight.Bold
+                    } else {
+                        FontWeight.Normal
+                    },
+                    color = if (indice <= pasoActual) {
+                        VerdeVetSync
+                    } else {
+                        GrisTextoSecundario
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MensajePaso(
+    texto: String,
+    esError: Boolean = false
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (esError) {
+                Color(0xFFFFF0EF)
+            } else {
+                Color.White
+            }
+        )
+    ) {
+        Text(
+            text = texto,
+            modifier = Modifier.padding(16.dp),
+            color = if (esError) {
+                RojoAlerta
+            } else {
+                GrisTextoSecundario
+            },
+            fontSize = 14.sp,
+            lineHeight = 20.sp
+        )
+    }
+}
+
+@Composable
+private fun TarjetaResumen(
+    titulo: String,
+    valor: String,
+    detalle: String,
+    onEditar: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 10.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = titulo,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp,
+                    color = GrisTextoSecundario,
+                    modifier = Modifier.weight(1f)
+                )
+
+                TextButton(
+                    onClick = onEditar,
+                    contentPadding = PaddingValues(
+                        horizontal = 8.dp,
+                        vertical = 0.dp
+                    )
+                ) {
+                    Text(
+                        text = "Editar",
+                        color = VerdeVetSync,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+
+            Text(
+                text = valor,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF252925)
+            )
+
+            if (detalle.isNotBlank()) {
+                Spacer(modifier = Modifier.height(3.dp))
+
+                Text(
+                    text = detalle,
+                    fontSize = 12.sp,
+                    color = GrisTextoSecundario
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PantallaCitaSolicitada(
+    cita: Cita,
+    onVerCitas: () -> Unit,
+    onVolver: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(FondoCrema)
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(76.dp)
+                .clip(CircleShape)
+                .background(VerdeClaroIcono),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "✓",
+                fontSize = 42.sp,
+                fontWeight = FontWeight.Bold,
+                color = VerdeVetSync
+            )
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text(
+            text = "¡Cita solicitada!",
+            fontSize = 27.sp,
+            fontWeight = FontWeight.Bold,
+            color = VerdeVetSync
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Hemos recibido tu solicitud y está pendiente de confirmación.",
+            fontSize = 14.sp,
+            lineHeight = 21.sp,
+            color = GrisTextoSecundario
+        )
+
+        Spacer(modifier = Modifier.height(22.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
             )
         ) {
-            if (guardandoCita) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(22.dp),
-                    color = Color.White,
-                    strokeWidth = 2.dp
-                )
-            } else {
+            Column(
+                modifier = Modifier.padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 Text(
-                    text = "Solicitar cita",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold
+                    text = "Resumen de la cita",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF252925)
+                )
+
+                ResumenFila(
+                    etiqueta = "Mascota",
+                    valor = cita.nombreMascota
+                )
+
+                ResumenFila(
+                    etiqueta = "Servicio",
+                    valor = cita.nombreServicio
+                )
+
+                ResumenFila(
+                    etiqueta = "Fecha",
+                    valor = cita.fecha
+                )
+
+                ResumenFila(
+                    etiqueta = "Hora",
+                    valor = cita.hora
+                )
+
+                ResumenFila(
+                    etiqueta = "Costo estimado",
+                    valor = formatearCosto(cita.costo)
+                )
+
+                ResumenFila(
+                    etiqueta = "Estado",
+                    valor = cita.estado.etiqueta
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(26.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = onVerCitas,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = VerdeVetSync
+            )
+        ) {
+            Text("Ver mis citas")
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedButton(
+            onClick = onVolver,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Text("Volver")
+        }
     }
+}
+
+@Composable
+private fun ResumenFila(
+    etiqueta: String,
+    valor: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(
+            text = etiqueta,
+            modifier = Modifier.weight(1f),
+            fontSize = 13.sp,
+            color = GrisTextoSecundario
+        )
+
+        Text(
+            text = valor,
+            modifier = Modifier.weight(1.3f),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF252925)
+        )
+    }
+}
+
+private fun formatearCosto(
+    costo: Double
+): String {
+    return "$" + String.format(Locale.US, "%.2f", costo)
 }
