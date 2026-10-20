@@ -150,8 +150,14 @@ fun CitasScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        cargarCitas()
+    LaunchedEffect(SesionUsuario.idUsuario) {
+        if (SesionUsuario.idUsuario.isNotBlank()) {
+            cargarCitas()
+        } else {
+            citas = emptyList()
+            errorCarga = null
+            cargando = false
+        }
     }
 
     val citasFiltradas = remember(citas, filtroSeleccionado) {

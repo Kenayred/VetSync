@@ -62,14 +62,24 @@ fun HomeScreen(
             )
         }
         is SubPantallaHome.EditarPerfil -> {
-            EditarPerfilScreen(
-                usuario = SesionUsuario.usuarioActual!!,
-                controlador = UsuarioControlador(),
-                onBackClick = { subPantallaActual = null },
-                onPerfilActualizado = {
-                    subPantallaActual = null
-                }
-            )
+            val usuarioActivo = SesionUsuario.usuarioActual
+
+            if (usuarioActivo == null) {
+                subPantallaActual = null
+                SesionUsuario.cerrarSesion()
+                onNavigateToLogin()
+            } else {
+                EditarPerfilScreen(
+                    usuario = usuarioActivo,
+                    controlador = UsuarioControlador(),
+                    onBackClick = {
+                        subPantallaActual = null
+                    },
+                    onPerfilActualizado = {
+                        subPantallaActual = null
+                    }
+                )
+            }
         }
         is SubPantallaHome.AgendarCita -> {
             AgendarCitaScreen(
