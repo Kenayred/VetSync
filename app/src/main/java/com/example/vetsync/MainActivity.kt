@@ -3,7 +3,7 @@ package com.example.vetsync
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
+import com.example.vetsync.vista.theme.VetSyncAppTheme
 import androidx.compose.runtime.*
 import kotlinx.coroutines.delay
 import com.example.vetsync.vista.HomeScreen
@@ -30,9 +30,11 @@ class MainActivity : ComponentActivity() {
         )
 
         setContent {
-            MaterialTheme {
+            VetSyncAppTheme {
 
-                var pantallaActual by remember { mutableStateOf("login") }
+                var pantallaActual by remember {
+                    mutableStateOf("login")
+                }
                 var isLoading by remember { mutableStateOf(true) }
                 // Guardamos el nombre del usuario que inicia sesión
                 var nombreUsuario by remember { mutableStateOf("Laura") }

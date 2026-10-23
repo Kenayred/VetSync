@@ -17,6 +17,7 @@ class UsuarioRepository {
 
     fun verificarCorreoExistente(
         correo: String,
+        idUsuarioExcluir: String? = null,
         onDisponible: () -> Unit,
         onOcupado: () -> Unit,
         onError: (String) -> Unit
@@ -25,14 +26,52 @@ class UsuarioRepository {
             .whereEqualTo("correo", correo.trim())
             .get()
             .addOnSuccessListener { snapshot ->
-                if (snapshot.isEmpty) {
-                    onDisponible()
-                } else {
+
+                val existeOtroUsuario = snapshot.documents.any { documento ->
+                    documento.id != idUsuarioExcluir
+                }
+
+                if (existeOtroUsuario) {
                     onOcupado()
+                } else {
+                    onDisponible()
                 }
             }
             .addOnFailureListener { e ->
-                onError(e.message ?: "Error al verificar la disponibilidad del correo.")
+                onError(
+                    e.message
+                        ?: "Error al verificar la disponibilidad del correo."
+                )
+            }
+    }
+
+    fun verificarUsernameExistente(
+        username: String,
+        idUsuarioExcluir: String? = null,
+        onDisponible: () -> Unit,
+        onOcupado: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        db.collection("usuarios")
+            .whereEqualTo("username", username.trim())
+            .get()
+            .addOnSuccessListener { snapshot ->
+
+                val existeOtroUsuario = snapshot.documents.any { documento ->
+                    documento.id != idUsuarioExcluir
+                }
+
+                if (existeOtroUsuario) {
+                    onOcupado()
+                } else {
+                    onDisponible()
+                }
+            }
+            .addOnFailureListener { e ->
+                onError(
+                    e.message
+                        ?: "Error al verificar la disponibilidad del nombre de usuario."
+                )
             }
     }
     fun buscarUsuario(credencial: String, contrasena: String, onSuccess: (Usuario) -> Unit, onError: (String) -> Unit) {

@@ -193,7 +193,7 @@ fun DetalleMascotaScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = mascota.nombre.ifBlank { "Max" },
+                text = mascota.nombre.ifBlank { "Nombre no registrado" },
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1E221F)
@@ -203,7 +203,7 @@ fun DetalleMascotaScreen(
                 Text(text = "🐾", fontSize = 13.sp)
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = mascota.raza.ifBlank { "Golden Retriever" },
+                    text = mascota.raza.ifBlank { "Raza no registrada" },
                     fontSize = 14.sp,
                     color = GrisTextoSecundario
                 )
@@ -295,7 +295,7 @@ fun DetalleMascotaScreen(
             ) {
                 AtributoMascotaCard(
                     titulo = "Sexo",
-                    valor = mascota.sexo.ifBlank { "Macho" },
+                    valor = mascota.sexo.ifBlank { "No especificado" },
                     icono = Icons.Outlined.FavoriteBorder,
                     fondoIcono = Color(0xFFEAEDE9),
                     tintIcono = VerdeVetSync,
@@ -303,7 +303,7 @@ fun DetalleMascotaScreen(
                 )
                 AtributoMascotaCard(
                     titulo = "Especie",
-                    valor = mascota.especie.ifBlank { "Canino" },
+                    valor = mascota.especie.ifBlank { "No especificada" },
                     icono = Icons.Outlined.Star,
                     fondoIcono = VerdeClaroIcono,
                     tintIcono = VerdeVetSync,
@@ -313,12 +313,23 @@ fun DetalleMascotaScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            InformacionGeneralSection(
-                propietario = usuario?.nombre ?: "Laura Méndez",
-                telefono = usuario?.telefono?.ifBlank { "+503 6000 1234" } ?: "+503 6000 1234",
-                colorMarcas = mascota.colorMarcas.ifBlank { "Sin especificar" },
-                alergiasObservaciones = mascota.observaciones.ifBlank { "Ninguna registrada" }
-            )
+        InformacionGeneralSection(
+            propietario = usuario
+                ?.nombre
+                ?.takeIf { it.isNotBlank() }
+                ?: "No disponible",
+
+            telefono = usuario
+                ?.telefono
+                ?.takeIf { it.isNotBlank() }
+                ?: "No registrado",
+
+            colorMarcas = mascota.colorMarcas
+                .ifBlank { "Sin especificar" },
+
+            alergiasObservaciones = mascota.observaciones
+                .ifBlank { "Ninguna registrada" }
+        )
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -334,7 +345,7 @@ fun DetalleMascotaScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            PlanPreventivoCard()
+            //PlanPreventivoCard()
 
             Spacer(modifier = Modifier.height(28.dp))
 
@@ -377,7 +388,7 @@ fun DetalleMascotaScreen(
                 },
                 title = { Text(text = "¿Eliminar a ${mascota.nombre}?") },
                 text = {
-                    Text(text = "Esta acción no se puede deshacer. Todos los datos, historial y citas de esta mascota se borrarán permanentemente.")
+                    Text(text = "Esta acción eliminará permanentemente el registro de esta mascota. No podrás deshacerla.")
                 },
                 confirmButton = {
                     TextButton(
@@ -567,11 +578,45 @@ fun DatoGeneralItem(label: String, valor: String) {
 }
 
 @Composable
-fun HistorialMedicoSection(onVerTodoClick: () -> Unit) {
+private fun EstadoModuloVacio(
+    icono: ImageVector,
+    mensaje: String
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 18.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = icono,
+            contentDescription = null,
+            tint = GrisTextoSecundario,
+            modifier = Modifier.size(32.dp)
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Text(
+            text = mensaje,
+            fontSize = 13.sp,
+            color = GrisTextoSecundario,
+            textAlign = TextAlign.Center,
+            lineHeight = 19.sp
+        )
+    }
+}
+
+@Composable
+fun HistorialMedicoSection(
+    onVerTodoClick: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
         border = BorderStroke(1.dp, Color(0xFFEEECE8))
     ) {
         Column(
@@ -584,14 +629,18 @@ fun HistorialMedicoSection(onVerTodoClick: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Icon(
                         imageVector = Icons.Outlined.DateRange,
                         contentDescription = null,
                         tint = VerdeVetSync,
                         modifier = Modifier.size(20.dp)
                     )
+
                     Spacer(modifier = Modifier.width(8.dp))
+
                     Text(
                         text = "Historial médico",
                         fontSize = 16.sp,
@@ -599,33 +648,21 @@ fun HistorialMedicoSection(onVerTodoClick: () -> Unit) {
                         color = Color(0xFF1E221F)
                     )
                 }
+
                 Text(
                     text = "Ver todo",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = VerdeVetSync,
-                    modifier = Modifier.clickable { onVerTodoClick() }
+                    modifier = Modifier.clickable {
+                        onVerTodoClick()
+                    }
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ItemHistorialMedico(
-                dia = "12",
-                mes = "OCT",
-                titulo = "Revisión anual",
-                descripcion = "Examen físico general sin alteraciones. Constantes vitales...",
-                doctor = "Dr. Martínez"
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ItemHistorialMedico(
-                dia = "05",
-                mes = "JUN",
-                titulo = "Consulta dermatológica",
-                descripcion = "Prurito intenso en zona lumbar. Diagnóstico: Dermatitis alérgica...",
-                doctor = "Dra. Gómez"
+            EstadoModuloVacio(
+                icono = Icons.Outlined.DateRange,
+                mensaje = "El historial clínico todavía no está conectado a registros reales."
             )
         }
     }
@@ -698,23 +735,28 @@ fun VacunasSection() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
         border = BorderStroke(1.dp, Color(0xFFEEECE8))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .padding(18.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Icon(
                     imageVector = Icons.Outlined.CheckCircle,
                     contentDescription = null,
                     tint = VerdeVetSync,
                     modifier = Modifier.size(20.dp)
                 )
+
                 Spacer(modifier = Modifier.width(8.dp))
+
                 Text(
                     text = "Vacunas",
                     fontSize = 16.sp,
@@ -723,25 +765,9 @@ fun VacunasSection() {
                 )
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
-
-            ItemVacunaCard(
-                nombre = "Rabia",
-                fecha = "Aplicada: 12/10/2023",
-                estado = "Al día",
-                esAlerta = false
-            )
-            ItemVacunaCard(
-                nombre = "Polivalente (DHPPi)",
-                fecha = "Vence: 15/11/2023",
-                estado = "Próxima a\nvencer",
-                esAlerta = true
-            )
-            ItemVacunaCard(
-                nombre = "Tos de las perreras",
-                fecha = "Aplicada: 05/06/2023",
-                estado = "Al día",
-                esAlerta = false
+            EstadoModuloVacio(
+                icono = Icons.Outlined.CheckCircle,
+                mensaje = "Los registros de vacunación estarán disponibles cuando se implemente este módulo."
             )
         }
     }
@@ -816,21 +842,27 @@ fun ProximasCitasMascotaSection() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = FondoProximasCitas)
+        colors = CardDefaults.cardColors(
+            containerColor = FondoProximasCitas
+        )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Icon(
                     imageVector = Icons.Outlined.DateRange,
                     contentDescription = null,
                     tint = VerdeVetSync,
                     modifier = Modifier.size(20.dp)
                 )
+
                 Spacer(modifier = Modifier.width(8.dp))
+
                 Text(
                     text = "Próximas citas",
                     fontSize = 16.sp,
@@ -839,108 +871,12 @@ fun ProximasCitasMascotaSection() {
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        Column {
-                            Text(
-                                text = "Mañana, 10:00 AM",
-                                fontSize = 11.sp,
-                                color = GrisTextoSecundario
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "Vacunación Polivalente",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1E221F)
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "👤 Dr. Martínez",
-                                fontSize = 11.sp,
-                                color = GrisTextoSecundario
-                            )
-                        }
-
-                        Surface(
-                            color = Color(0xFFF2EFE9),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    text = "NOV",
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = GrisTextoSecundario
-                                )
-                                Text(
-                                    text = "14",
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF1E221F)
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = { },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(38.dp),
-                            shape = RoundedCornerShape(10.dp),
-                            border = BorderStroke(1.dp, Color(0xFFE0DBD4)),
-                            contentPadding = PaddingValues(0.dp)
-                        ) {
-                            Text(
-                                text = "Reprogramar",
-                                fontSize = 12.sp,
-                                color = Color(0xFF2E3330)
-                            )
-                        }
-
-                        Button(
-                            onClick = { },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(38.dp),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = VerdeVetSync),
-                            contentPadding = PaddingValues(0.dp)
-                        ) {
-                            Text(
-                                text = "Confirmar",
-                                fontSize = 12.sp,
-                                color = Color.White
-                            )
-                        }
-                    }
-                }
-            }
+            EstadoModuloVacio(
+                icono = Icons.Outlined.DateRange,
+                mensaje = "Las próximas citas se mostrarán aquí cuando conectemos la agenda con Firestore."
+            )
         }
     }
 }

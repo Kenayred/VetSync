@@ -49,6 +49,7 @@ fun DashboardScreen(
     val usuario = SesionUsuario.usuarioActual
     var listaMascotas by remember { mutableStateOf<List<Mascota>>(emptyList()) }
     var cargandoMascotas by remember { mutableStateOf(true) }
+    var errorCargarMascotas by remember { mutableStateOf(false) }
     var mascotaSeleccionadaId: String by remember { mutableStateOf("") }
 
     Column(
@@ -100,20 +101,27 @@ fun DashboardScreen(
 
         LaunchedEffect(SesionUsuario.idUsuario) {
             cargandoMascotas = true
+            errorCargarMascotas = false
+
             controladorMascota.obtenerMascotasUsuario(
                 idUsuario = SesionUsuario.idUsuario,
                 onSuccess = { mascotas ->
                     listaMascotas = mascotas
-                    if (mascotas.isNotEmpty()
-                        //&& mascotaSeleccionadaId == -1
-                        ) {
-                        mascotaSeleccionadaId = mascotas.first().id
-                    }
+
+                    mascotaSeleccionadaId =
+                        mascotas.firstOrNull()?.id.orEmpty()
+
                     cargandoMascotas = false
                 },
                 onError = { error ->
+                    errorCargarMascotas = true
                     cargandoMascotas = false
-                    Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+
+                    Toast.makeText(
+                        context,
+                        error,
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             )
         }
@@ -133,8 +141,20 @@ fun DashboardScreen(
                 ) {
                     LoadingDots()
                 }
-            } else
-                if (listaMascotas.isEmpty()) {
+            } else if (errorCargarMascotas) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(84.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No se pudieron cargar tus mascotas. Intenta nuevamente.",
+                        fontSize = 13.sp,
+                        color = GrisTextoSecundario
+                    )
+                }
+            } else if (listaMascotas.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -193,7 +213,7 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        CitaPorConfirmarCard()
+
 
         Spacer(modifier = Modifier.height(20.dp))
     }
