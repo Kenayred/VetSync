@@ -51,6 +51,18 @@ class MascotaRepository{
             .addOnFailureListener { e -> onFailure(e) }
     }
 
+    fun editarMascota(
+        mascota: Mascota,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        db.collection("mascotas")
+            .document(mascota.id)
+            .set(mascota)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onFailure(e) }
+    }
+
     fun eliminarMascotaa(
         idMascota: String,
         onSuccess: () -> Unit,

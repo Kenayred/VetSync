@@ -21,11 +21,12 @@ import com.example.vetsync.vista.screens.NotificacionesScreen
 import com.example.vetsync.modelo.Mascota
 import com.example.vetsync.vista.screens.AgendarCitaScreen
 import com.example.vetsync.vista.screens.HistorialClinicoScreen
+import com.example.vetsync.vista.screens.EditarMascotaScreen
 
 sealed class SubPantallaHome {
     object AgregarMascota : SubPantallaHome()
     object EditarPerfil : SubPantallaHome()
-
+    data class EditarMascota(val mascota: Mascota? = null) : SubPantallaHome()
     data class AgendarCita(
         val mascota: Mascota? = null
     ) : SubPantallaHome()
@@ -60,6 +61,26 @@ fun HomeScreen(
                 onCancelarClick = { subPantallaActual = null },
                 onMascotaGuardada = { subPantallaActual =null }
             )
+        }
+        is SubPantallaHome.EditarMascota -> {
+            val usuarioActivo = SesionUsuario.usuarioActual
+
+            // Validamos que haya un usuario activo y que la mascota no venga nula
+            if (usuarioActivo == null || pantalla.mascota == null){
+                subPantallaActual = null
+                if (usuarioActivo == null) {
+                    SesionUsuario.cerrarSesion()
+                    onNavigateToLogin()
+                }
+            } else {
+                EditarMascotaScreen(
+                    mascota = pantalla.mascota,
+                    controlador = com.example.vetsync.controlador.MascotaControlador(),
+                    onBackClick = {subPantallaActual = null},
+                    onCancelarClick = {subPantallaActual = null},
+                    onMascotaEditada = { subPantallaActual = null}
+                )
+            }
         }
         is SubPantallaHome.EditarPerfil -> {
             val usuarioActivo = SesionUsuario.usuarioActual
@@ -150,6 +171,9 @@ fun HomeScreen(
                             },
                             onHistorialClick = { mascota ->
                                 subPantallaActual = SubPantallaHome.HistorialClinico(mascota)
+                            },
+                            onEditarMascotaClick = {
+                                mascota -> subPantallaActual = SubPantallaHome.EditarMascota(mascota)
                             }
                         )
 

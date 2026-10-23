@@ -49,7 +49,8 @@ fun DetalleMascotaScreen(
     onMascotaActualizada: (Mascota) -> Unit = {},
     onAgendarCitaClick: () -> Unit = {},
     onVerHistorialClick: () -> Unit = {},
-    onMascotaEliminada:() -> Unit = {}
+    onMascotaEliminada:() -> Unit = {},
+    onNavigateToEdit:(Mascota) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -318,18 +319,34 @@ fun DetalleMascotaScreen(
                 ?.nombre
                 ?.takeIf { it.isNotBlank() }
                 ?: "No disponible",
-
             telefono = usuario
                 ?.telefono
                 ?.takeIf { it.isNotBlank() }
                 ?: "No registrado",
-
-            colorMarcas = mascota.colorMarcas
-                .ifBlank { "Sin especificar" },
-
-            alergiasObservaciones = mascota.observaciones
-                .ifBlank { "Ninguna registrada" }
+            colorMarcas = mascota.colorMarcas.ifBlank { "Sin especificar" },
+            alergiasObservaciones = mascota.observaciones.ifBlank { "Ninguna registrada" },
+            fechaNacimiento = mascota.fechaNacimiento.ifBlank {"No disponible"}
         )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Button(
+                onClick = { onNavigateToEdit(mascota) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = VerdeVetSync),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Editar mascota",
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Editar Información", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -521,7 +538,8 @@ fun InformacionGeneralSection(
     propietario: String,
     telefono: String,
     colorMarcas: String,
-    alergiasObservaciones: String
+    alergiasObservaciones: String,
+    fechaNacimiento: String
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -551,10 +569,11 @@ fun InformacionGeneralSection(
                 )
             }
 
-            DatoGeneralItem(label = "Propietario", valor = propietario)
+            //DatoGeneralItem(label = "Propietario", valor = propietario)
             DatoGeneralItem(label = "Teléfono", valor = telefono)
             DatoGeneralItem(label = "Color / Marcas", valor = colorMarcas)
             DatoGeneralItem(label = "Alergias / Observaciones", valor = alergiasObservaciones)
+            DatoGeneralItem(label = "Fecha Nacimiento", valor = fechaNacimiento)
         }
     }
 }

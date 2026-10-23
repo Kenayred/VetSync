@@ -377,6 +377,7 @@ fun AgendarCitaScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .background(FondoCrema)
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
