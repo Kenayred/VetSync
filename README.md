@@ -44,9 +44,9 @@ Desarrollar VetSync como una solución digital para apoyar la gestión de pacien
 
 ---
 
-# 🧩 Funcionalidades actuales
+# Funcionalidades anteriores
 
-La implementación actual de la **Etapa 2** se encuentra desarrollada en Kotlin modo consola.
+La implementación anterior de la **Etapa 2** se encuentra desarrollada en Kotlin modo consola.
 
 ### 👤 Gestión de usuarios
 
@@ -109,3 +109,40 @@ PENDIENTE
 CONFIRMADA
 COMPLETADA
 CANCELADA
+```
+
+# Funcionalidades Actuales
+
+La implementación de la **Etapa 3** marca la transición del sistema hacia una aplicación móvil nativa para Android, desarrollando la interfaz gráfica (UI) de forma declarativa utilizando **Jetpack Compose**. 
+
+A continuación se detallan los módulos y pantallas desarrolladas para esta etapa:
+
+### 📱 Navegación Principal e Interfaz
+- Estructuración de la navegación mediante una barra inferior (*BottomBar*).
+- Acceso directo a las vistas principales de la aplicación: Inicio, Mis Mascotas, Citas, Notificaciones y Perfil.
+
+### 👤 Módulo de Usuario y Autenticación
+- **Registro e Inicio de sesión:** Pantallas de *login* y registro para clientes.
+- **Gestión del Perfil:** 
+  - Pantalla para visualizar toda la información personal del usuario.
+  - Pantalla de formulario para editar y actualizar los datos del usuario.
+  - Opción de cierre de sesión segura (por reglas de negocio actuales, no se permite la eliminación de la cuenta).
+
+### 🐶 Módulo de Mascotas (UI)
+- **Listado interactivo:** Pantalla que muestra todas las mascotas registradas por el usuario autenticado.
+- **Vista de detalles:** Pantalla específica para observar la información completa y detallada de una mascota seleccionada.
+- **Edición de información:** Formulario integrado (accesible desde el detalle) para actualizar los datos de la mascota (nombre, raza, peso, fechas, etc.).
+
+### 📅 Módulo de Agendamiento y Gestión de Citas
+- **Flujo guiado para nueva cita:**
+  1. Selección de la mascota a atender.
+  2. Selección del servicio veterinario a realizar.
+  3. Selección de fecha y hora, integrando un motor de validación que filtra y muestra **únicamente los horarios disponibles** para evitar traslapes.
+  4. Pantalla de confirmación para revisar el resumen de la reserva antes de enviarla.
+- **Administración de citas del cliente:**
+  - Pantalla dedicada para listar el historial de citas asociadas al usuario.
+  - Vista de detalles de la cita.
+  - Funcionalidad para **reprogramar citas**.
+
+### 🔔 Notificaciones
+- Pantalla dedicada a la bandeja de notificaciones para mantener al cliente informado sobre actualizaciones de la clínica o cambios en el estado de sus servicios.
