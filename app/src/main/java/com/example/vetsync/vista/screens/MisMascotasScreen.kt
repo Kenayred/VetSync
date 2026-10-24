@@ -38,7 +38,8 @@ fun MisMascotasScreen(
     controladorMascota: MascotaControlador = remember { MascotaControlador() },
     onAgregarMascotaClick: () -> Unit = {},
     onAgendarCitaClick: (Mascota) -> Unit = {},
-    onHistorialClick: (Mascota?) -> Unit = {}
+    onHistorialClick: (Mascota?) -> Unit = {},
+    onEditarMascotaClick: (Mascota?) -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -89,6 +90,9 @@ fun MisMascotasScreen(
             },
             onVerHistorialClick = {
                 onHistorialClick(mascotaSeleccionada)
+            },
+            onNavigateToEdit = {
+                onEditarMascotaClick(mascotaSeleccionada)
             }
         )
     } else {

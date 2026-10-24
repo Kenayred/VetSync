@@ -155,6 +155,37 @@ class MascotaControlador {
         )
     }
 
+    fun editarMascota(
+        mascota: Mascota,
+        onSuccess: (Mascota) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        if (mascota.nombre.isBlank()) {
+            onError("El nombre de la mascota es obligatorio.")
+            return
+        }
+
+        if (mascota.especie.isBlank() || mascota.especie == "Seleccione el tipo") {
+            onError("Debes seleccionar una especie o tipo válido.")
+            return
+        }
+
+        if (mascota.peso < 0.0) {
+            onError("El peso no puede ser negativo.")
+            return
+        }
+
+        dbManager.editarMascota(
+            mascota = mascota,
+            onSuccess = {
+                onSuccess(mascota)
+            },
+            onFailure = { excepcion ->
+                onError(excepcion.message ?: "Error desconocido al actualizar la mascota.")
+            }
+        )
+    }
+
     fun eliminarMascota(
         mascotaId: String,
         onSuccess: () -> Unit,
