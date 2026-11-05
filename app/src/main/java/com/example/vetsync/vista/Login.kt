@@ -28,12 +28,15 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.example.vetsync.R
+import com.example.vetsync.modelo.RolUsuario
+import android.util.Log
 
 @Composable
 fun LoginScreen(
     controlador: UsuarioControlador = remember { UsuarioControlador() },
     onNavigateToRegister: () -> Unit = {},
-    onLoginSuccess: () -> Unit = {}
+    onLoginSuccess: () -> Unit = {},
+    onNavigateToAdmin: () -> Unit ={}
 ) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -67,8 +70,12 @@ fun LoginScreen(
                         idToken = token,
                         onSuccess = { usuarioEncontrado ->
                             isLoading = false
-
-                            onLoginSuccess()
+                            Log.e("PRUEBA ROL", "El rol es ${usuarioEncontrado.rol}")
+                            if(usuarioEncontrado.rol == RolUsuario.ADMINISTRADOR){
+                                onNavigateToAdmin()
+                            } else {
+                                onLoginSuccess()
+                            }
 
                             Toast.makeText(
                                 context,
@@ -189,8 +196,12 @@ fun LoginScreen(
                         isLoading = false
 
                         SesionUsuario.iniciarSesion(usuarioEncontrado)
-                        onLoginSuccess()
 
+                        if(usuarioEncontrado.rol == RolUsuario.ADMINISTRADOR){
+                            onNavigateToAdmin()
+                        } else {
+                            onLoginSuccess()
+                        }
                         Toast.makeText(
                             context,
                             "¡Ha iniciado sesión!",

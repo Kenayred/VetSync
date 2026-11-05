@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.example.vetsync.vista.theme.*
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.Image
+import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.runtime.remember
 import androidx.compose.ui.layout.ContentScale
 import com.example.vetsync.modelo.ImagenUtils
@@ -117,6 +118,90 @@ fun HomeTopBar(
 }
 
 @Composable
+fun AdminHomeTopBar(
+    mostrarFotoPerfil: Boolean = true,
+    onNotificationsClick: () -> Unit = {}
+) {
+
+    val usuario = SesionUsuario.usuarioActual
+    val fotoUrl = usuario?.fotoUrl ?: ""
+
+    val bitmapPerfil = remember(fotoUrl) {
+        if (fotoUrl.isNotEmpty()) ImagenUtils.base64ABitmap(fotoUrl) else null
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if(mostrarFotoPerfil){
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(VerdeClaroIcono)
+                        .border(1.dp, VerdeVetSync.copy(alpha = 0.4f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    if (bitmapPerfil != null) {
+                        Image(
+                            bitmap = bitmapPerfil,
+                            contentDescription = "Foto de perfil",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Perfil",
+                            tint = VerdeVetSync,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
+                }
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(
+                text = "VetSync",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = VerdeVetSync
+            )
+        }
+
+        IconButton(
+            onClick = onNotificationsClick
+        ) {
+            Box(
+                contentAlignment = Alignment.TopEnd
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Notifications,
+                    contentDescription = "Abrir notificaciones",
+                    tint = Color(0xFF2B2B2B),
+                    modifier = Modifier.size(26.dp)
+                )
+
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .offset(x = 2.dp, y = (-1).dp)
+                        .clip(CircleShape)
+                        .background(RojoAlerta)
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun HomeBottomNavigationBar(
     selectedTab: Int,
     onTabSelected: (Int) -> Unit
@@ -154,6 +239,57 @@ fun HomeBottomNavigationBar(
             BottomNavItem(
                 label = "Notificaciones",
                 icon = Icons.Outlined.Notifications,
+                selected = selectedTab == 3,
+                onClick = { onTabSelected(3) }
+            )
+            BottomNavItem(
+                label = "Perfil",
+                icon = Icons.Outlined.Person,
+                selected = selectedTab == 4,
+                onClick = { onTabSelected(4) }
+            )
+        }
+    }
+}
+
+@Composable
+fun AdminHomeBottomNavigationBar(
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit
+) {
+    Surface(
+        color = Color(0xFFF4EFEA),
+        tonalElevation = 4.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp, horizontal = 8.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BottomNavItem(
+                label = "Inicio",
+                icon = Icons.Default.Dashboard,
+                selected = selectedTab == 0,
+                onClick = { onTabSelected(0) }
+            )
+            BottomNavItem(
+                label = "Citas",
+                icon = Icons.Outlined.CalendarToday,
+                selected = selectedTab == 1,
+                onClick = { onTabSelected(1) }
+            )
+            BottomNavItem(
+                label = "Pacientes",
+                icon = Icons.Outlined.Pets,
+                selected = selectedTab == 2,
+                hasBadge = true,
+                onClick = { onTabSelected(2) }
+            )
+            BottomNavItem(
+                label = "Reportes",
+                icon = Icons.Outlined.Analytics,
                 selected = selectedTab == 3,
                 onClick = { onTabSelected(3) }
             )

@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import kotlinx.coroutines.delay
 import com.example.vetsync.vista.HomeScreen
 import com.example.vetsync.vista.LoginScreen
+import com.example.vetsync.vista.AdminHomeScreen
 import com.example.vetsync.vista.RegisterScreen
 import com.example.vetsync.vista.screens.LoadingScreen
 import androidx.activity.SystemBarStyle
@@ -59,6 +60,10 @@ class MainActivity : ComponentActivity() {
                                 onLoginSuccess = {
                                     pantallaActual = "home"
                                     isLoading = true
+                                },
+                                onNavigateToAdmin = {
+                                    pantallaActual = "adminHome"
+                                    isLoading = true
                                 }
                             )
                         }
@@ -72,6 +77,14 @@ class MainActivity : ComponentActivity() {
                         }
                         "home" -> {
                             HomeScreen(
+                                onNavigateToLogin = {
+                                    pantallaActual = "login"
+                                    isLoading = true
+                                }
+                            )
+                        }
+                        "adminHome" -> {
+                            AdminHomeScreen(
                                 onNavigateToLogin = {
                                     pantallaActual = "login"
                                     isLoading = true
