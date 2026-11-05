@@ -1,0 +1,33 @@
+name: Android CI (VetSync)
+
+on:
+  push:
+    branches: [ "main", "feature/**" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Descargar el código
+      uses: actions/checkout@v4
+
+    - name: Configurar Java JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Dar permisos de ejecución a Gradle
+      run: chmod +x gradlew
+
+    - name: Crear google-services.json
+      env:
+        GOOGLE_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+      run: echo "$GOOGLE_JSON" > app/google-services.json
+
+    - name: Compilar la aplicación (Build Debug)
+      run: ./gradlew assembleDebug
