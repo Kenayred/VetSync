@@ -17,6 +17,10 @@ import com.example.vetsync.modelo.Usuario
 import com.example.vetsync.vista.screens.CitasScreen
 import com.example.vetsync.vista.screens.NotificacionesScreen
 import com.example.vetsync.modelo.Mascota
+import com.example.vetsync.vista.screens.AdminCitasScreen
+import com.example.vetsync.vista.screens.AdminPacientesScreen
+import com.example.vetsync.vista.screens.AdminPerfilScreen
+import com.example.vetsync.vista.screens.AdminReportesScreen
 
 
 sealed class SubPantallaAdminHome {
@@ -43,7 +47,6 @@ fun AdminHomeScreen(
 
     when (val pantalla = subPantallaActual) {
 
-
         null -> {
             Scaffold(
                 containerColor = FondoCrema,
@@ -69,29 +72,18 @@ fun AdminHomeScreen(
                 ) {
 
                     when (selectedTab) {
-                        0 -> AdminDashboardScreen(
-
-
-                        )
-                        1 -> MisMascotasScreen(
-                            onAgregarMascotaClick = {
-                                subPantallaActual = SubPantallaAdminHome.AgregarMascota
-                            },
-
-                        )
-
-                        2 -> {
-
+                        0 -> AdminDashboardScreen()
+                        1 ->{
+                            AdminCitasScreen()
                         }
-
+                        2 -> {
+                            AdminPacientesScreen()
+                        }
                         3 -> {
-                            NotificacionesScreen()
+                            AdminReportesScreen()
                         }
                         4 ->  {
-                            // Validamos que el usuario no sea nulo
-                            val usuarioActivo = SesionUsuario.usuarioActual ?: Usuario()
-
-
+                            AdminPerfilScreen()
                         }
                     }
                 }
