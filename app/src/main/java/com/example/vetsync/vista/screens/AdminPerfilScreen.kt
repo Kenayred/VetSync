@@ -55,22 +55,18 @@ fun AdminPerfilScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 1. Tarjeta Principal del Perfil
         PerfilHeaderCard()
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 2. Tarjeta: Información de la Clínica
         InfoClinicaCard()
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 3. Tarjeta: Preferencias
         PreferenciasAdminCard()
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 4. Tarjeta: Seguridad y Cerrar Sesión
         SeguridadAdminCard(onLogoutClick = onLogoutClick)
 
         Spacer(modifier = Modifier.height(80.dp)) // Espacio para el BottomBar

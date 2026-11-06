@@ -28,3 +28,17 @@ data class Cita(
     // Fecha de creación expresada en milisegundos.
     val fechaCreacion: Long = 0L
 )
+
+data class ResumenCitas(
+    val total: Int = 0,
+    val pendientes: Int = 0,
+    val confirmadas: Int = 0,
+    val completadas: Int = 0,
+    val canceladas: Int = 0
+)
+
+data class CitaConMascota(
+    val cita: Cita,
+    val raza: String,
+    val edad: String
+)

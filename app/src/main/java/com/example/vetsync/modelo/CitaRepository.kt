@@ -3,6 +3,7 @@ package com.example.vetsync.modelo
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 
+
 class CitaRepository {
 
     private val db = FirebaseFirestore.getInstance()
@@ -77,6 +78,54 @@ class CitaRepository {
             }
             .addOnFailureListener { error ->
                 onFailure(error)
+            }
+    }
+
+    fun obtenerResumenCitasDiaAdmin(
+        fechaActual: String,
+        onSuccess: (ResumenCitas) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        if (fechaActual.isBlank()) {
+            onSuccess(ResumenCitas())
+            return
+        }
+
+        db.collection(coleccionCitas)
+            .whereEqualTo("fecha", fechaActual)
+            .get()
+            .addOnSuccessListener { snapshots ->
+                var pendientes = 0
+                var confirmadas = 0
+                var completadas = 0
+                var canceladas = 0
+
+                // Convertimos los documentos de Firebase directamente a tu modelo Cita
+                val listaCitas = snapshots.toObjects(Cita::class.java)
+
+                // Clasificamos cada cita según su estado
+                for (cita in listaCitas) {
+                    when (cita.estado) {
+                        EstadoCita.PENDIENTE -> pendientes++
+                        EstadoCita.CONFIRMADA -> confirmadas++
+                        EstadoCita.COMPLETADA -> completadas++
+                        EstadoCita.CANCELADA -> canceladas++
+                    }
+                }
+
+                // Empaquetamos los resultados
+                val resumen = ResumenCitas(
+                    total = listaCitas.size,
+                    pendientes = pendientes,
+                    confirmadas = confirmadas,
+                    completadas = completadas,
+                    canceladas = canceladas
+                )
+
+                onSuccess(resumen)
+            }
+            .addOnFailureListener { excepcion ->
+                onFailure(excepcion)
             }
     }
 
@@ -299,4 +348,50 @@ class CitaRepository {
             fechaCreacion = document.getLong("fechaCreacion") ?: 0L
         )
     }
+
+    fun obtenerProximosPacientes(
+        fechaActual: String,
+        onSuccess: (List<CitaConMascota>) -> Unit,
+        onFailure: (Exception)->Unit
+    ){
+        db.collection(coleccionCitas)
+            .whereEqualTo("fecha", fechaActual)
+            .whereEqualTo("estado", EstadoCita.CONFIRMADA.name)
+            .get()
+            .addOnSuccessListener{snapshots ->
+                val citas = snapshots.toObjects(Cita::class.java)
+
+                val citasOrdenadas = citas.sortedBy{it.hora}
+                if(citasOrdenadas.isEmpty()){
+                    onSuccess(emptyList())
+                    return@addOnSuccessListener
+                }
+
+                val listaFinal = mutableListOf<CitaConMascota>()
+                var consultasCompletadas = 0
+
+                citasOrdenadas.forEach { cita ->
+                    db.collection("mascotas").document(cita.mascotaId).get()
+                        .addOnSuccessListener { mascota ->
+                            val raza = mascota.getString("raza") ?: "N/D"
+                            val edad = mascota.getString("edad") ?: "N/D"
+
+                            listaFinal.add(CitaConMascota(cita,raza,edad))
+                            consultasCompletadas++
+
+                            if(consultasCompletadas == citasOrdenadas.size)
+                                onSuccess(listaFinal.sortedBy{it.cita.hora})
+                        }
+                        .addOnFailureListener {
+                            listaFinal.add(CitaConMascota(cita,"N/D",""))
+                            consultasCompletadas++
+                            if(consultasCompletadas == citasOrdenadas.size){
+                                onSuccess(listaFinal.sortedBy {it.cita.hora})
+                            }
+                        }
+                }
+            }
+            .addOnFailureListener { onFailure(it) }
+    }
+
 }

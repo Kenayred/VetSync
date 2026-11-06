@@ -1,5 +1,6 @@
 package com.example.vetsync.vista.screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,6 +15,11 @@ import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,19 +31,42 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.vetsync.R // Asegúrate de ajustar este import a tu proyecto
+import com.example.vetsync.R
+import com.example.vetsync.vista.theme.*
+import com.example.vetsync.controlador.CitaControlador
+import com.example.vetsync.modelo.CitaConMascota
+import com.example.vetsync.modelo.ResumenCitas
 
 @Composable
 fun AdminDashboardScreen(
+    controladorCita: CitaControlador = remember { CitaControlador() },
     modifier: Modifier = Modifier
 ) {
-    // Color de fondo general extraído del diseño
-    val backgroundColor = Color(0xFFFDFCF9)
+
+    var resumenCitas by remember { mutableStateOf(ResumenCitas()) }
+    var proximosPacientes by remember { mutableStateOf<List<CitaConMascota>>(emptyList())}
+    LaunchedEffect(Unit) {
+        controladorCita.obtenerResumenCitasDiaAdmin(
+            onSuccess = { resumen ->
+                resumenCitas = resumen
+            },
+            onFailure = { error ->
+                Log.e("Firebase", "Error al traer citas: ${error.message}")
+            }
+        )
+
+        controladorCita.obtenerProximosPacientes(
+            onSuccess = { lista -> proximosPacientes = lista},
+            onFailure = {error ->
+                Log.e("ERROR: Proximos Pacientes", "${error.message}")
+            }
+        )
+    }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(backgroundColor)
+            .background(FondoCrema)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
@@ -45,7 +74,7 @@ fun AdminDashboardScreen(
             text = "Resumen del Día",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1A1A1A)
+            color = TextoOscuro
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -53,10 +82,10 @@ fun AdminDashboardScreen(
         // Tarjeta: Citas Totales
         DashboardKpiCard(
             title = "Citas Totales",
-            value = "24",
+            value = resumenCitas.total.toString(),
             icon = Icons.Default.DateRange,
-            iconBgColor = Color(0xFFE2EFE7),
-            iconTintColor = Color(0xFF4A7D5E),
+            iconBgColor = FondoClaro,
+            iconTintColor = VerdeFondoIcono,
             extraRightText = "Hoy",
             trendText = "~12%"
         )
@@ -68,8 +97,8 @@ fun AdminDashboardScreen(
             title = "Ingresos Estimados",
             value = "$1,250",
             icon = Icons.Outlined.AccountBalanceWallet,
-            iconBgColor = Color(0xFFEBCBB9),
-            iconTintColor = Color(0xFF915133)
+            iconBgColor = NaranjaSuaveIcono,
+            iconTintColor = NaranjaIcono
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -100,21 +129,21 @@ fun AdminDashboardScreen(
         ) {
             EstadoCitaMiniCard(
                 modifier = Modifier.weight(1f),
-                numero = "12",
+                numero = resumenCitas.completadas.toString(),
                 estado = "Completadas",
                 numeroColor = Color(0xFF2E5B4B),
                 bgColor = Color(0xFFF5EFEB)
             )
             EstadoCitaMiniCard(
                 modifier = Modifier.weight(1f),
-                numero = "8",
+                numero = resumenCitas.pendientes.toString(),
                 estado = "Pendientes",
                 numeroColor = Color(0xFFB57B22),
                 bgColor = Color(0xFFFDF8EA)
             )
             EstadoCitaMiniCard(
                 modifier = Modifier.weight(1f),
-                numero = "4",
+                numero = resumenCitas.confirmadas.toString(),
                 estado = "Confirmadas",
                 numeroColor = Color(0xFF333333),
                 bgColor = Color(0xFFF5EFEB)
@@ -132,31 +161,38 @@ fun AdminDashboardScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        PacienteCard(
-            nombre = "Max",
-            razaEdad = "Golden Retriever • 2 años",
-            estado = "Pendiente",
-            estadoBgColor = Color(0xFFFDF0D5),
-            estadoTextColor = Color(0xFFB57B22),
-            hora = "10:30 AM",
-            tipoConsulta = "Consulta General",
-            descripcion = "Revisión anual y aplicación de vacunas múltiples. Presenta leve picor en oreja izquierda."
-        )
+        if(proximosPacientes.isEmpty()){
+            Text("No hay citas confirmadas para hoy", color = TextoOscuro)
+        } else {
+            proximosPacientes.forEach { mascota ->
 
-        Spacer(modifier = Modifier.height(12.dp))
+                PacienteCard(
+                    nombre = mascota.cita.nombreMascota,
+                    razaEdad = "${mascota.raza} • ${mascota.edad}",
+                    estado = mascota.cita.estado.etiqueta,
+                    estadoBgColor = Color(0xFFFDF0D5),
+                    estadoTextColor = Color(0xFFB57B22),
+                    hora = mascota.cita.hora,
+                    tipoConsulta = mascota.cita.nombreServicio,
+                    descripcion = mascota.cita.motivo
+                )
 
-        PacienteCard(
-            nombre = "Luna",
-            razaEdad = "Siamés • 4 años",
-            estado = "Confirmada",
-            estadoBgColor = Color(0xFFD5E8D4), // Verde claro
-            estadoTextColor = Color(0xFF2E5B4B),
-            hora = "11:15 AM",
-            tipoConsulta = "Seguimiento",
-            descripcion = "Revisión de suturas post-operación de esterilización. Estado general favorable."
-        )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
 
-        Spacer(modifier = Modifier.height(80.dp)) // Espacio para que el BottomBar no tape el último elemento
+//        PacienteCard(
+//            nombre = "Luna",
+//            razaEdad = "Siamés • 4 años",
+//            estado = "Confirmada",
+//            estadoBgColor = Color(0xFFD5E8D4), // Verde claro
+//            estadoTextColor = Color(0xFF2E5B4B),
+//            hora = "11:15 AM",
+//            tipoConsulta = "Seguimiento",
+//            descripcion = "Revisión de suturas post-operación de esterilización. Estado general favorable."
+//        )
+//
+//        Spacer(modifier = Modifier.height(80.dp)) // Espacio para que el BottomBar no tape el último elemento
     }
 }
 
