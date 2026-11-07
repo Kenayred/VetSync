@@ -46,3 +46,8 @@ data class Mascota(
 //        )
     }
 }
+
+data class MascotaConDueno (
+    val mascota: Mascota,
+    val nombreDueno: String
+)

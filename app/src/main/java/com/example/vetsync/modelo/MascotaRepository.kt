@@ -73,4 +73,69 @@ class MascotaRepository{
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> onFailure(e) }
     }
+
+    fun obtenerMascotasAdmin(
+        onSuccess: (List<MascotaConDueno>) -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        db.collection("mascotas").get()
+            .addOnSuccessListener { snap ->
+                val mascotas = snap.toObjects(Mascota::class.java)
+                Log.e("PRUEBA_MASCOTAS", "Repositorio: Descargadas ${mascotas.size} mascotas brutas") // LOG 2
+
+                if (mascotas.isEmpty()) {
+                    onSuccess(emptyList())
+                    return@addOnSuccessListener
+                }
+
+                val listaFinal = mutableListOf<MascotaConDueno>()
+                var consultasCompletadas = 0 // Nuestro contador maestro
+
+                mascotas.forEachIndexed { index, items ->
+                    val numero = index + 1
+                    Log.e("PRUEBA_MASCOTAS", "Evaluando mascota $numero: ${items.nombre} | ID Dueño: '${items.idDueno}'")
+
+                    // 1. Limpiamos el ID por si se guardó con espacios accidentales
+                    val idLimpio = items.idDueno.trim()
+
+                    if (idLimpio.isNotBlank()) {
+                        db.collection("usuarios")
+                            .document(idLimpio)
+                            .get()
+                            .addOnSuccessListener { dueno ->
+                                val nombreDueno = dueno.getString("nombre") ?: "N/D"
+                                listaFinal.add(MascotaConDueno(items, nombreDueno))
+
+                                consultasCompletadas++
+                                Log.e("PRUEBA_MASCOTAS", "Éxito mascota $numero. Completadas: $consultasCompletadas/9")
+
+                                if (consultasCompletadas == mascotas.size) {
+                                    Log.e("PRUEBA_MASCOTAS", "¡Terminó el ciclo! Enviando a la vista...")
+                                    onSuccess(listaFinal)
+                                }
+                            }
+                            .addOnFailureListener { error ->
+                                Log.e("PRUEBA_MASCOTAS", "Fallo mascota $numero: ${error.message}")
+                                listaFinal.add(MascotaConDueno(items, "Error al cargar"))
+
+                                consultasCompletadas++
+                                if (consultasCompletadas == mascotas.size) {
+                                    onSuccess(listaFinal)
+                                }
+                            }
+                    } else {
+                        Log.e("PRUEBA_MASCOTAS", "Mascota $numero sin ID de dueño válido.")
+                        listaFinal.add(MascotaConDueno(items, "Sin dueño asignado"))
+
+                        consultasCompletadas++
+                        if (consultasCompletadas == mascotas.size) {
+                            Log.e("PRUEBA_MASCOTAS", "¡Terminó el ciclo (con vacíos)! Enviando...")
+                            onSuccess(listaFinal)
+                        }
+                    }
+                }
+            }
+            .addOnFailureListener { onError(it) }
+    }
+
 }
