@@ -19,12 +19,24 @@ import androidx.compose.ui.unit.sp
 import com.example.vetsync.vista.theme.*
 import com.example.vetsync.controlador.UsuarioControlador
 import com.example.vetsync.modelo.SesionUsuario
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.example.vetsync.R
+import com.example.vetsync.modelo.RolUsuario
+import android.util.Log
 
 @Composable
 fun LoginScreen(
     controlador: UsuarioControlador = remember { UsuarioControlador() },
     onNavigateToRegister: () -> Unit = {},
-    onLoginSuccess: () -> Unit = {}
+    onLoginSuccess: () -> Unit = {},
+    onNavigateToAdmin: () -> Unit ={}
 ) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -32,6 +44,58 @@ fun LoginScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMensaje by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
+
+    //INICIALIZACION DE LAUNCHER GOOGLE
+
+    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+        .requestIdToken(context.getString(R.string.default_web_client_id))
+        .requestEmail()
+        .build()
+
+    val googleSignInClient = remember { GoogleSignIn.getClient(context, gso) }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                account.idToken?.let { token ->
+
+                    isLoading = true
+                    errorMensaje = null
+
+                    controlador.iniciarSesionConGoogle(
+                        idToken = token,
+                        onSuccess = { usuarioEncontrado ->
+                            isLoading = false
+                            Log.e("PRUEBA ROL", "El rol es ${usuarioEncontrado.rol}")
+                            if(usuarioEncontrado.rol == RolUsuario.ADMINISTRADOR){
+                                onNavigateToAdmin()
+                            } else {
+                                onLoginSuccess()
+                            }
+
+                            Toast.makeText(
+                                context,
+                                "¡Ha iniciado sesión con Google!",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        },
+                        onError = { mensajeError ->
+                            isLoading = false
+                            errorMensaje = mensajeError
+                        }
+                    )
+                }
+            } catch (e: ApiException) {
+                isLoading = false
+                // Si el usuario cierra la ventanita de Google antes de elegir cuenta,
+                // caerá aquí. Puedes dejar el errorMensaje null o poner un aviso.
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -125,15 +189,19 @@ fun LoginScreen(
                 isLoading = true
 
                 controlador.iniciarSesion(
-                    username = username.trim(),
+                    correo = username.trim(),
                     password = password,
 
                     onSuccess = { usuarioEncontrado ->
                         isLoading = false
 
                         SesionUsuario.iniciarSesion(usuarioEncontrado)
-                        onLoginSuccess()
 
+                        if(usuarioEncontrado.rol == RolUsuario.ADMINISTRADOR){
+                            onNavigateToAdmin()
+                        } else {
+                            onLoginSuccess()
+                        }
                         Toast.makeText(
                             context,
                             "¡Ha iniciado sesión!",
@@ -167,6 +235,47 @@ fun LoginScreen(
                     fontSize = 16.sp
                 )
             }
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Divider(modifier = Modifier.weight(1f), color = Color.Gray, thickness = 1.dp)
+            Text(
+                text = "O iniciar sesión con",
+                modifier = Modifier.padding(horizontal = 8.dp),
+                color = Color.Gray
+            )
+            Divider(modifier = Modifier.weight(1f), color = Color.Gray, thickness = 1.dp)
+        }
+
+        Button(
+            onClick = { launcher.launch(googleSignInClient.signInIntent) },
+            enabled = !isLoading,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.White
+            ),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray)
+        ){
+            Icon(
+                painter = androidx.compose.ui.res.painterResource(id = R.drawable.ic_google),
+                contentDescription = "Logo de Google",
+                modifier = Modifier.size(24.dp),
+                tint = Color.Unspecified
+            )
+            Text(
+                text = "\tGoogle",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))

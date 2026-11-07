@@ -1,9 +1,11 @@
 package com.example.vetsync.controlador
 
 import com.example.vetsync.modelo.Cita
+import com.example.vetsync.modelo.CitaConMascota
 import com.example.vetsync.modelo.CitaRepository
 import com.example.vetsync.modelo.EstadoCita
 import com.example.vetsync.modelo.MascotaRepository
+import com.example.vetsync.modelo.ResumenCitas
 import com.example.vetsync.modelo.Servicio
 import com.example.vetsync.modelo.ServicioRepository
 import com.example.vetsync.modelo.SesionUsuario
@@ -582,5 +584,31 @@ class CitaControlador {
         }
 
         return null
+    }
+
+    fun obtenerResumenCitasDiaAdmin(
+        onSuccess: (ResumenCitas) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        // Obtenemos la fecha en formato YYYY-MM-DD
+        val fechaActual: String = LocalDate.now().toString()
+
+        citaRepository.obtenerResumenCitasDiaAdmin(
+            fechaActual = fechaActual,
+            onSuccess = onSuccess,
+            onFailure = onFailure
+        )
+    }
+
+    fun obtenerProximosPacientes(
+        onSuccess: (List<CitaConMascota>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val fechaActual: String = LocalDate.now().toString()
+        citaRepository.obtenerProximosPacientes(
+            fechaActual = fechaActual,
+            onSuccess = onSuccess,
+            onFailure = onFailure
+        )
     }
 }

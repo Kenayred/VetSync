@@ -5,12 +5,16 @@ import com.example.vetsync.modelo.UsuarioRepository
 import com.example.vetsync.modelo.Usuario
 import com.example.vetsync.modelo.RolUsuario
 import com.example.vetsync.modelo.SesionUsuario
+import com.google.firebase.Firebase
 import java.util.UUID
 import org.mindrot.jbcrypt.BCrypt
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 
 class UsuarioControlador {
 
     private val dbManager = UsuarioRepository()
+    private val auth = FirebaseAuth.getInstance()
 
     fun registrarUsuario(
         username: String,
@@ -29,111 +33,163 @@ class UsuarioControlador {
         val correoLimpio = correo.trim()
         val telefonoLimpio = telefono.trim()
 
-        // 1. Validar campos obligatorios.
-        if (
-            usernameLimpio.isBlank() ||
-            nombreLimpio.isBlank() ||
-            correoLimpio.isBlank() ||
-            contrasena.isBlank()
-        ) {
+        if (usernameLimpio.isBlank() || nombreLimpio.isBlank() || correoLimpio.isBlank() || contrasena.isBlank()) {
             onError("Por favor, completa todos los campos obligatorios.")
             return
         }
-
-        // 2. Validar longitud del nombre.
         if (nombreLimpio.length < 3) {
             onError("El nombre completo debe tener al menos 3 caracteres.")
             return
         }
-
-        // 3. Validar formato del nombre de usuario.
         val formatoUsername = Regex("^[\\p{L}\\p{N}._-]{3,20}$")
-
         if (!formatoUsername.matches(usernameLimpio)) {
-            onError(
-                "El nombre de usuario debe tener entre 3 y 20 caracteres " +
-                        "y solo puede incluir letras, números, puntos, guiones " +
-                        "o guiones bajos."
-            )
+            onError("El nombre de usuario debe tener entre 3 y 20 caracteres y solo puede incluir letras, números, puntos, guiones o guiones bajos.")
             return
         }
-
-        // 4. Validar el correo.
         if (!Patterns.EMAIL_ADDRESS.matcher(correoLimpio).matches()) {
             onError("Ingresa un correo electrónico válido.")
             return
         }
-
-        // 5. Validar contraseña.
         if (contrasena.length < 6) {
             onError("La contraseña debe tener al menos 6 caracteres.")
             return
         }
-
-        // 6. Comprobar que las contraseñas coincidan.
         if (contrasena != confirmarContrasena) {
             onError("Las contraseñas no coinciden.")
             return
         }
-
-        // 7. Comprobar aceptación de términos.
         if (!terminosAceptados) {
             onError("Debes aceptar los términos y condiciones.")
             return
         }
 
-        // 8. Comprobar que el correo esté disponible.
         dbManager.verificarCorreoExistente(
             correo = correoLimpio,
             onDisponible = {
-
-                // 9. Comprobar que el nombre de usuario esté disponible.
                 dbManager.verificarUsernameExistente(
                     username = usernameLimpio,
                     onDisponible = {
 
-                        val nuevoId = UUID.randomUUID().toString()
-                        val contrasenaHasheada =
-                            BCrypt.hashpw(contrasena, BCrypt.gensalt())
+                        auth.createUserWithEmailAndPassword(correoLimpio, contrasena)
+                            .addOnSuccessListener { authResult ->
+                                val firebaseUser = authResult.user
+                                if (firebaseUser != null) {
 
-                        val nuevoUsuario = Usuario(
-                            id = nuevoId,
-                            username = usernameLimpio,
-                            contrasena = contrasenaHasheada,
-                            nombre = nombreLimpio,
-                            correo = correoLimpio,
-                            telefono = telefonoLimpio,
-                            rol = RolUsuario.CLIENTE,
-                            fotoUrl = fotoUrl
-                        )
+                                    val nuevoUsuario = Usuario(
+                                        id = firebaseUser.uid,
+                                        username = usernameLimpio,
+                                        contrasena = "",
+                                        nombre = nombreLimpio,
+                                        correo = correoLimpio,
+                                        telefono = telefonoLimpio,
+                                        rol = RolUsuario.CLIENTE,
+                                        fotoUrl = fotoUrl
+                                    )
 
-                        dbManager.guardarUsuario(
-                            usuario = nuevoUsuario,
-                            onSuccess = {
-                                onSuccess()
-                            },
-                            onError = { mensaje ->
-                                onError(mensaje)
+                                    dbManager.guardarUsuario(
+                                        usuario = nuevoUsuario,
+                                        onSuccess = { onSuccess() },
+                                        onError = { mensaje -> onError(mensaje) }
+                                    )
+                                }
                             }
-                        )
+                            .addOnFailureListener { e ->
+                                onError("Error al registrar en Firebase Auth: ${e.localizedMessage}")
+                            }
                     },
-                    onOcupado = {
-                        onError(
-                            "Este nombre de usuario ya está registrado."
-                        )
-                    },
-                    onError = { mensaje ->
-                        onError(mensaje)
-                    }
+                    onOcupado = { onError("Este nombre de usuario ya está registrado.") },
+                    onError = { mensaje -> onError(mensaje) }
                 )
             },
-            onOcupado = {
-                onError("Este correo electrónico ya está registrado.")
-            },
-            onError = { mensaje ->
-                onError(mensaje)
-            }
+            onOcupado = { onError("Este correo electrónico ya está registrado.") },
+            onError = { mensaje -> onError(mensaje) }
         )
+    }
+
+    fun iniciarSesion(
+        correo: String,
+        password: String,
+        onSuccess: (Usuario) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        if (correo.isBlank() || password.isBlank()) {
+            onError("Ingresa tu correo y contraseña.")
+            return
+        }
+
+        // 3. Inicio de sesión con Auth
+        auth.signInWithEmailAndPassword(correo.trim(), password)
+            .addOnSuccessListener { authResult ->
+                val uid = authResult.user?.uid
+                if (uid != null) {
+                    // Si el login es exitoso, buscamos sus datos en Firestore
+                    dbManager.obtenerUsuarioPorId(
+                        id = uid,
+                        onSuccess = { usuarioEncontrado ->
+                            SesionUsuario.iniciarSesion(usuarioEncontrado)
+                            onSuccess(usuarioEncontrado)
+                        },
+                        onError = { error -> onError(error) }
+                    )
+                }
+            }
+            .addOnFailureListener { e ->
+                onError("Correo o contraseña incorrectos.")
+            }
+    }
+
+    fun iniciarSesionConGoogle(
+        idToken: String,
+        onSuccess: (Usuario) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val credencial = GoogleAuthProvider.getCredential(idToken, null)
+
+        auth.signInWithCredential(credencial)
+            .addOnSuccessListener { authResult ->
+                val firebaseUser = authResult.user
+                if (firebaseUser != null) {
+
+                    dbManager.obtenerUsuarioPorId(
+                        id = firebaseUser.uid,
+                        onSuccess = { usuarioExistente ->
+                            // Ya existía en la base de datos
+                            SesionUsuario.iniciarSesion(usuarioExistente)
+                            onSuccess(usuarioExistente)
+                        },
+                        onError = {
+                            // No existe (es nuevo), lo registramos automáticamente
+                            val nuevoUsuario = Usuario(
+                                id = firebaseUser.uid,
+                                username = firebaseUser.email?.substringBefore("@") ?: "user_${firebaseUser.uid.take(5)}",
+                                contrasena = "",
+                                nombre = firebaseUser.displayName ?: "Usuario de Google",
+                                correo = firebaseUser.email ?: "",
+                                telefono = "",
+                                rol = RolUsuario.CLIENTE,
+                                fotoUrl = firebaseUser.photoUrl?.toString() ?: ""
+                            )
+
+                            dbManager.guardarUsuario(
+                                usuario = nuevoUsuario,
+                                onSuccess = {
+                                    SesionUsuario.iniciarSesion(nuevoUsuario)
+                                    onSuccess(nuevoUsuario)
+                                },
+                                onError = { error -> onError(error) }
+                            )
+                        }
+                    )
+                }
+            }
+            .addOnFailureListener { e ->
+                onError("Error al autenticar con Google: ${e.localizedMessage}")
+            }
+    }
+
+    fun cerrarSesion() {
+        auth.signOut()
+        SesionUsuario.cerrarSesion()
     }
 
     fun actualizarPerfil(
@@ -292,22 +348,5 @@ class UsuarioControlador {
         )
     }
 
-    fun iniciarSesion(
-        username: String,
-        password: String,
-        onSuccess: (Usuario) -> Unit,
-        onError: (String) -> Unit
-    ) {
-        if (username.isBlank() || password.isBlank()) {
-            onError("Ingresa tu usuario/correo y contraseña.")
-            return
-        }
 
-        dbManager.buscarUsuario(
-            credencial = username.trim(),
-            contrasena = password,
-            onSuccess = { usuarioEncontrado -> onSuccess(usuarioEncontrado) },
-            onError = { error -> onError(error) }
-        )
-    }
 }

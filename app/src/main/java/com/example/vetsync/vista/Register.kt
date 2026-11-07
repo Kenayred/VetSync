@@ -31,6 +31,11 @@ import com.example.vetsync.controlador.UsuarioControlador
 import androidx.compose.ui.platform.LocalContext
 import com.example.vetsync.modelo.ImagenUtils
 import android.util.Patterns.EMAIL_ADDRESS
+import android.app.Activity
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.example.vetsync.R
 @Composable
 fun RegisterScreen(
     controlador: UsuarioControlador = remember { UsuarioControlador() },
@@ -70,15 +75,60 @@ fun RegisterScreen(
         }
     }
 
+    //INICIALIZACION DE LAUNCHER DE GOOGLE
+
+    // 1. Configuración de Google
+    val gso = remember {
+        GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+    }
+
+    val googleSignInClient = remember { GoogleSignIn.getClient(context, gso) }
+
+    // 2. Lanzador para recibir el resultado
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                account.idToken?.let { token ->
+                    isLoading = true
+                    errorRegistro = null
+
+                    controlador.iniciarSesionConGoogle(
+                        idToken = token,
+                        onSuccess = { _ ->
+                            isLoading = false
+                            Toast.makeText(context, "¡Cuenta creada y sesión iniciada con Google!", Toast.LENGTH_SHORT).show()
+
+                            // Navegamos de vuelta al Login (o directamente al Home si tu flujo lo permite)
+                            onNavigateToLogin()
+                        },
+                        onError = { mensajeError ->
+                            isLoading = false
+                            errorRegistro = mensajeError
+                        }
+                    )
+                }
+            } catch (e: ApiException) {
+                isLoading = false
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
-            .padding(24.dp),
+            .padding(24.dp)
+            .statusBarsPadding(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = "VetSync",
             fontSize = 28.sp,
@@ -545,6 +595,49 @@ fun RegisterScreen(
                     fontWeight = FontWeight.Bold
                 )
             }
+        }
+
+        // 3. Divisor visual
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Divider(modifier = Modifier.weight(1f), color = Color.Gray, thickness = 1.dp)
+            Text(
+                text = "O registrarse con",
+                modifier = Modifier.padding(horizontal = 8.dp),
+                color = Color.Gray,
+                fontSize = 14.sp
+            )
+            Divider(modifier = Modifier.weight(1f), color = Color.Gray, thickness = 1.dp)
+        }
+
+        // Botón de Google
+        Button(
+            onClick = { launcher.launch(googleSignInClient.signInIntent) },
+            enabled = !isLoading,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.White
+            ),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray)
+        ) {
+            Icon(
+                painter = androidx.compose.ui.res.painterResource(id = R.drawable.ic_google),
+                contentDescription = "Logo de Google",
+                modifier = Modifier.size(24.dp),
+                tint = Color.Unspecified
+            )
+            Text(
+                text = "\tGoogle",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
         }
 
         if (errorRegistro != null) {

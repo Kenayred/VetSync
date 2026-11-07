@@ -15,6 +15,20 @@ class UsuarioRepository {
             .addOnFailureListener { e -> onError(e.message ?: "Error al guardar usuario") }
     }
 
+    fun obtenerUsuarioPorId(id: String, onSuccess: (Usuario) -> Unit, onError: (String) -> Unit) {
+        db.collection("usuarios").document(id).get()
+            .addOnSuccessListener { documento ->
+                if (documento.exists()) {
+                    val usuarioDb = documento.toObject(Usuario::class.java)
+                    if (usuarioDb != null) onSuccess(usuarioDb)
+                    else onError("Error al leer el perfil.")
+                } else {
+                    onError("El perfil de usuario no existe.")
+                }
+            }
+            .addOnFailureListener { e -> onError(e.message ?: "Error de red.") }
+    }
+
     fun verificarCorreoExistente(
         correo: String,
         idUsuarioExcluir: String? = null,

@@ -203,7 +203,6 @@ fun MascotaPerfilCompletoCard(
         Column(modifier = Modifier.fillMaxWidth()) {
             val bitmapMascota = remember(mascota.fotoUrl) { ImagenUtils.base64ABitmap(mascota.fotoUrl) }
 
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

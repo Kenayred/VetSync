@@ -2,6 +2,7 @@ package com.example.vetsync.controlador
 
 import com.example.vetsync.modelo.MascotaRepository
 import com.example.vetsync.modelo.Mascota
+import com.example.vetsync.modelo.MascotaConDueno
 import com.example.vetsync.modelo.SesionUsuario
 import java.util.UUID
 import java.time.LocalDate
@@ -198,6 +199,18 @@ class MascotaControlador {
             },
             onFailure = {
                     error -> onError(error.message ?: "Error al borrar la mascota")
+            }
+        )
+    }
+
+    fun obtenerMascotasAdmin(
+        onSuccess: (List<MascotaConDueno>) -> Unit,
+        onError: (String) -> Unit
+    ){
+        dbManager.obtenerMascotasAdmin(
+            onSuccess = { listaMascotas -> onSuccess(listaMascotas) },
+            onError = {
+                error -> onError(error.message ?: "ERROR")
             }
         )
     }
