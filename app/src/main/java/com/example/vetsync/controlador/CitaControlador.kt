@@ -9,13 +9,14 @@ import com.example.vetsync.modelo.ResumenCitas
 import com.example.vetsync.modelo.Servicio
 import com.example.vetsync.modelo.ServicioRepository
 import com.example.vetsync.modelo.SesionUsuario
-
+import com.example.vetsync.modelo.RolUsuario
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import com.google.firebase.firestore.ListenerRegistration
 
 class CitaControlador {
 
@@ -406,6 +407,38 @@ class CitaControlador {
     }
 
     // --------------------------------------------------
+    // OBSERVAR CAMBIOS EN LAS CITAS DEL USUARIO
+    // --------------------------------------------------
+
+    fun observarCitasUsuario(
+        onSuccess: (List<Cita>) -> Unit,
+        onError: (String) -> Unit
+    ): ListenerRegistration? {
+
+        val idPropietario = SesionUsuario.idUsuario
+
+        if (idPropietario.isBlank()) {
+            onError("No hay una sesión activa.")
+            return null
+        }
+
+        return citaRepository.observarCitasPorPropietario(
+            idPropietario = idPropietario,
+
+            onSuccess = { citas ->
+                onSuccess(citas)
+            },
+
+            onFailure = { error ->
+                onError(
+                    error.message
+                        ?: "No se pudieron observar los cambios de las citas."
+                )
+            }
+        )
+    }
+
+    // --------------------------------------------------
     // CANCELAR UNA CITA
     // --------------------------------------------------
 
@@ -467,6 +500,66 @@ class CitaControlador {
                         ?: "No se pudieron consultar las citas del usuario."
                 )
             }
+        )
+    }
+
+    // --------------------------------------------------
+// FUNCIONES EXCLUSIVAS DEL ADMINISTRADOR
+// --------------------------------------------------
+
+    fun obtenerTodasLasCitasAdmin(
+        onSuccess: (List<Cita>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        if (
+            SesionUsuario.usuarioActual?.rol !=
+            RolUsuario.ADMINISTRADOR
+        ) {
+            onFailure(
+                SecurityException(
+                    "No tienes permisos para consultar todas las citas."
+                )
+            )
+            return
+        }
+
+        citaRepository.obtenerTodasLasCitasAdmin(
+            onSuccess = onSuccess,
+            onFailure = onFailure
+        )
+    }
+
+    fun confirmarCitaAdmin(
+        idCita: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        if (
+            SesionUsuario.usuarioActual?.rol !=
+            RolUsuario.ADMINISTRADOR
+        ) {
+            onFailure(
+                SecurityException(
+                    "No tienes permisos para confirmar citas."
+                )
+            )
+            return
+        }
+
+        if (idCita.isBlank()) {
+            onFailure(
+                IllegalArgumentException(
+                    "El identificador de la cita es obligatorio."
+                )
+            )
+            return
+        }
+
+        citaRepository.actualizarEstado(
+            idCita = idCita,
+            nuevoEstado = EstadoCita.CONFIRMADA,
+            onSuccess = onSuccess,
+            onFailure = onFailure
         )
     }
 

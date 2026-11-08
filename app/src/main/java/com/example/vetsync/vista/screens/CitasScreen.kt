@@ -56,6 +56,8 @@ import com.example.vetsync.vista.theme.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import com.example.vetsync.notificaciones.ProgramadorRecordatorios
+import androidx.compose.runtime.DisposableEffect
 
 private val formatoFechaTarjeta = DateTimeFormatter.ofPattern(
     "d MMM yyyy",
@@ -120,9 +122,19 @@ fun CitasScreen(
 
         controladorCitas.obtenerCitasUsuario(
             onSuccess = { lista ->
+
+                // Actualizamos las citas de la pantalla.
                 citas = lista
+
+                // Sincronizamos los recordatorios locales.
+                ProgramadorRecordatorios.sincronizarRecordatorios(
+                    context = context.applicationContext,
+                    citas = lista
+                )
+
                 cargando = false
             },
+
             onError = { mensaje ->
                 errorCarga = mensaje
                 cargando = false
@@ -150,13 +162,56 @@ fun CitasScreen(
         }
     }
 
-    LaunchedEffect(SesionUsuario.idUsuario) {
-        if (SesionUsuario.idUsuario.isNotBlank()) {
-            cargarCitas()
-        } else {
+    // =====================================================
+    // OBSERVAR CITAS Y SINCRONIZAR RECORDATORIOS
+    // =====================================================
+
+    DisposableEffect(SesionUsuario.idUsuario) {
+
+        val idUsuario = SesionUsuario.idUsuario
+
+        if (idUsuario.isBlank()) {
+
             citas = emptyList()
             errorCarga = null
             cargando = false
+
+            onDispose { }
+
+        } else {
+
+            cargando = true
+            errorCarga = null
+
+            val listener = controladorCitas.observarCitasUsuario(
+
+                onSuccess = { lista ->
+
+                    // Actualizar las citas visibles.
+                    citas = lista
+
+                    errorCarga = null
+                    cargando = false
+
+                    // Sincronizar los recordatorios locales.
+                    ProgramadorRecordatorios.sincronizarRecordatorios(
+                        context = context.applicationContext,
+                        citas = lista
+                    )
+                },
+
+                onError = { mensaje ->
+
+                    errorCarga = mensaje
+                    cargando = false
+                }
+            )
+
+            onDispose {
+                // Liberar el listener cuando se abandone
+                // la pantalla o cambie la sesión.
+                listener?.remove()
+            }
         }
     }
 

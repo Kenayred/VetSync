@@ -31,169 +31,913 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.example.vetsync.controlador.CitaControlador
+import com.example.vetsync.modelo.Cita
+import com.example.vetsync.modelo.EstadoCita
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import com.example.vetsync.controlador.NotaClinicaControlador
 
 @Composable
 fun AdminCitasScreen(
     modifier: Modifier = Modifier
 ) {
-    val backgroundColor = Color(0xFFFDFCF9)
+    val controlador = remember {
+        CitaControlador()
+    }
+
+    val controladorNota = remember {
+        NotaClinicaControlador()
+    }
+
+    var citaParaNota by remember {
+        mutableStateOf<Cita?>(null)
+    }
+
+    var errorNota by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    var citas by remember {
+        mutableStateOf<List<Cita>>(emptyList())
+    }
+
+    var cargando by remember {
+        mutableStateOf(true)
+    }
+
+    var procesandoId by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    var errorMensaje by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    var mensajeExito by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    fun guardarNotaClinica(
+        cita: Cita,
+        motivo: String,
+        peso: Double?,
+        temperatura: Double?,
+        diagnostico: String,
+        receta: String,
+        observaciones: String
+    ) {
+        procesandoId = cita.id
+        errorNota = null
+        errorMensaje = null
+        mensajeExito = null
+
+        controladorNota.registrarNotaClinica(
+            cita = cita,
+            motivo = motivo,
+            peso = peso,
+            temperatura = temperatura,
+            diagnostico = diagnostico,
+            receta = receta,
+            observaciones = observaciones,
+
+            onSuccess = {
+                // Actualizamos la cita en la lista del administrador.
+                citas = citas.map { actual ->
+                    if (actual.id == cita.id) {
+                        actual.copy(
+                            estado = EstadoCita.COMPLETADA
+                        )
+                    } else {
+                        actual
+                    }
+                }
+
+                procesandoId = null
+                citaParaNota = null
+                errorNota = null
+
+                mensajeExito =
+                    "La nota clínica de ${cita.nombreMascota} " +
+                            "fue registrada correctamente. El cliente recibió " +
+                            "una notificación."
+            },
+
+            onError = { error ->
+                procesandoId = null
+                errorNota = error
+            }
+        )
+    }
+
+    fun cargarCitas() {
+        cargando = true
+        errorMensaje = null
+
+        controlador.obtenerTodasLasCitasAdmin(
+            onSuccess = { lista ->
+                citas = lista
+                cargando = false
+            },
+            onFailure = { error ->
+                cargando = false
+                errorMensaje = error.message
+                    ?: "No se pudieron cargar las citas."
+            }
+        )
+    }
+
+    fun confirmarCita(cita: Cita) {
+        procesandoId = cita.id
+        errorMensaje = null
+        mensajeExito = null
+
+        controlador.confirmarCitaAdmin(
+            idCita = cita.id,
+
+            onSuccess = {
+                citas = citas.map { actual ->
+                    if (actual.id == cita.id) {
+                        actual.copy(
+                            estado = EstadoCita.CONFIRMADA
+                        )
+                    } else {
+                        actual
+                    }
+                }
+
+                procesandoId = null
+
+                mensajeExito =
+                    "La cita de ${cita.nombreMascota} " +
+                            "fue confirmada y se notificó al cliente."
+            },
+
+            onFailure = { error ->
+                procesandoId = null
+
+                errorMensaje = error.message
+                    ?: "No se pudo confirmar la cita."
+            }
+        )
+    }
+
+    LaunchedEffect(Unit) {
+        cargarCitas()
+    }
+
+    val formatoFecha = DateTimeFormatter.ofPattern(
+        "dd/MM/yyyy"
+    )
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(backgroundColor)
+            .background(Color(0xFFFDFCF9))
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .padding(
+                horizontal = 20.dp,
+                vertical = 16.dp
+            )
     ) {
-        // 1. Cabecera y Botón Nueva Cita
+
         Text(
             text = "Agenda de Citas",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF1A1A1A)
         )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
         Text(
-            text = "Jueves, 24 de Octubre de 2023",
+            text = "Fecha: ${LocalDate.now().format(formatoFecha)}",
             fontSize = 14.sp,
             color = Color.Gray
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        Button(
-            onClick = { /* TODO: Navegar a crear cita */ },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A7D5E)),
-            shape = RoundedCornerShape(24.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+        // Resumen dinámico.
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            ),
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(
+                1.dp,
+                Color(0xFFE5E5E5)
+            )
         ) {
-            Icon(imageVector = Icons.Default.Add, contentDescription = "Nueva", modifier = Modifier.size(18.dp))
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "Nueva Cita", fontSize = 14.sp)
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+
+                Text(
+                    text = "Resumen de citas",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                FilaResumen(
+                    color = Color(0xFFCDE2D4),
+                    etiqueta = "Total de citas",
+                    valor = citas.size.toString(),
+                    isBold = true
+                )
+
+                FilaResumen(
+                    color = Color(0xFFFDE89C),
+                    etiqueta = "Pendientes",
+                    valor = citas.count {
+                        it.estado == EstadoCita.PENDIENTE
+                    }.toString()
+                )
+
+                FilaResumen(
+                    color = Color(0xFF91C5A9),
+                    etiqueta = "Confirmadas",
+                    valor = citas.count {
+                        it.estado == EstadoCita.CONFIRMADA
+                    }.toString()
+                )
+
+                FilaResumen(
+                    color = Color(0xFFF7D1C9),
+                    etiqueta = "Canceladas",
+                    valor = citas.count {
+                        it.estado == EstadoCita.CANCELADA
+                    }.toString()
+                )
+
+                FilaResumen(
+                    color = Color(0xFFE0E0E0),
+                    etiqueta = "Completadas",
+                    valor = citas.count {
+                        it.estado == EstadoCita.COMPLETADA
+                    }.toString()
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // 2. Tarjeta de Filtros y Búsqueda
-        CardFiltrosBusqueda()
+        Text(
+            text = "Citas registradas",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1A1A1A)
+        )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
-        // 3. Tarjeta del Calendario
-        CardCalendarioMensual()
+        if (mensajeExito != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFE2EFE7)
+                )
+            ) {
+                Text(
+                    text = mensajeExito ?: "",
+                    modifier = Modifier.padding(14.dp),
+                    color = Color(0xFF285C3A),
+                    fontSize = 13.sp
+                )
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+        }
 
-        // 4. Tarjeta de Resumen del Día
-        CardResumenDia()
+        if (errorMensaje != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFFFE8E6)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(14.dp)
+                ) {
+                    Text(
+                        text = errorMensaje ?: "",
+                        color = Color(0xFFB3261E),
+                        fontSize = 13.sp
+                    )
+
+                    TextButton(
+                        onClick = { cargarCitas() }
+                    ) {
+                        Text("Reintentar")
+                    }
+                }
+            }
+        }
+
+        when {
+
+            cargando -> {
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(40.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = Color(0xFF4A7D5E)
+                    )
+                }
+            }
+
+            errorMensaje != null -> {
+                // El error ya se muestra arriba.
+            }
+
+            citas.isEmpty() -> {
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "Todavía no hay citas registradas.",
+                        modifier = Modifier.padding(24.dp),
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+
+            else -> {
+
+                citas.forEach { cita ->
+
+                    CitaAdminItem(
+                        cita = cita,
+                        procesando = procesandoId == cita.id,
+                        bloqueado = procesandoId != null,
+                        onConfirmar = {
+                            confirmarCita(cita)
+                        },
+                        onRegistrarNota = {
+                            citaParaNota = cita
+                            errorNota = null
+                        }
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(14.dp)
+                    )
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+    citaParaNota?.let { cita ->
 
-        // 5. Lista de Citas (Línea de tiempo)
-        CitaItem(
-            hora = "09:00",
-            ampm = "AM",
-            nombrePaciente = "Max",
-            estado = "PENDIENTE",
-            estadoBgColor = Color(0xFFFDF0D5),
-            estadoTextColor = Color(0xFFB57B22),
-            nombreDueno = "Carlos Ruiz",
-            etiquetas = listOf(
-                Pair(Icons.Outlined.LocalHospital, "Vacunación Anual") to Color(0xFFE2EFE7),
-                Pair(Icons.Outlined.Description, "$45.00") to Color(0xFFF0F0F0)
-            ),
-            botones = {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = { },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A7D5E)),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.weight(1f).height(40.dp)
-                    ) {
-                        Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text("Iniciar", fontSize = 13.sp)
-                    }
-                    OutlinedButton(
-                        onClick = { },
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.weight(1f).height(40.dp)
-                    ) {
-                        Icon(Icons.Outlined.Edit, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.DarkGray)
-                        Spacer(Modifier.width(4.dp))
-                        Text("Editar", fontSize = 13.sp, color = Color.DarkGray)
-                    }
+        FormularioNotaClinicaDialog(
+            cita = cita,
+            guardando = procesandoId == cita.id,
+            error = errorNota,
+
+            onDismiss = {
+                if (procesandoId != cita.id) {
+                    citaParaNota = null
+                    errorNota = null
                 }
+            },
+
+            onGuardar = { motivo,
+                          peso,
+                          temperatura,
+                          diagnostico,
+                          receta,
+                          observaciones ->
+
+                guardarNotaClinica(
+                    cita = cita,
+                    motivo = motivo,
+                    peso = peso,
+                    temperatura = temperatura,
+                    diagnostico = diagnostico,
+                    receta = receta,
+                    observaciones = observaciones
+                )
             }
         )
+    }
+}
 
-        Spacer(modifier = Modifier.height(16.dp))
+@Composable
+private fun FormularioNotaClinicaDialog(
+    cita: Cita,
+    guardando: Boolean,
+    error: String?,
+    onDismiss: () -> Unit,
+    onGuardar: (
+        String,
+        Double?,
+        Double?,
+        String,
+        String,
+        String
+    ) -> Unit
+) {
 
-        CitaItem(
-            hora = "10:30",
-            ampm = "AM",
-            horaColor = Color.Gray, // Hora más tenue por ser completada
-            nombrePaciente = "Luna",
-            estado = "COMPLETADA",
-            estadoBgColor = Color(0xFF91C5A9), // Verde completado
-            estadoTextColor = Color.White,
-            nombreDueno = "María Gómez",
-            etiquetas = listOf(
-                Pair(Icons.Outlined.LocalHospital, "Consulta General") to Color(0xFFF0F0F0)
-            ),
-            botones = {
-                OutlinedButton(
-                    onClick = { },
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.fillMaxWidth().height(40.dp)
+    var motivo by remember(cita.id) {
+        mutableStateOf(cita.motivo)
+    }
+
+    var pesoTexto by remember(cita.id) {
+        mutableStateOf("")
+    }
+
+    var temperaturaTexto by remember(cita.id) {
+        mutableStateOf("")
+    }
+
+    var diagnostico by remember(cita.id) {
+        mutableStateOf("")
+    }
+
+    var receta by remember(cita.id) {
+        mutableStateOf("")
+    }
+
+    var observaciones by remember(cita.id) {
+        mutableStateOf("")
+    }
+
+    var errorCampos by remember(cita.id) {
+        mutableStateOf<String?>(null)
+    }
+
+    val mensajeError = errorCampos ?: error
+
+    AlertDialog(
+        onDismissRequest = {
+            if (!guardando) {
+                onDismiss()
+            }
+        },
+
+        title = {
+            Text(
+                text = "Registrar nota clínica",
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1A1A1A)
+            )
+        },
+
+        text = {
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 520.dp)
+                    .verticalScroll(rememberScrollState()),
+
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+
+                Text(
+                    text = "Paciente: ${cita.nombreMascota}",
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF4A7D5E)
+                )
+
+                Text(
+                    text = "Servicio: ${cita.nombreServicio}",
+                    fontSize = 13.sp,
+                    color = Color.Gray
+                )
+
+                Text(
+                    text = "Fecha: ${cita.fecha} • Hora: ${cita.hora}",
+                    fontSize = 13.sp,
+                    color = Color.Gray
+                )
+
+                HorizontalDivider(
+                    color = Color(0xFFE5E5E5)
+                )
+
+                Text(
+                    text = "Información clínica",
+                    fontWeight = FontWeight.Bold
+                )
+
+                OutlinedTextField(
+                    value = motivo,
+                    onValueChange = {
+                        motivo = it
+                    },
+                    label = {
+                        Text("Motivo de consulta (opcional)")
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2,
+                    enabled = !guardando
+                )
+
+                OutlinedTextField(
+                    value = pesoTexto,
+                    onValueChange = {
+                        pesoTexto = it
+                        errorCampos = null
+                    },
+                    label = {
+                        Text("Peso en kg (opcional)")
+                    },
+                    placeholder = {
+                        Text("Ej. 18.5")
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal
+                    ),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !guardando
+                )
+
+                OutlinedTextField(
+                    value = temperaturaTexto,
+                    onValueChange = {
+                        temperaturaTexto = it
+                        errorCampos = null
+                    },
+                    label = {
+                        Text("Temperatura en °C (opcional)")
+                    },
+                    placeholder = {
+                        Text("Ej. 38.5")
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal
+                    ),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !guardando
+                )
+
+                OutlinedTextField(
+                    value = diagnostico,
+                    onValueChange = {
+                        diagnostico = it
+                        errorCampos = null
+                    },
+                    label = {
+                        Text("Diagnóstico *")
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3,
+                    enabled = !guardando
+                )
+
+                OutlinedTextField(
+                    value = receta,
+                    onValueChange = {
+                        receta = it
+                        errorCampos = null
+                    },
+                    label = {
+                        Text("Receta médica *")
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3,
+                    enabled = !guardando
+                )
+
+                OutlinedTextField(
+                    value = observaciones,
+                    onValueChange = {
+                        observaciones = it
+                    },
+                    label = {
+                        Text("Observaciones (opcional)")
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2,
+                    enabled = !guardando
+                )
+
+                Text(
+                    text = "* Campos obligatorios",
+                    fontSize = 12.sp,
+                    color = Color.Gray
+                )
+
+                if (mensajeError != null) {
+
+                    Text(
+                        text = mensajeError,
+                        color = Color(0xFFB3261E),
+                        fontSize = 13.sp
+                    )
+                }
+            }
+        },
+
+        confirmButton = {
+
+            Button(
+                onClick = {
+
+                    errorCampos = null
+
+                    val pesoNormalizado = pesoTexto
+                        .trim()
+                        .replace(',', '.')
+
+                    val temperaturaNormalizada = temperaturaTexto
+                        .trim()
+                        .replace(',', '.')
+
+                    val peso = if (
+                        pesoNormalizado.isBlank()
+                    ) {
+                        null
+                    } else {
+                        pesoNormalizado.toDoubleOrNull()
+                    }
+
+                    val temperatura = if (
+                        temperaturaNormalizada.isBlank()
+                    ) {
+                        null
+                    } else {
+                        temperaturaNormalizada.toDoubleOrNull()
+                    }
+
+                    when {
+
+                        pesoNormalizado.isNotBlank() &&
+                                (peso == null || peso <= 0) -> {
+
+                            errorCampos =
+                                "Ingresa un peso válido mayor que cero."
+                        }
+
+                        temperaturaNormalizada.isNotBlank() &&
+                                (temperatura == null || temperatura <= 0) -> {
+
+                            errorCampos =
+                                "Ingresa una temperatura válida mayor que cero."
+                        }
+
+                        diagnostico.isBlank() -> {
+
+                            errorCampos =
+                                "El diagnóstico es obligatorio."
+                        }
+
+                        receta.isBlank() -> {
+
+                            errorCampos =
+                                "La receta médica es obligatoria."
+                        }
+
+                        else -> {
+
+                            onGuardar(
+                                motivo,
+                                peso,
+                                temperatura,
+                                diagnostico,
+                                receta,
+                                observaciones
+                            )
+                        }
+                    }
+                },
+
+                enabled = !guardando,
+
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF4A7D5E)
+                )
+            ) {
+
+                if (guardando) {
+
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+
+                    Spacer(
+                        modifier = Modifier.width(8.dp)
+                    )
+
+                    Text("Guardando...")
+
+                } else {
+
+                    Text("Guardar y completar")
+                }
+            }
+        },
+
+        dismissButton = {
+
+            TextButton(
+                onClick = onDismiss,
+                enabled = !guardando
+            ) {
+                Text("Cancelar")
+            }
+        },
+
+        shape = RoundedCornerShape(18.dp),
+
+        containerColor = Color.White
+    )
+}
+
+@Composable
+private fun CitaAdminItem(
+    cita: Cita,
+    procesando: Boolean,
+    bloqueado: Boolean,
+    onConfirmar: () -> Unit,
+    onRegistrarNota: () -> Unit
+) {
+    val estadoColor = when (cita.estado) {
+        EstadoCita.PENDIENTE -> Color(0xFFFDF0D5)
+        EstadoCita.CONFIRMADA -> Color(0xFFE2EFE7)
+        EstadoCita.COMPLETADA -> Color(0xFF91C5A9)
+        EstadoCita.CANCELADA -> Color(0xFFF7D1C9)
+    }
+
+    val estadoTextoColor = when (cita.estado) {
+        EstadoCita.PENDIENTE -> Color(0xFFB57B22)
+        EstadoCita.CONFIRMADA -> Color(0xFF285C3A)
+        EstadoCita.COMPLETADA -> Color.White
+        EstadoCita.CANCELADA -> Color(0xFF9D4035)
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(
+            1.dp,
+            Color(0xFFE5E5E5)
+        )
+    ) {
+
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Text(
+                    text = cita.nombreMascota.ifBlank {
+                        "Mascota"
+                    },
+                    modifier = Modifier.weight(1f),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1A1A1A)
+                )
+
+                Surface(
+                    color = estadoColor,
+                    shape = RoundedCornerShape(6.dp)
                 ) {
-                    Icon(Icons.Outlined.Description, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.DarkGray)
-                    Spacer(Modifier.width(4.dp))
-                    Text("Ver Resumen", fontSize = 13.sp, color = Color.DarkGray)
+                    Text(
+                        text = cita.estado.etiqueta,
+                        modifier = Modifier.padding(
+                            horizontal = 10.dp,
+                            vertical = 5.dp
+                        ),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = estadoTextoColor
+                    )
                 }
             }
-        )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-        CitaItem(
-            hora = "11:15",
-            ampm = "AM",
-            nombrePaciente = "Rocky",
-            estado = "PENDIENTE",
-            estadoBgColor = Color(0xFFFDF0D5),
-            estadoTextColor = Color(0xFFB57B22),
-            nombreDueno = "Ana Silva",
-            esAvatarLetra = true,
-            letraAvatar = "R",
-            etiquetas = listOf(
-                Pair(Icons.Outlined.ContentCut, "Peluquería") to Color(0xFFF5E0D8) // Color salmón claro
-            ),
-            botones = {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = { },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4A7D5E)),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.weight(1f).height(40.dp)
-                    ) {
-                        Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text("Iniciar", fontSize = 13.sp)
+            Text(
+                text = "Servicio: ${cita.nombreServicio}",
+                fontSize = 14.sp,
+                color = Color.DarkGray
+            )
+
+            Spacer(modifier = Modifier.height(5.dp))
+
+            Text(
+                text = "Fecha: ${cita.fecha}  •  Hora: ${cita.hora}",
+                fontSize = 13.sp,
+                color = Color.Gray
+            )
+
+            Spacer(modifier = Modifier.height(5.dp))
+
+            Text(
+                text = "Costo: ${
+                    String.format(
+                        Locale.US,
+                        "\$%.2f",
+                        cita.costo
+                    )
+                }",
+                fontSize = 13.sp,
+                color = Color.Gray
+            )
+
+            if (cita.motivo.isNotBlank()) {
+                Spacer(modifier = Modifier.height(5.dp))
+
+                Text(
+                    text = "Motivo: ${cita.motivo}",
+                    fontSize = 13.sp,
+                    color = Color.Gray
+                )
+            }
+
+            if (
+                cita.estado == EstadoCita.PENDIENTE ||
+                cita.estado == EstadoCita.CONFIRMADA
+            ) {
+
+                Spacer(
+                    modifier = Modifier.height(14.dp)
+                )
+
+                Button(
+                    onClick = {
+                        if (cita.estado == EstadoCita.PENDIENTE) {
+                            onConfirmar()
+                        } else {
+                            onRegistrarNota()
+                        }
+                    },
+
+                    enabled = !bloqueado,
+
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp),
+
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4A7D5E)
+                    ),
+
+                    shape = RoundedCornerShape(8.dp)
+
+                ) {
+
+                    if (procesando) {
+
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+
+                        Spacer(
+                            modifier = Modifier.width(8.dp)
+                        )
                     }
-                    OutlinedButton(
-                        onClick = { },
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.weight(1f).height(40.dp)
-                    ) {
-                        Icon(Icons.Outlined.Edit, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.DarkGray)
-                        Spacer(Modifier.width(4.dp))
-                        Text("Editar", fontSize = 13.sp, color = Color.DarkGray)
-                    }
+
+                    Text(
+                        text = when {
+                            procesando -> "Procesando..."
+                            cita.estado == EstadoCita.PENDIENTE -> "Confirmar cita"
+                            else -> "Registrar nota clínica"
+                        },
+                        fontSize = 13.sp
+                    )
                 }
             }
-        )
-
-        Spacer(modifier = Modifier.height(80.dp)) // Padding para BottomBar
+        }
     }
 }
 

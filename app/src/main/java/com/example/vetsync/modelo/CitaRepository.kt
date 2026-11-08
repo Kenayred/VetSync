@@ -2,7 +2,8 @@ package com.example.vetsync.modelo
 
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
-
+import com.google.firebase.firestore.WriteBatch
+import com.google.firebase.firestore.ListenerRegistration
 
 class CitaRepository {
 
@@ -33,15 +34,34 @@ class CitaRepository {
             return
         }
 
-        val referencia = db.collection(coleccionCitas)
-            .document()
+        val referencia = db.collection(coleccionCitas).document()
 
         val citaNueva = cita.copy(
             id = referencia.id,
             fechaCreacion = System.currentTimeMillis()
         )
 
-        referencia.set(convertirAMapa(citaNueva))
+        // Guardamos la cita y su notificación en una sola operación.
+        val lote = db.batch()
+
+        lote.set(
+            referencia,
+            convertirAMapa(citaNueva)
+        )
+
+        agregarNotificacionAlLote(
+            lote = lote,
+            usuarioId = citaNueva.propietarioId,
+            mascotaId = citaNueva.mascotaId,
+            citaId = citaNueva.id,
+            tipo = "CITA_SOLICITADA",
+            titulo = "Solicitud de cita recibida",
+            mensaje = "Tu solicitud de cita para ${citaNueva.nombreMascota} " +
+                    "fue recibida para el ${citaNueva.fecha} a las " +
+                    "${citaNueva.hora}. Está pendiente de confirmación."
+        )
+
+        lote.commit()
             .addOnSuccessListener {
                 onSuccess(citaNueva)
             }
@@ -78,6 +98,48 @@ class CitaRepository {
             }
             .addOnFailureListener { error ->
                 onFailure(error)
+            }
+    }
+
+    // --------------------------------------------------
+    // OBSERVAR CITAS DEL PROPIETARIO EN TIEMPO REAL
+    // --------------------------------------------------
+
+    fun observarCitasPorPropietario(
+        idPropietario: String,
+        onSuccess: (List<Cita>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ): ListenerRegistration? {
+
+        if (idPropietario.isBlank()) {
+            onFailure(
+                IllegalArgumentException(
+                    "No se pudo identificar al propietario."
+                )
+            )
+            return null
+        }
+
+        return db.collection(coleccionCitas)
+            .whereEqualTo("propietarioId", idPropietario)
+            .addSnapshotListener { snapshot, error ->
+
+                if (error != null) {
+                    onFailure(error)
+                    return@addSnapshotListener
+                }
+
+                val citas = snapshot?.documents
+                    ?.mapNotNull { documento ->
+                        convertirCita(documento)
+                    }
+                    ?.sortedWith(
+                        compareBy<Cita> { it.fecha }
+                            .thenBy { it.hora }
+                    )
+                    ?: emptyList()
+
+                onSuccess(citas)
             }
     }
 
@@ -191,6 +253,30 @@ class CitaRepository {
             }
     }
 
+    fun obtenerTodasLasCitasAdmin(
+        onSuccess: (List<Cita>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        db.collection(coleccionCitas)
+            .get()
+            .addOnSuccessListener { snapshot ->
+
+                val citas = snapshot.documents
+                    .mapNotNull { documento ->
+                        convertirCita(documento)
+                    }
+                    .sortedWith(
+                        compareBy<Cita> { it.fecha }
+                            .thenBy { it.hora }
+                    )
+
+                onSuccess(citas)
+            }
+            .addOnFailureListener { error ->
+                onFailure(error)
+            }
+    }
+
     fun verificarHorarioDisponible(
         fecha: String,
         hora: String,
@@ -248,11 +334,112 @@ class CitaRepository {
             return
         }
 
-        db.collection(coleccionCitas)
+        val referencia = db.collection(coleccionCitas)
             .document(idCita)
-            .update("estado", nuevoEstado.name)
-            .addOnSuccessListener {
-                onSuccess()
+
+        // Primero consultamos los datos de la cita.
+        referencia.get()
+            .addOnSuccessListener { documento ->
+
+                if (!documento.exists()) {
+                    onFailure(
+                        IllegalStateException(
+                            "La cita seleccionada no existe."
+                        )
+                    )
+                    return@addOnSuccessListener
+                }
+
+                val estadoActual = documento.getString("estado")
+                    ?: EstadoCita.PENDIENTE.name
+
+                // Evitamos generar notificaciones duplicadas
+                // cuando se intenta establecer el mismo estado.
+                if (estadoActual == nuevoEstado.name) {
+                    onSuccess()
+                    return@addOnSuccessListener
+                }
+
+                val propietarioId =
+                    documento.getString("propietarioId") ?: ""
+
+                val mascotaId =
+                    documento.getString("mascotaId") ?: ""
+
+                val nombreMascota =
+                    documento.getString("nombreMascota")
+                        .takeUnless { it.isNullOrBlank() }
+                        ?: "tu mascota"
+
+                val fecha = documento.getString("fecha") ?: ""
+                val hora = documento.getString("hora") ?: ""
+
+                // Definimos la notificación según el nuevo estado.
+                val datosNotificacion = when (nuevoEstado) {
+
+                    EstadoCita.CONFIRMADA -> Triple(
+                        "CITA_CONFIRMADA",
+                        "Cita confirmada",
+                        "La cita de $nombreMascota para el $fecha " +
+                                "a las $hora ha sido confirmada."
+                    )
+
+                    EstadoCita.CANCELADA -> Triple(
+                        "CITA_CANCELADA",
+                        "Cita cancelada",
+                        "La cita de $nombreMascota programada para el " +
+                                "$fecha a las $hora ha sido cancelada."
+                    )
+
+                    EstadoCita.COMPLETADA -> Triple(
+                        "CITA_COMPLETADA",
+                        "Atención completada",
+                        "La atención de $nombreMascota del día $fecha " +
+                                "ha sido registrada como completada."
+                    )
+
+                    EstadoCita.PENDIENTE -> null
+                }
+
+                if (datosNotificacion != null && propietarioId.isBlank()) {
+                    onFailure(
+                        IllegalStateException(
+                            "No se encontró el propietario de la cita."
+                        )
+                    )
+                    return@addOnSuccessListener
+                }
+
+                // Actualizamos el estado y creamos la notificación
+                // dentro del mismo lote.
+                val lote = db.batch()
+
+                lote.update(
+                    referencia,
+                    "estado",
+                    nuevoEstado.name
+                )
+
+                datosNotificacion?.let { datos ->
+
+                    agregarNotificacionAlLote(
+                        lote = lote,
+                        usuarioId = propietarioId,
+                        mascotaId = mascotaId,
+                        citaId = idCita,
+                        tipo = datos.first,
+                        titulo = datos.second,
+                        mensaje = datos.third
+                    )
+                }
+
+                lote.commit()
+                    .addOnSuccessListener {
+                        onSuccess()
+                    }
+                    .addOnFailureListener { error ->
+                        onFailure(error)
+                    }
             }
             .addOnFailureListener { error ->
                 onFailure(error)
@@ -279,20 +466,118 @@ class CitaRepository {
             return
         }
 
-        db.collection(coleccionCitas)
+        val referencia = db.collection(coleccionCitas)
             .document(idCita)
-            .update(
-                mapOf(
-                    "fecha" to nuevaFecha,
-                    "hora" to nuevaHora
+
+        referencia.get()
+            .addOnSuccessListener { documento ->
+
+                if (!documento.exists()) {
+                    onFailure(
+                        IllegalStateException(
+                            "La cita seleccionada no existe."
+                        )
+                    )
+                    return@addOnSuccessListener
+                }
+
+                val propietarioId =
+                    documento.getString("propietarioId") ?: ""
+
+                if (propietarioId.isBlank()) {
+                    onFailure(
+                        IllegalStateException(
+                            "No se encontró el propietario de la cita."
+                        )
+                    )
+                    return@addOnSuccessListener
+                }
+
+                val mascotaId =
+                    documento.getString("mascotaId") ?: ""
+
+                val nombreMascota =
+                    documento.getString("nombreMascota")
+                        .takeUnless { it.isNullOrBlank() }
+                        ?: "tu mascota"
+
+                val fechaAnterior =
+                    documento.getString("fecha") ?: ""
+
+                val horaAnterior =
+                    documento.getString("hora") ?: ""
+
+                if (
+                    fechaAnterior == nuevaFecha &&
+                    horaAnterior == nuevaHora
+                ) {
+                    onSuccess()
+                    return@addOnSuccessListener
+                }
+
+                val lote = db.batch()
+
+                lote.update(
+                    referencia,
+                    mapOf(
+                        "fecha" to nuevaFecha,
+                        "hora" to nuevaHora
+                    )
                 )
-            )
-            .addOnSuccessListener {
-                onSuccess()
+
+                agregarNotificacionAlLote(
+                    lote = lote,
+                    usuarioId = propietarioId,
+                    mascotaId = mascotaId,
+                    citaId = idCita,
+                    tipo = "CITA_REPROGRAMADA",
+                    titulo = "Cita reprogramada",
+                    mensaje = "La cita de $nombreMascota cambió de " +
+                            "$fechaAnterior a las $horaAnterior a " +
+                            "$nuevaFecha a las $nuevaHora."
+                )
+
+                lote.commit()
+                    .addOnSuccessListener {
+                        onSuccess()
+                    }
+                    .addOnFailureListener { error ->
+                        onFailure(error)
+                    }
             }
             .addOnFailureListener { error ->
                 onFailure(error)
             }
+    }
+
+    private fun agregarNotificacionAlLote(
+        lote: WriteBatch,
+        usuarioId: String,
+        mascotaId: String,
+        citaId: String,
+        tipo: String,
+        titulo: String,
+        mensaje: String
+    ) {
+        val referenciaNotificacion = db
+            .collection("notificaciones")
+            .document()
+
+        val notificacion = mapOf(
+            "usuarioId" to usuarioId,
+            "mascotaId" to mascotaId,
+            "citaId" to citaId,
+            "tipo" to tipo,
+            "titulo" to titulo,
+            "mensaje" to mensaje,
+            "leida" to false,
+            "fechaCreacion" to System.currentTimeMillis()
+        )
+
+        lote.set(
+            referenciaNotificacion,
+            notificacion
+        )
     }
 
     private fun convertirAMapa(
