@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "878826482699",
+    "project_id": "vetsync-20b83",
+    "storage_bucket": "vetsync-20b83.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:878826482699:android:8b627a28f786c5f35c6b0e",
+        "android_client_info": {
+          "package_name": "com.example.vetsync"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "878826482699-ortr3hk4pu1h7fnkn7qg28sfvn2an9d9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.vetsync",
+            "certificate_hash": "8fa9eab78e73ea9f77ca75a81e0fb5eac945071a"
+          }
+        },
+        {
+          "client_id": "878826482699-sc9v0sc598ganqa78oimpdaemnlt3fsk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.vetsync",
+            "certificate_hash": "09c1ecca1727e33d4e4454a9824c3fe7c9763acd"
+          }
+        },
+        {
+          "client_id": "878826482699-ms0vbhstqfpi6cotoipjli04qpmscdv8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCCLF4XS2PPAvpVl2rgPfxkAwcD_X9Pqqk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "878826482699-ms0vbhstqfpi6cotoipjli04qpmscdv8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

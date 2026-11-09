@@ -57,42 +57,124 @@ fun LoginScreen(
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+
+        Log.d(
+            "VetSyncGoogle",
+            "ResultCode: ${result.resultCode}, Intent nulo: ${result.data == null}"
+        )
+
+        if (result.data == null) {
+
+            isLoading = false
+
+            errorMensaje =
+                "Google no devolvió información de la cuenta seleccionada."
+
+            Log.e(
+                "VetSyncGoogle",
+                "El resultado de Google no contiene datos."
+            )
+
+        } else {
+
             try {
-                val account = task.getResult(ApiException::class.java)
-                account.idToken?.let { token ->
+
+                val account = GoogleSignIn
+                    .getSignedInAccountFromIntent(result.data)
+                    .getResult(ApiException::class.java)
+
+                val token = account.idToken
+
+                Log.d(
+                    "VetSyncGoogle",
+                    "Cuenta: ${account.email}"
+                )
+
+                Log.d(
+                    "VetSyncGoogle",
+                    "ID Token disponible: ${!token.isNullOrBlank()}"
+                )
+
+                if (token.isNullOrBlank()) {
+
+                    isLoading = false
+
+                    errorMensaje =
+                        "Google no proporcionó el token de autenticación."
+
+                    Log.e(
+                        "VetSyncGoogle",
+                        "El ID Token es nulo."
+                    )
+
+                } else {
 
                     isLoading = true
                     errorMensaje = null
 
                     controlador.iniciarSesionConGoogle(
                         idToken = token,
-                        onSuccess = { usuarioEncontrado ->
+
+                        onSuccess = { usuario ->
+
                             isLoading = false
-                            Log.e("PRUEBA ROL", "El rol es ${usuarioEncontrado.rol}")
-                            if(usuarioEncontrado.rol == RolUsuario.ADMINISTRADOR){
-                                onNavigateToAdmin()
-                            } else {
-                                onLoginSuccess()
-                            }
+
+                            Log.d(
+                                "VetSyncGoogle",
+                                "Autenticación correcta. Rol: ${usuario.rol}"
+                            )
 
                             Toast.makeText(
                                 context,
                                 "¡Ha iniciado sesión con Google!",
                                 Toast.LENGTH_SHORT
                             ).show()
+
+                            if (usuario.rol == RolUsuario.ADMINISTRADOR) {
+                                onNavigateToAdmin()
+                            } else {
+                                onLoginSuccess()
+                            }
                         },
-                        onError = { mensajeError ->
+
+                        onError = { mensaje ->
+
                             isLoading = false
-                            errorMensaje = mensajeError
+                            errorMensaje = mensaje
+
+                            Log.e(
+                                "VetSyncGoogle",
+                                "Error de Firebase: $mensaje"
+                            )
                         }
                     )
                 }
+
             } catch (e: ApiException) {
+
                 isLoading = false
-                // Si el usuario cierra la ventanita de Google antes de elegir cuenta,
-                // caerá aquí. Puedes dejar el errorMensaje null o poner un aviso.
+
+                errorMensaje =
+                    "Error de Google Sign-In: código ${e.statusCode}"
+
+                Log.e(
+                    "VetSyncGoogle",
+                    "Código de error: ${e.statusCode}",
+                    e
+                )
+
+            } catch (e: Exception) {
+
+                isLoading = false
+
+                errorMensaje =
+                    "Ocurrió un error al procesar la cuenta de Google."
+
+                Log.e(
+                    "VetSyncGoogle",
+                    "Error inesperado.",
+                    e
+                )
             }
         }
     }
@@ -254,7 +336,8 @@ fun LoginScreen(
         }
 
         Button(
-            onClick = { launcher.launch(googleSignInClient.signInIntent) },
+            onClick = { errorMensaje = null
+                launcher.launch(googleSignInClient.signInIntent) },
             enabled = !isLoading,
             modifier = Modifier
                 .fillMaxWidth()
