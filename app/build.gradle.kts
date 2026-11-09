@@ -69,5 +69,8 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.android.gms:play-services-auth:21.1.1")
 
+    // WorkManager para programar recordatorios
+    implementation("androidx.work:work-runtime-ktx:2.12.0")
+
     implementation("org.mindrot:jbcrypt:0.4")
 }

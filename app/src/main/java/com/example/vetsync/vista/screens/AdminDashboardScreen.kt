@@ -36,32 +36,154 @@ import com.example.vetsync.vista.theme.*
 import com.example.vetsync.controlador.CitaControlador
 import com.example.vetsync.modelo.CitaConMascota
 import com.example.vetsync.modelo.ResumenCitas
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun AdminDashboardScreen(
-    controladorCita: CitaControlador = remember { CitaControlador() },
-    modifier: Modifier = Modifier
+    controladorCita: CitaControlador = remember {
+        CitaControlador()
+    },
+    modifier: Modifier = Modifier,
+    onNavigateToCitas: () -> Unit = {},
+    onNavigateToPacientes: () -> Unit = {}
 ) {
 
-    var resumenCitas by remember { mutableStateOf(ResumenCitas()) }
-    var proximosPacientes by remember { mutableStateOf<List<CitaConMascota>>(emptyList())}
-    LaunchedEffect(Unit) {
+    var resumenCitas by remember {
+        mutableStateOf(ResumenCitas())
+    }
+
+    var proximosPacientes by remember {
+        mutableStateOf<List<CitaConMascota>>(emptyList())
+    }
+
+    var ingresosEstimados by remember {
+        mutableStateOf(0.0)
+    }
+
+// Estados de carga independientes.
+    var cargandoResumen by remember {
+        mutableStateOf(true)
+    }
+
+    var cargandoPacientes by remember {
+        mutableStateOf(true)
+    }
+
+    var cargandoIngresos by remember {
+        mutableStateOf(true)
+    }
+
+// Errores independientes.
+    var errorResumen by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    var errorPacientes by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    var errorIngresos by remember {
+        mutableStateOf<String?>(null)
+    }
+
+// --------------------------------------------------
+// CARGAR INFORMACIÓN DEL DASHBOARD
+// --------------------------------------------------
+
+    fun cargarDashboard() {
+
+        cargandoResumen = true
+        cargandoPacientes = true
+        cargandoIngresos = true
+
+        errorResumen = null
+        errorPacientes = null
+        errorIngresos = null
+
+        // 1. Resumen de citas.
         controladorCita.obtenerResumenCitasDiaAdmin(
+
             onSuccess = { resumen ->
                 resumenCitas = resumen
+                cargandoResumen = false
             },
+
             onFailure = { error ->
-                Log.e("Firebase", "Error al traer citas: ${error.message}")
+                errorResumen = error.message
+                    ?: "No se pudo cargar el resumen de citas."
+
+                cargandoResumen = false
+
+                Log.e(
+                    "AdminDashboard",
+                    "Error en resumen: ${error.message}"
+                )
             }
         )
 
+        // 2. Próximos pacientes.
         controladorCita.obtenerProximosPacientes(
-            onSuccess = { lista -> proximosPacientes = lista},
-            onFailure = {error ->
-                Log.e("ERROR: Proximos Pacientes", "${error.message}")
+
+            onSuccess = { lista ->
+                proximosPacientes = lista
+                cargandoPacientes = false
+            },
+
+            onFailure = { error ->
+                errorPacientes = error.message
+                    ?: "No se pudieron cargar los pacientes."
+
+                cargandoPacientes = false
+
+                Log.e(
+                    "AdminDashboard",
+                    "Error en pacientes: ${error.message}"
+                )
+            }
+        )
+
+        // 3. Ingresos estimados.
+        controladorCita.obtenerIngresosEstimadosDiaAdmin(
+
+            onSuccess = { ingresos ->
+                ingresosEstimados = ingresos
+                cargandoIngresos = false
+            },
+
+            onFailure = { error ->
+                errorIngresos = error.message
+                    ?: "No se pudieron calcular los ingresos."
+
+                cargandoIngresos = false
+
+                Log.e(
+                    "AdminDashboard",
+                    "Error en ingresos: ${error.message}"
+                )
             }
         )
     }
+
+    LaunchedEffect(Unit) {
+        cargarDashboard()
+    }
+
+    val fechaActual = remember {
+        LocalDate.now().format(
+            DateTimeFormatter.ofPattern(
+                "EEEE d 'de' MMMM 'de' yyyy",
+                Locale("es", "SV")
+            )
+        )
+    }
+
+    val erroresDashboard = listOfNotNull(
+        errorResumen,
+        errorPacientes,
+        errorIngresos
+    )
 
     Column(
         modifier = modifier
@@ -77,28 +199,99 @@ fun AdminDashboardScreen(
             color = TextoOscuro
         )
 
+        Text(
+            text = fechaActual.replaceFirstChar {
+                it.uppercase(Locale("es", "SV"))
+            },
+            fontSize = 13.sp,
+            color = GrisTextoSecundario
+        )
+
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Tarjeta: Citas Totales
+        if (erroresDashboard.isNotEmpty()) {
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFFFE8E6)
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+
+                    Text(
+                        text = "Algunos datos no pudieron cargarse.",
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFB3261E)
+                    )
+
+                    erroresDashboard.forEach { mensaje ->
+
+                        Text(
+                            text = mensaje,
+                            fontSize = 12.sp,
+                            color = Color(0xFFB3261E)
+                        )
+                    }
+
+                    TextButton(
+                        onClick = {
+                            cargarDashboard()
+                        }
+                    ) {
+                        Text(
+                            "Reintentar",
+                            color = Color(0xFFB3261E)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // --------------------------------------------------
+        // TARJETA: TOTAL DE CITAS
+        // --------------------------------------------------
+
         DashboardKpiCard(
             title = "Citas Totales",
-            value = resumenCitas.total.toString(),
+            value = if (cargandoResumen) {
+                "..."
+            } else {
+                resumenCitas.total.toString()
+            },
             icon = Icons.Default.DateRange,
             iconBgColor = FondoClaro,
             iconTintColor = VerdeFondoIcono,
-            extraRightText = "Hoy",
-            trendText = "~12%"
+            extraRightText = "Hoy"
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Tarjeta: Ingresos Estimados
+        // --------------------------------------------------
+        // TARJETA: INGRESOS ESTIMADOS
+        // --------------------------------------------------
+
         DashboardKpiCard(
             title = "Ingresos Estimados",
-            value = "$1,250",
+            value = if (cargandoIngresos) {
+                "..."
+            } else {
+                "$" + String.format(
+                    Locale.US,
+                    "%.2f",
+                    ingresosEstimados
+                )
+            },
             icon = Icons.Outlined.AccountBalanceWallet,
             iconBgColor = NaranjaSuaveIcono,
-            iconTintColor = NaranjaIcono
+            iconTintColor = NaranjaIcono,
+            supportingText = "Citas confirmadas y completadas de hoy."
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -109,44 +302,87 @@ fun AdminDashboardScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+
             Text(
                 text = "Estado de Citas",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Medium
             )
-            Text(
-                text = "Ver todas>",
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
+
+            TextButton(
+                onClick = onNavigateToCitas
+            ) {
+                Text(
+                    text = "Ver agenda",
+                    color = VerdeVetSync,
+                    fontSize = 12.sp
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Primera fila.
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+
             EstadoCitaMiniCard(
                 modifier = Modifier.weight(1f),
-                numero = resumenCitas.completadas.toString(),
+                numero = if (cargandoResumen) {
+                    "..."
+                } else {
+                    resumenCitas.completadas.toString()
+                },
                 estado = "Completadas",
                 numeroColor = Color(0xFF2E5B4B),
                 bgColor = Color(0xFFF5EFEB)
             )
+
             EstadoCitaMiniCard(
                 modifier = Modifier.weight(1f),
-                numero = resumenCitas.pendientes.toString(),
+                numero = if (cargandoResumen) {
+                    "..."
+                } else {
+                    resumenCitas.pendientes.toString()
+                },
                 estado = "Pendientes",
                 numeroColor = Color(0xFFB57B22),
                 bgColor = Color(0xFFFDF8EA)
             )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Segunda fila.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
             EstadoCitaMiniCard(
                 modifier = Modifier.weight(1f),
-                numero = resumenCitas.confirmadas.toString(),
+                numero = if (cargandoResumen) {
+                    "..."
+                } else {
+                    resumenCitas.confirmadas.toString()
+                },
                 estado = "Confirmadas",
                 numeroColor = Color(0xFF333333),
-                bgColor = Color(0xFFF5EFEB)
+                bgColor = Color(0xFFE6F0E8)
+            )
+
+            EstadoCitaMiniCard(
+                modifier = Modifier.weight(1f),
+                numero = if (cargandoResumen) {
+                    "..."
+                } else {
+                    resumenCitas.canceladas.toString()
+                },
+                estado = "Canceladas",
+                numeroColor = Color(0xFF9D4035),
+                bgColor = Color(0xFFFFE8E6)
             )
         }
 
@@ -161,38 +397,116 @@ fun AdminDashboardScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if(proximosPacientes.isEmpty()){
-            Text("No hay citas confirmadas para hoy", color = TextoOscuro)
-        } else {
-            proximosPacientes.forEach { mascota ->
+        when {
 
-                PacienteCard(
-                    nombre = mascota.cita.nombreMascota,
-                    razaEdad = "${mascota.raza} • ${mascota.edad}",
-                    estado = mascota.cita.estado.etiqueta,
-                    estadoBgColor = Color(0xFFFDF0D5),
-                    estadoTextColor = Color(0xFFB57B22),
-                    hora = mascota.cita.hora,
-                    tipoConsulta = mascota.cita.nombreServicio,
-                    descripcion = mascota.cita.motivo
+            cargandoPacientes -> {
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = VerdeVetSync
+                    )
+                }
+            }
+
+            errorPacientes != null -> {
+
+                Text(
+                    text = errorPacientes.orEmpty(),
+                    fontSize = 13.sp,
+                    color = Color(0xFFB3261E)
                 )
+            }
 
-                Spacer(modifier = Modifier.height(12.dp))
+            proximosPacientes.isEmpty() -> {
+
+                Text(
+                    text = "No hay citas confirmadas para hoy.",
+                    color = GrisTextoSecundario,
+                    fontSize = 14.sp
+                )
+            }
+
+            else -> {
+
+                proximosPacientes.forEach { paciente ->
+
+                    PacienteCard(
+                        nombre = paciente.cita.nombreMascota,
+
+                        razaEdad = listOf(
+                            paciente.raza,
+                            paciente.edad
+                        )
+                            .filter { it.isNotBlank() }
+                            .joinToString(" • ")
+                            .ifBlank { "Información no disponible" },
+
+                        estado = paciente.cita.estado.etiqueta,
+
+                        estadoBgColor = Color(0xFFD7E7D9),
+
+                        estadoTextColor = Color(0xFF365C3F),
+
+                        hora = paciente.cita.hora,
+
+                        tipoConsulta = paciente.cita.nombreServicio,
+
+                        descripcion = paciente.cita.motivo
+                            .ifBlank {
+                                "Sin descripción del motivo de consulta."
+                            }
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
             }
         }
 
-//        PacienteCard(
-//            nombre = "Luna",
-//            razaEdad = "Siamés • 4 años",
-//            estado = "Confirmada",
-//            estadoBgColor = Color(0xFFD5E8D4), // Verde claro
-//            estadoTextColor = Color(0xFF2E5B4B),
-//            hora = "11:15 AM",
-//            tipoConsulta = "Seguimiento",
-//            descripcion = "Revisión de suturas post-operación de esterilización. Estado general favorable."
-//        )
-//
-//        Spacer(modifier = Modifier.height(80.dp)) // Espacio para que el BottomBar no tape el último elemento
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Text(
+            text = "Accesos rápidos",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextoOscuro
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+            OutlinedButton(
+                onClick = onNavigateToCitas,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+
+                Text(
+                    text = "Gestionar citas",
+                    fontSize = 12.sp
+                )
+            }
+
+            OutlinedButton(
+                onClick = onNavigateToPacientes,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+
+                Text(
+                    text = "Ver pacientes",
+                    fontSize = 12.sp
+                )
+            }
+        }
     }
 }
 
@@ -204,7 +518,7 @@ fun DashboardKpiCard(
     iconBgColor: Color,
     iconTintColor: Color,
     extraRightText: String? = null,
-    trendText: String? = null
+    supportingText: String? = null
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -255,13 +569,14 @@ fun DashboardKpiCard(
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
                 )
-                if (trendText != null) {
-                    Spacer(modifier = Modifier.width(8.dp))
+                if (supportingText != null) {
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
                     Text(
-                        text = trendText,
-                        fontSize = 12.sp,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(bottom = 6.dp)
+                        text = supportingText,
+                        fontSize = 11.sp,
+                        color = Color.Gray
                     )
                 }
             }

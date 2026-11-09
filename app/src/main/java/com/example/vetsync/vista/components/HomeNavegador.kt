@@ -36,6 +36,7 @@ import androidx.compose.material3.IconButton
 @Composable
 fun HomeTopBar(
     mostrarFotoPerfil: Boolean = true,
+    notificacionesNoLeidas: Int = 0,
     onNotificationsClick: () -> Unit = {}
 ) {
 
@@ -105,13 +106,31 @@ fun HomeTopBar(
                     modifier = Modifier.size(26.dp)
                 )
 
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .offset(x = 2.dp, y = (-1).dp)
-                        .clip(CircleShape)
-                        .background(RojoAlerta)
-                )
+                if (notificacionesNoLeidas > 0) {
+                    Surface(
+                        modifier = Modifier.offset(
+                            x = 5.dp,
+                            y = (-5).dp
+                        ),
+                        color = RojoAlerta,
+                        shape = CircleShape
+                    ) {
+                        Text(
+                            text = if (notificacionesNoLeidas > 9) {
+                                "9+"
+                            } else {
+                                notificacionesNoLeidas.toString()
+                            },
+                            modifier = Modifier.padding(
+                                horizontal = 4.dp,
+                                vertical = 2.dp
+                            ),
+                            color = Color.White,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
     }
@@ -204,6 +223,7 @@ fun AdminHomeTopBar(
 @Composable
 fun HomeBottomNavigationBar(
     selectedTab: Int,
+    notificacionesNoLeidas: Int = 0,
     onTabSelected: (Int) -> Unit
 ) {
     Surface(
@@ -240,6 +260,8 @@ fun HomeBottomNavigationBar(
                 label = "Notificaciones",
                 icon = Icons.Outlined.Notifications,
                 selected = selectedTab == 3,
+                hasBadge = notificacionesNoLeidas > 0,
+                badgeCount = notificacionesNoLeidas,
                 onClick = { onTabSelected(3) }
             )
             BottomNavItem(
@@ -309,6 +331,7 @@ fun BottomNavItem(
     icon: ImageVector,
     selected: Boolean,
     hasBadge: Boolean = false,
+    badgeCount: Int = 0,
     onClick: () -> Unit
 ) {
     val backgroundColor = if (selected) VerdeClaroIcono else Color.Transparent
@@ -330,13 +353,43 @@ fun BottomNavItem(
                 modifier = Modifier.size(22.dp)
             )
             if (hasBadge) {
-                Box(
-                    modifier = Modifier
-                        .size(7.dp)
-                        .offset(x = 2.dp, y = (-1).dp)
-                        .clip(CircleShape)
-                        .background(RojoAlerta)
-                )
+
+                if (badgeCount > 0) {
+
+                    Surface(
+                        modifier = Modifier.offset(
+                            x = 6.dp,
+                            y = (-5).dp
+                        ),
+                        color = RojoAlerta,
+                        shape = CircleShape
+                    ) {
+                        Text(
+                            text = if (badgeCount > 9) {
+                                "9+"
+                            } else {
+                                badgeCount.toString()
+                            },
+                            modifier = Modifier.padding(
+                                horizontal = 4.dp,
+                                vertical = 1.dp
+                            ),
+                            color = Color.White,
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                } else {
+
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .offset(x = 2.dp, y = (-1).dp)
+                            .clip(CircleShape)
+                            .background(RojoAlerta)
+                    )
+                }
             }
         }
         Spacer(modifier = Modifier.height(2.dp))

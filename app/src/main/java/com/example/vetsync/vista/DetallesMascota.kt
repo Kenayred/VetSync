@@ -681,7 +681,7 @@ fun HistorialMedicoSection(
 
             EstadoModuloVacio(
                 icono = Icons.Outlined.DateRange,
-                mensaje = "El historial clínico todavía no está conectado a registros reales."
+                mensaje = "Consulta los diagnósticos, recetas médicas y observaciones registradas para esta mascota."
             )
         }
     }

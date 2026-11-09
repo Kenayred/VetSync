@@ -15,6 +15,48 @@ class UsuarioRepository {
             .addOnFailureListener { e -> onError(e.message ?: "Error al guardar usuario") }
     }
 
+    fun obtenerUsuarioParaRestaurarSesion(
+        id: String,
+        onSuccess: (Usuario) -> Unit,
+        onNotFound: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        if (id.isBlank()) {
+            onFailure(
+                IllegalArgumentException(
+                    "El identificador del usuario está vacío."
+                )
+            )
+            return
+        }
+
+        db.collection("usuarios")
+            .document(id)
+            .get()
+            .addOnSuccessListener { documento ->
+
+                if (!documento.exists()) {
+                    onNotFound()
+                    return@addOnSuccessListener
+                }
+
+                val usuario = documento.toObject(Usuario::class.java)
+
+                if (usuario != null) {
+                    onSuccess(usuario)
+                } else {
+                    onFailure(
+                        IllegalStateException(
+                            "No se pudieron recuperar los datos del perfil."
+                        )
+                    )
+                }
+            }
+            .addOnFailureListener { error ->
+                onFailure(error)
+            }
+    }
+
     fun obtenerUsuarioPorId(id: String, onSuccess: (Usuario) -> Unit, onError: (String) -> Unit) {
         db.collection("usuarios").document(id).get()
             .addOnSuccessListener { documento ->
@@ -152,6 +194,46 @@ class UsuarioRepository {
             .update("fotoUrl", nuevaFotoUrl)
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> onFailure(e) }
+    }
+
+    // --------------------------------------------------
+    // CONSULTAR CLIENTES PARA LA ADMINISTRACIÓN
+    // --------------------------------------------------
+    fun obtenerClientes(
+        onSuccess: (List<Usuario>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+
+        db.collection("usuarios")
+            .whereEqualTo("rol", RolUsuario.CLIENTE.name)
+            .get()
+            .addOnSuccessListener { snapshot ->
+
+                val clientes = snapshot.documents
+                    .mapNotNull { documento ->
+
+                        val nombre = documento.getString("nombre")
+                            ?: return@mapNotNull null
+
+                        Usuario(
+                            id = documento.id,
+                            username = documento.getString("username") ?: "",
+                            nombre = nombre,
+                            correo = documento.getString("correo") ?: "",
+                            telefono = documento.getString("telefono") ?: "",
+                            rol = RolUsuario.CLIENTE,
+                            fotoUrl = documento.getString("fotoUrl") ?: ""
+                        )
+                    }
+                    .sortedBy {
+                        it.nombre.trim().lowercase()
+                    }
+
+                onSuccess(clientes)
+            }
+            .addOnFailureListener { error ->
+                onFailure(error)
+            }
     }
 
 }

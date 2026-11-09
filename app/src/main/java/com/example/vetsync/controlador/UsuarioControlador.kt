@@ -192,6 +192,55 @@ class UsuarioControlador {
         SesionUsuario.cerrarSesion()
     }
 
+    fun restaurarSesion(
+        onSuccess: (Usuario) -> Unit,
+        onNoSession: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val usuarioFirebase = auth.currentUser
+
+        // No existe una sesión autenticada.
+        if (usuarioFirebase == null) {
+            SesionUsuario.cerrarSesion()
+            onNoSession()
+            return
+        }
+
+        // Recuperar el perfil asociado al UID de Firebase.
+        dbManager.obtenerUsuarioParaRestaurarSesion(
+            id = usuarioFirebase.uid,
+
+            onSuccess = { usuarioEncontrado ->
+
+                // El UID de Firebase es el identificador oficial.
+                val usuarioRestaurado = usuarioEncontrado.copy(
+                    id = usuarioFirebase.uid
+                )
+
+                SesionUsuario.iniciarSesion(usuarioRestaurado)
+
+                onSuccess(usuarioRestaurado)
+            },
+
+            onNotFound = {
+                // Existe autenticación, pero no existe el perfil.
+                cerrarSesion()
+
+                onError(
+                    "No se encontró el perfil asociado a tu cuenta. " +
+                            "Inicia sesión nuevamente."
+                )
+            },
+
+            onFailure = { error ->
+                onError(
+                    error.message
+                        ?: "No se pudo recuperar la sesión. Comprueba tu conexión."
+                )
+            }
+        )
+    }
+
     fun actualizarPerfil(
         nuevoNombre: String,
         nuevoUsername: String,
@@ -348,5 +397,38 @@ class UsuarioControlador {
         )
     }
 
+    // --------------------------------------------------
+    // CONSULTAR CLIENTES DESDE ADMINISTRACIÓN
+    // --------------------------------------------------
+    fun obtenerClientesAdmin(
+        onSuccess: (List<Usuario>) -> Unit,
+        onError: (String) -> Unit
+    ) {
+
+        // Verificar permisos administrativos.
+        if (
+            SesionUsuario.usuarioActual?.rol !=
+            RolUsuario.ADMINISTRADOR
+        ) {
+            onError(
+                "No tienes permisos para consultar los clientes."
+            )
+            return
+        }
+
+        dbManager.obtenerClientes(
+
+            onSuccess = { clientes ->
+                onSuccess(clientes)
+            },
+
+            onFailure = { error ->
+                onError(
+                    error.message
+                        ?: "No se pudieron recuperar los clientes."
+                )
+            }
+        )
+    }
 
 }

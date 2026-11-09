@@ -44,6 +44,37 @@ fun HomeScreen(
 
     var subPantallaActual by remember { mutableStateOf<SubPantallaHome?>(null) }
 
+    val usuarioId = SesionUsuario.idUsuario
+
+    val notificacionRepository = remember {
+        com.example.vetsync.modelo.NotificacionRepository()
+    }
+
+    var notificacionesNoLeidas by remember(usuarioId) {
+        mutableIntStateOf(0)
+    }
+
+    DisposableEffect(usuarioId) {
+
+        val listener = notificacionRepository.observarNotificaciones(
+            usuarioId = usuarioId,
+
+            onSuccess = { lista ->
+                notificacionesNoLeidas = lista.count {
+                    !it.leida
+                }
+            },
+
+            onFailure = {
+                notificacionesNoLeidas = 0
+            }
+        )
+
+        onDispose {
+            listener?.remove()
+        }
+    }
+
     BackHandler(
         enabled = subPantallaActual != null || selectedTab != 0
     ) {
@@ -129,6 +160,7 @@ fun HomeScreen(
                 topBar = {
                     HomeTopBar(
                         mostrarFotoPerfil = (selectedTab != 4),
+                        notificacionesNoLeidas = notificacionesNoLeidas,
                         onNotificationsClick = {
                             selectedTab = 3
                         }
@@ -137,6 +169,7 @@ fun HomeScreen(
                 bottomBar = {
                     HomeBottomNavigationBar(
                         selectedTab = selectedTab,
+                        notificacionesNoLeidas = notificacionesNoLeidas,
                         onTabSelected = { selectedTab = it }
                     )
                 }
@@ -195,7 +228,7 @@ fun HomeScreen(
                             PerfilScreen(
                                 usuario = usuarioActivo,
                                 onLogoutClick = {
-                                    SesionUsuario.cerrarSesion()
+                                    UsuarioControlador().cerrarSesion()
                                     onNavigateToLogin()
                                 },
                                 onEditProfileClick = {
