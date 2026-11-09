@@ -264,4 +264,79 @@ class NotaClinicaRepository {
             onFailure(error)
         }
     }
+
+    // --------------------------------------------------
+    // CONSULTAR HISTORIAL CLÍNICO COMO ADMINISTRADOR
+    // --------------------------------------------------
+    fun obtenerHistorialPorMascotaAdmin(
+        mascotaId: String,
+        onSuccess: (List<NotaClinica>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+
+        if (mascotaId.isBlank()) {
+            onFailure(
+                IllegalArgumentException(
+                    "El identificador de la mascota es obligatorio."
+                )
+            )
+            return
+        }
+
+        val referenciaMascota = db.collection("mascotas")
+            .document(mascotaId)
+
+        referenciaMascota.get()
+            .addOnSuccessListener { documentoMascota ->
+
+                if (!documentoMascota.exists()) {
+                    onFailure(
+                        IllegalStateException(
+                            "La mascota seleccionada no existe."
+                        )
+                    )
+                    return@addOnSuccessListener
+                }
+
+                referenciaMascota
+                    .collection("notas_clinicas")
+                    .get()
+                    .addOnSuccessListener { snapshot ->
+
+                        val historial = snapshot.documents
+                            .mapNotNull { documento ->
+
+                                documento.toObject(
+                                    NotaClinica::class.java
+                                )?.copy(
+                                    id = documento.id,
+                                    mascotaId = documento.getString(
+                                        "mascotaId"
+                                    ) ?: mascotaId,
+                                    propietarioId = documento.getString(
+                                        "propietarioId"
+                                    ) ?: "",
+                                    citaId = documento.getString(
+                                        "citaId"
+                                    ) ?: ""
+                                )
+                            }
+                            .sortedWith(
+                                compareByDescending<NotaClinica> {
+                                    it.fecha
+                                }.thenByDescending {
+                                    it.fechaCreacion
+                                }
+                            )
+
+                        onSuccess(historial)
+                    }
+                    .addOnFailureListener { error ->
+                        onFailure(error)
+                    }
+            }
+            .addOnFailureListener { error ->
+                onFailure(error)
+            }
+    }
 }

@@ -63,6 +63,46 @@ class MascotaRepository{
             .addOnFailureListener { e -> onFailure(e) }
     }
 
+    fun editarMascotaAdmin(
+        mascota: Mascota,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        if (mascota.id.isBlank()) {
+            onFailure(
+                IllegalArgumentException(
+                    "No se encontró el identificador de la mascota."
+                )
+            )
+            return
+        }
+
+        // Actualizar únicamente los datos generales.
+        // El propietario y las relaciones clínicas permanecen intactos.
+        val datosActualizados = hashMapOf<String, Any>(
+            "nombre" to mascota.nombre,
+            "especie" to mascota.especie,
+            "raza" to mascota.raza,
+            "edad" to mascota.edad,
+            "sexo" to mascota.sexo,
+            "fechaNacimiento" to mascota.fechaNacimiento,
+            "peso" to mascota.peso,
+            "colorMarcas" to mascota.colorMarcas,
+            "observaciones" to mascota.observaciones,
+            "fotoUrl" to mascota.fotoUrl
+        )
+
+        db.collection("mascotas")
+            .document(mascota.id)
+            .update(datosActualizados)
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener { error ->
+                onFailure(error)
+            }
+    }
+
     fun eliminarMascotaa(
         idMascota: String,
         onSuccess: () -> Unit,
@@ -107,7 +147,10 @@ class MascotaRepository{
                                 listaFinal.add(MascotaConDueno(items, nombreDueno))
 
                                 consultasCompletadas++
-                                Log.e("PRUEBA_MASCOTAS", "Éxito mascota $numero. Completadas: $consultasCompletadas/9")
+                                Log.d(
+                                    "AdminPacientes",
+                                    "Mascotas consultadas: $consultasCompletadas/${mascotas.size}"
+                                )
 
                                 if (consultasCompletadas == mascotas.size) {
                                     Log.e("PRUEBA_MASCOTAS", "¡Terminó el ciclo! Enviando a la vista...")

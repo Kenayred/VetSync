@@ -196,4 +196,44 @@ class UsuarioRepository {
             .addOnFailureListener { e -> onFailure(e) }
     }
 
+    // --------------------------------------------------
+    // CONSULTAR CLIENTES PARA LA ADMINISTRACIÓN
+    // --------------------------------------------------
+    fun obtenerClientes(
+        onSuccess: (List<Usuario>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+
+        db.collection("usuarios")
+            .whereEqualTo("rol", RolUsuario.CLIENTE.name)
+            .get()
+            .addOnSuccessListener { snapshot ->
+
+                val clientes = snapshot.documents
+                    .mapNotNull { documento ->
+
+                        val nombre = documento.getString("nombre")
+                            ?: return@mapNotNull null
+
+                        Usuario(
+                            id = documento.id,
+                            username = documento.getString("username") ?: "",
+                            nombre = nombre,
+                            correo = documento.getString("correo") ?: "",
+                            telefono = documento.getString("telefono") ?: "",
+                            rol = RolUsuario.CLIENTE,
+                            fotoUrl = documento.getString("fotoUrl") ?: ""
+                        )
+                    }
+                    .sortedBy {
+                        it.nombre.trim().lowercase()
+                    }
+
+                onSuccess(clientes)
+            }
+            .addOnFailureListener { error ->
+                onFailure(error)
+            }
+    }
+
 }

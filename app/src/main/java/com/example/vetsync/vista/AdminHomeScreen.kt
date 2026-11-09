@@ -72,7 +72,15 @@ fun AdminHomeScreen(
                 ) {
 
                     when (selectedTab) {
-                        0 -> AdminDashboardScreen()
+                        0 -> AdminDashboardScreen(
+                            onNavigateToCitas = {
+                                selectedTab = 1
+                            },
+
+                            onNavigateToPacientes = {
+                                selectedTab = 2
+                            }
+                        )
                         1 ->{
                             AdminCitasScreen()
                         }

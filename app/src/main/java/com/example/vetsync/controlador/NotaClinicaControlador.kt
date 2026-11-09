@@ -50,6 +50,48 @@ class NotaClinicaControlador {
         )
     }
 
+    // --------------------------------------------------
+    // CONSULTAR HISTORIAL CLÍNICO COMO ADMINISTRADOR
+    // --------------------------------------------------
+    fun obtenerHistorialMascotaAdmin(
+        mascotaId: String,
+        onSuccess: (List<NotaClinica>) -> Unit,
+        onError: (String) -> Unit
+    ) {
+
+        if (
+            SesionUsuario.usuarioActual?.rol !=
+            RolUsuario.ADMINISTRADOR
+        ) {
+            onError(
+                "No tienes permisos para consultar historiales clínicos."
+            )
+            return
+        }
+
+        if (mascotaId.isBlank()) {
+            onError(
+                "No se ha seleccionado una mascota válida."
+            )
+            return
+        }
+
+        notaRepository.obtenerHistorialPorMascotaAdmin(
+            mascotaId = mascotaId,
+
+            onSuccess = { historial ->
+                onSuccess(historial)
+            },
+
+            onFailure = { error ->
+                onError(
+                    error.message
+                        ?: "No se pudo recuperar el historial clínico."
+                )
+            }
+        )
+    }
+
     fun registrarNotaClinica(
         cita: Cita,
         motivo: String = "",

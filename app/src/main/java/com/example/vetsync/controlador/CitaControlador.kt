@@ -504,8 +504,8 @@ class CitaControlador {
     }
 
     // --------------------------------------------------
-// FUNCIONES EXCLUSIVAS DEL ADMINISTRADOR
-// --------------------------------------------------
+    // FUNCIONES EXCLUSIVAS DEL ADMINISTRADOR
+    // --------------------------------------------------
 
     fun obtenerTodasLasCitasAdmin(
         onSuccess: (List<Cita>) -> Unit,
@@ -525,6 +525,49 @@ class CitaControlador {
 
         citaRepository.obtenerTodasLasCitasAdmin(
             onSuccess = onSuccess,
+            onFailure = onFailure
+        )
+    }
+
+    // --------------------------------------------------
+    // OBTENER INGRESOS ESTIMADOS DEL DÍA
+    // --------------------------------------------------
+
+    fun obtenerIngresosEstimadosDiaAdmin(
+        onSuccess: (Double) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        if (
+            SesionUsuario.usuarioActual?.rol !=
+            RolUsuario.ADMINISTRADOR
+        ) {
+            onFailure(
+                SecurityException(
+                    "No tienes permisos para consultar los ingresos."
+                )
+            )
+            return
+        }
+
+        val fechaActual = LocalDate.now().toString()
+
+        citaRepository.obtenerCitasPorFecha(
+            fecha = fechaActual,
+
+            onSuccess = { citas ->
+
+                // Contamos únicamente las citas confirmadas
+                // y completadas. Excluimos pendientes y canceladas.
+                val ingresosEstimados = citas
+                    .filter {
+                        it.estado == EstadoCita.CONFIRMADA ||
+                                it.estado == EstadoCita.COMPLETADA
+                    }
+                    .sumOf { it.costo }
+
+                onSuccess(ingresosEstimados)
+            },
+
             onFailure = onFailure
         )
     }
@@ -564,9 +607,45 @@ class CitaControlador {
     }
 
     // --------------------------------------------------
-// CONSULTAR CITAS DE UNA FECHA
-// --------------------------------------------------
+    // CONSULTAR CITAS DE UNA MASCOTA COMO ADMINISTRADOR
+    // --------------------------------------------------
+    fun obtenerCitasMascotaAdmin(
+        mascotaId: String,
+        onSuccess: (List<Cita>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
 
+        if (
+            SesionUsuario.usuarioActual?.rol !=
+            RolUsuario.ADMINISTRADOR
+        ) {
+            onFailure(
+                SecurityException(
+                    "No tienes permisos para consultar las citas del paciente."
+                )
+            )
+            return
+        }
+
+        if (mascotaId.isBlank()) {
+            onFailure(
+                IllegalArgumentException(
+                    "No se identificó la mascota seleccionada."
+                )
+            )
+            return
+        }
+
+        citaRepository.obtenerCitasPorMascota(
+            idMascota = mascotaId,
+            onSuccess = onSuccess,
+            onFailure = onFailure
+        )
+    }
+
+    // --------------------------------------------------
+    // CONSULTAR CITAS DE UNA FECHA
+    // --------------------------------------------------
     fun obtenerCitasPorFecha(
         fecha: String,
         onSuccess: (List<Cita>) -> Unit,

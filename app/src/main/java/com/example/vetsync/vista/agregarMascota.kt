@@ -57,7 +57,8 @@ fun AgregarMascotaScreen(
     controlador: MascotaControlador = remember { MascotaControlador() },
     onBackClick: () -> Unit = {},
     onCancelarClick: () -> Unit = {},
-    onMascotaGuardada: () -> Unit = {}
+    onMascotaGuardada: () -> Unit = {},
+    propietarioId: String? = null
 ) {
     var nombre by remember { mutableStateOf("") }
     var nombreError by remember { mutableStateOf(false) }
@@ -87,6 +88,8 @@ fun AgregarMascotaScreen(
     val scrollState = rememberScrollState()
     val context = LocalContext.current
 
+    val esRegistroAdministrador = propietarioId != null
+
     val selectorImagenLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -109,14 +112,22 @@ fun AgregarMascotaScreen(
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             Text(
-                text = "Agregar Mascota",
+                text = if (esRegistroAdministrador) {
+                    "Registrar paciente"
+                } else {
+                    "Agregar Mascota"
+                },
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1E221F)
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Ingresa los detalles del nuevo paciente para mantener su registro al día.",
+                text = if (esRegistroAdministrador) {
+                    "Ingresa los datos de la mascota del cliente seleccionado."
+                } else {
+                    "Ingresa los detalles del nuevo paciente para mantener su registro al día."
+                },
                 fontSize = 14.sp,
                 color = GrisTextoSecundario,
                 lineHeight = 20.sp
@@ -420,34 +431,68 @@ fun AgregarMascotaScreen(
                                     especie.trim()
                                 }
 
-                                controlador.registrarMascota(
-                                    idUsuario = SesionUsuario.idUsuario,
-                                    nombre = nombre,
-                                    especie = especieFinal,
-                                    raza = raza,
-                                    edadTexto = edad,
-                                    sexo = sexo,
-                                    fechaNacimiento = fechaNacimiento,
-                                    pesoTexto = peso,
-                                    colorMarcas = colorMarcas,
-                                    observaciones = observaciones,
-                                    fotoUrl = fotoBase64, // <-- Imagen en base64
-                                    onSuccess = {
-                                        android.widget.Toast.makeText(
-                                            context,
-                                            "¡Mascota registrada con éxito!",
-                                            android.widget.Toast.LENGTH_SHORT
-                                        ).show()
-                                        onMascotaGuardada()
-                                    },
-                                    onError = { mensajeError ->
-                                        android.widget.Toast.makeText(
-                                            context,
-                                            mensajeError,
-                                            android.widget.Toast.LENGTH_SHORT
-                                        ).show()
+                                val onRegistroExitoso: () -> Unit = {
+                                    val mensaje = if (esRegistroAdministrador) {
+                                        "¡Paciente registrado con éxito!"
+                                    } else {
+                                        "¡Mascota registrada con éxito!"
                                     }
-                                )
+
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        mensaje,
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
+
+                                    onMascotaGuardada()
+                                }
+
+                                val onRegistroError: (String) -> Unit = { mensajeError ->
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        mensajeError,
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+
+                                if (propietarioId == null) {
+
+                                    // Registro normal del cliente.
+                                    controlador.registrarMascota(
+                                        idUsuario = SesionUsuario.idUsuario,
+                                        nombre = nombre,
+                                        especie = especieFinal,
+                                        raza = raza,
+                                        edadTexto = edad,
+                                        sexo = sexo,
+                                        fechaNacimiento = fechaNacimiento,
+                                        pesoTexto = peso,
+                                        colorMarcas = colorMarcas,
+                                        observaciones = observaciones,
+                                        fotoUrl = fotoBase64,
+                                        onSuccess = onRegistroExitoso,
+                                        onError = onRegistroError
+                                    )
+
+                                } else {
+
+                                    // Registro realizado por el administrador para un cliente.
+                                    controlador.registrarMascotaParaCliente(
+                                        propietarioId = propietarioId,
+                                        nombre = nombre,
+                                        especie = especieFinal,
+                                        raza = raza,
+                                        edadTexto = edad,
+                                        sexo = sexo,
+                                        fechaNacimiento = fechaNacimiento,
+                                        pesoTexto = peso,
+                                        colorMarcas = colorMarcas,
+                                        observaciones = observaciones,
+                                        fotoUrl = fotoBase64,
+                                        onSuccess = onRegistroExitoso,
+                                        onError = onRegistroError
+                                    )
+                                }
                             }
 
                         },
@@ -465,7 +510,11 @@ fun AgregarMascotaScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Guardar mascota",
+                            text = if (esRegistroAdministrador) {
+                                "Registrar paciente"
+                            } else {
+                                "Guardar mascota"
+                            },
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color.White

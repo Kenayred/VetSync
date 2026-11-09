@@ -397,5 +397,38 @@ class UsuarioControlador {
         )
     }
 
+    // --------------------------------------------------
+    // CONSULTAR CLIENTES DESDE ADMINISTRACIÓN
+    // --------------------------------------------------
+    fun obtenerClientesAdmin(
+        onSuccess: (List<Usuario>) -> Unit,
+        onError: (String) -> Unit
+    ) {
+
+        // Verificar permisos administrativos.
+        if (
+            SesionUsuario.usuarioActual?.rol !=
+            RolUsuario.ADMINISTRADOR
+        ) {
+            onError(
+                "No tienes permisos para consultar los clientes."
+            )
+            return
+        }
+
+        dbManager.obtenerClientes(
+
+            onSuccess = { clientes ->
+                onSuccess(clientes)
+            },
+
+            onFailure = { error ->
+                onError(
+                    error.message
+                        ?: "No se pudieron recuperar los clientes."
+                )
+            }
+        )
+    }
 
 }
