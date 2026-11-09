@@ -21,7 +21,7 @@ import com.example.vetsync.vista.screens.AdminCitasScreen
 import com.example.vetsync.vista.screens.AdminPacientesScreen
 import com.example.vetsync.vista.screens.AdminPerfilScreen
 import com.example.vetsync.vista.screens.AdminReportesScreen
-
+import com.example.vetsync.controlador.UsuarioControlador
 
 sealed class SubPantallaAdminHome {
 
@@ -90,8 +90,23 @@ fun AdminHomeScreen(
                         3 -> {
                             AdminReportesScreen()
                         }
-                        4 ->  {
-                            AdminPerfilScreen()
+                        4 -> {
+                            AdminPerfilScreen(
+                                usuario = SesionUsuario.usuarioActual,
+
+                                onLogoutClick = {
+
+                                    // Cerrar Firebase Authentication
+                                    // y limpiar la sesión local.
+                                    UsuarioControlador().cerrarSesion()
+
+                                    // Restablecer la navegación.
+                                    selectedTab = 0
+
+                                    // Regresar a la pantalla de inicio de sesión.
+                                    onNavigateToLogin()
+                                }
+                            )
                         }
                     }
                 }

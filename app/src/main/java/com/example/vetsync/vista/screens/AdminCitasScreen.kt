@@ -46,6 +46,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.vetsync.controlador.NotaClinicaControlador
+import androidx.compose.foundation.horizontalScroll
 
 @Composable
 fun AdminCitasScreen(
@@ -69,6 +70,10 @@ fun AdminCitasScreen(
 
     var citas by remember {
         mutableStateOf<List<Cita>>(emptyList())
+    }
+
+    var filtroEstadoSeleccionado by remember {
+        mutableStateOf("Total")
     }
 
     var cargando by remember {
@@ -195,6 +200,30 @@ fun AdminCitasScreen(
         cargarCitas()
     }
 
+    // --------------------------------------------------
+    // FILTRAR CITAS POR ESTADO
+    // --------------------------------------------------
+    val citasFiltradas = when (filtroEstadoSeleccionado) {
+
+        "Pendientes" -> citas.filter {
+            it.estado == EstadoCita.PENDIENTE
+        }
+
+        "Confirmadas" -> citas.filter {
+            it.estado == EstadoCita.CONFIRMADA
+        }
+
+        "Canceladas" -> citas.filter {
+            it.estado == EstadoCita.CANCELADA
+        }
+
+        "Completadas" -> citas.filter {
+            it.estado == EstadoCita.COMPLETADA
+        }
+
+        else -> citas
+    }
+
     val formatoFecha = DateTimeFormatter.ofPattern(
         "dd/MM/yyyy"
     )
@@ -301,7 +330,17 @@ fun AdminCitasScreen(
             color = Color(0xFF1A1A1A)
         )
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        FiltrosEstadoCitas(
+            citas = citas,
+            filtroSeleccionado = filtroEstadoSeleccionado,
+            onFiltroSeleccionado = {
+                filtroEstadoSeleccionado = it
+            }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         if (mensajeExito != null) {
             Card(
@@ -384,9 +423,58 @@ fun AdminCitasScreen(
                 }
             }
 
+            citasFiltradas.isEmpty() -> {
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+
+                    shape = RoundedCornerShape(12.dp),
+
+                    border = BorderStroke(
+                        1.dp,
+                        Color(0xFFE5E5E5)
+                    )
+                ) {
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+
+                        Text(
+                            text = "No hay citas ${filtroEstadoSeleccionado.lowercase()}.",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.DarkGray,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        TextButton(
+                            onClick = {
+                                filtroEstadoSeleccionado = "Total"
+                            }
+                        ) {
+                            Text(
+                                text = "Mostrar todas las citas",
+                                color = Color(0xFF4A7D5E)
+                            )
+                        }
+                    }
+                }
+            }
+
             else -> {
 
-                citas.forEach { cita ->
+                citasFiltradas.forEach { cita ->
 
                     CitaAdminItem(
                         cita = cita,
@@ -442,6 +530,83 @@ fun AdminCitasScreen(
                 )
             }
         )
+    }
+}
+
+@Composable
+private fun FiltrosEstadoCitas(
+    citas: List<Cita>,
+    filtroSeleccionado: String,
+    onFiltroSeleccionado: (String) -> Unit
+) {
+
+    val opciones = listOf(
+        "Total" to citas.size,
+
+        "Pendientes" to citas.count {
+            it.estado == EstadoCita.PENDIENTE
+        },
+
+        "Confirmadas" to citas.count {
+            it.estado == EstadoCita.CONFIRMADA
+        },
+
+        "Canceladas" to citas.count {
+            it.estado == EstadoCita.CANCELADA
+        },
+
+        "Completadas" to citas.count {
+            it.estado == EstadoCita.COMPLETADA
+        }
+    )
+
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+
+        Text(
+            text = "Filtrar por estado",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            color = Color.DarkGray
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+
+            opciones.forEach { (nombre, cantidad) ->
+
+                FilterChip(
+                    selected = filtroSeleccionado == nombre,
+
+                    onClick = {
+                        onFiltroSeleccionado(nombre)
+                    },
+
+                    label = {
+                        Text(
+                            text = "$nombre ($cantidad)",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    },
+
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Color(0xFFE2EFE7),
+                        selectedLabelColor = Color(0xFF285C3A),
+                        containerColor = Color.White,
+                        labelColor = Color.DarkGray
+                    )
+                )
+            }
+        }
     }
 }
 
