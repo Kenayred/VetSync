@@ -1,4 +1,4 @@
-# 🐾 VetSync – Sistema Inteligente de Gestión Veterinaria
+<img width="1001" height="918" alt="image" src="https://github.com/user-attachments/assets/840da3bd-8ae0-452a-9242-cbb31c51e3b0" /># 🐾 VetSync – Sistema Inteligente de Gestión Veterinaria
 
 <p align="center">
   <strong>Proyecto de Cátedra – ByteForge</strong><br>
@@ -146,3 +146,14 @@ A continuación se detallan los módulos y pantallas desarrolladas para esta eta
 
 ### 🔔 Notificaciones
 - Pantalla dedicada a la bandeja de notificaciones para mantener al cliente informado sobre actualizaciones de la clínica o cambios en el estado de sus servicios.
+
+## 📄 Licencia
+
+<p>
+  <a href="https://github.com/Kenayred/VetSync">VetSync</a> © 2026 by 
+  <a href="https://github.com/Kenayred/VetSync">ByteForge</a> (Jeferson Enrique Crespín Galdámez & Kennet Adonay Vargas Hernández) is licensed under 
+  <a href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>
+  <img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" alt="CC" width="18" height="18">
+  <img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" alt="BY" width="18" height="18">
+  <img src="https://mirrors.creativecommons.org/presskit/icons/nc.svg" alt="NC" width="18" height="18">
+</p>
