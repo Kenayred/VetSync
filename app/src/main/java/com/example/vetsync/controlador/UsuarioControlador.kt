@@ -431,4 +431,95 @@ class UsuarioControlador {
         )
     }
 
+    fun enviarCorreoRecuperacion(
+        correo: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val correoLimpio = correo.trim()
+
+        if (correoLimpio.isBlank()) {
+            onError("Por favor, ingresa tu correo electrónico.")
+            return
+        }
+
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(correoLimpio).matches()) {
+            onError("El formato del correo electrónico no es válido.")
+            return
+        }
+
+        auth.sendPasswordResetEmail(correoLimpio)
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener { e ->
+                onError("No se pudo enviar el correo: ${e.localizedMessage ?: "Verifica tu conexión."}")
+            }
+    }
+
+    fun cambiarContrasena(
+        contrasenaActual: String,
+        nuevaContrasena: String,
+        confirmarContrasena: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val user = auth.currentUser
+        val email = user?.email
+
+        if (user == null || email.isNullOrBlank()) {
+            onError("No se encontró una sesión activa válida.")
+            return
+        }
+
+        // Verificar si el usuario inició sesión con correo/contraseña (no solo Google)
+        val tieneProveedorPassword = user.providerData.any {
+            it.providerId == com.google.firebase.auth.EmailAuthProvider.PROVIDER_ID
+        }
+
+        if (!tieneProveedorPassword) {
+            onError("Tu cuenta está vinculada con Google. Gestiona tu contraseña desde tu cuenta de Google.")
+            return
+        }
+
+        if (contrasenaActual.isBlank()) {
+            onError("Ingresa tu contraseña actual.")
+            return
+        }
+
+        if (nuevaContrasena.length < 6) {
+            onError("La nueva contraseña debe tener al menos 6 caracteres.")
+            return
+        }
+
+        if (nuevaContrasena != confirmarContrasena) {
+            onError("Las contraseñas nuevas no coinciden.")
+            return
+        }
+
+        if (contrasenaActual == nuevaContrasena) {
+            onError("La nueva contraseña debe ser diferente a la actual.")
+            return
+        }
+
+        val credencial = com.google.firebase.auth.EmailAuthProvider.getCredential(
+            email,
+            contrasenaActual
+        )
+
+        user.reauthenticate(credencial)
+            .addOnSuccessListener {
+                user.updatePassword(nuevaContrasena)
+                    .addOnSuccessListener {
+                        onSuccess()
+                    }
+                    .addOnFailureListener { e ->
+                        onError("No se pudo actualizar la contraseña: ${e.localizedMessage}")
+                    }
+            }
+            .addOnFailureListener {
+                onError("La contraseña actual es incorrecta.")
+            }
+    }
+
 }

@@ -32,6 +32,21 @@ import androidx.compose.ui.layout.ContentScale
 import com.example.vetsync.modelo.ImagenUtils
 import com.example.vetsync.modelo.SesionUsuario
 import androidx.compose.material3.IconButton
+import android.widget.Toast
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.vetsync.controlador.UsuarioControlador
+import com.example.vetsync.vista.theme.RojoAlerta
+import com.example.vetsync.vista.theme.VerdeVetSync
 
 @Composable
 fun HomeTopBar(
@@ -421,4 +436,190 @@ fun BottomNavItem(
             lineHeight = 12.sp
         )
     }
+}
+
+@Composable
+fun DialogoCambiarContrasena(
+    controlador: UsuarioControlador,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+
+    var contrasenaActual by remember { mutableStateOf("") }
+    var nuevaContrasena by remember { mutableStateOf("") }
+    var confirmarContrasena by remember { mutableStateOf("") }
+
+    var verActual by remember { mutableStateOf(false) }
+    var verNueva by remember { mutableStateOf(false) }
+    var verConfirmar by remember { mutableStateOf(false) }
+
+    var cargando by remember { mutableStateOf(false) }
+    var errorMensaje by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = { if (!cargando) onDismiss() },
+        containerColor = Color.White,
+        title = {
+            Text(
+                text = "Cambiar contraseña",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+        },
+        text = {
+            Column {
+                Text(
+                    text = "Por seguridad, ingresa tu contraseña actual antes de definir una nueva.",
+                    fontSize = 13.sp,
+                    color = Color.DarkGray
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Contraseña actual
+                OutlinedTextField(
+                    value = contrasenaActual,
+                    onValueChange = {
+                        contrasenaActual = it
+                        errorMensaje = null
+                    },
+                    enabled = !cargando,
+                    label = { Text("Contraseña actual") },
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    trailingIcon = {
+                        IconButton(onClick = { verActual = !verActual }) {
+                            Icon(
+                                imageVector = if (verActual) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    visualTransformation = if (verActual) VisualTransformation.None else PasswordVisualTransformation(),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = VerdeVetSync,
+                        focusedLabelColor = VerdeVetSync,
+                        cursorColor = VerdeVetSync
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Nueva contraseña
+                OutlinedTextField(
+                    value = nuevaContrasena,
+                    onValueChange = {
+                        nuevaContrasena = it
+                        errorMensaje = null
+                    },
+                    enabled = !cargando,
+                    label = { Text("Nueva contraseña") },
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    trailingIcon = {
+                        IconButton(onClick = { verNueva = !verNueva }) {
+                            Icon(
+                                imageVector = if (verNueva) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    visualTransformation = if (verNueva) VisualTransformation.None else PasswordVisualTransformation(),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = VerdeVetSync,
+                        focusedLabelColor = VerdeVetSync,
+                        cursorColor = VerdeVetSync
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Confirmar nueva contraseña
+                OutlinedTextField(
+                    value = confirmarContrasena,
+                    onValueChange = {
+                        confirmarContrasena = it
+                        errorMensaje = null
+                    },
+                    enabled = !cargando,
+                    label = { Text("Confirmar nueva contraseña") },
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    trailingIcon = {
+                        IconButton(onClick = { verConfirmar = !verConfirmar }) {
+                            Icon(
+                                imageVector = if (verConfirmar) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    visualTransformation = if (verConfirmar) VisualTransformation.None else PasswordVisualTransformation(),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = VerdeVetSync,
+                        focusedLabelColor = VerdeVetSync,
+                        cursorColor = VerdeVetSync
+                    )
+                )
+
+                if (errorMensaje != null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = errorMensaje.orEmpty(),
+                        color = RojoAlerta,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    cargando = true
+                    errorMensaje = null
+
+                    controlador.cambiarContrasena(
+                        contrasenaActual = contrasenaActual,
+                        nuevaContrasena = nuevaContrasena,
+                        confirmarContrasena = confirmarContrasena,
+                        onSuccess = {
+                            cargando = false
+                            Toast.makeText(
+                                context,
+                                "Contraseña actualizada correctamente.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            onDismiss()
+                        },
+                        onError = { mensaje ->
+                            cargando = false
+                            errorMensaje = mensaje
+                        }
+                    )
+                },
+                enabled = !cargando,
+                colors = ButtonDefaults.buttonColors(containerColor = VerdeVetSync)
+            ) {
+                if (cargando) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Actualizar")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !cargando
+            ) {
+                Text("Cancelar", color = Color.Gray)
+            }
+        }
+    )
 }

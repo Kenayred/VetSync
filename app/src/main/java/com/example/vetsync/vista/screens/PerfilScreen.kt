@@ -34,8 +34,10 @@ import com.example.vetsync.vista.theme.*
 import com.example.vetsync.modelo.ImagenUtils
 import com.example.vetsync.controlador.MascotaControlador
 import com.example.vetsync.controlador.CitaControlador
+import com.example.vetsync.controlador.UsuarioControlador
 import com.example.vetsync.modelo.Cita
 import com.example.vetsync.modelo.EstadoCita
+import com.example.vetsync.vista.components.DialogoCambiarContrasena
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -43,8 +45,13 @@ import java.time.LocalTime
 fun PerfilScreen(
     usuario: Usuario,
     onLogoutClick: () -> Unit,
-    onEditProfileClick: () -> Unit
+    onEditProfileClick: () -> Unit,
+    controlador: UsuarioControlador = remember { UsuarioControlador() }
 ) {
+    var mostrarDialogoCerrarSesion by remember {
+        mutableStateOf(false)
+    }
+    var mostrarDialogoCambiarContrasena by remember { mutableStateOf(false) }
     val controladorMascota = remember {
         MascotaControlador()
     }
@@ -265,9 +272,79 @@ fun PerfilScreen(
             PreferenciasCard()
             Spacer(modifier = Modifier.height(16.dp))
 
-            SeguridadCard(onLogoutClick)
+            SeguridadCard(
+                onCambiarContrasenaClick = {
+                    mostrarDialogoCambiarContrasena = true
+                },
+                onCerrarSesionClick = {
+                    mostrarDialogoCerrarSesion = true
+                }
+            )
             Spacer(modifier = Modifier.height(30.dp)) // Espacio para el BottomNavigation
         }
+    }
+
+    if (mostrarDialogoCambiarContrasena) {
+        DialogoCambiarContrasena(
+            controlador = controlador,
+            onDismiss = { mostrarDialogoCambiarContrasena = false }
+        )
+    }
+
+    if (mostrarDialogoCerrarSesion) {
+
+        AlertDialog(
+            onDismissRequest = {
+                mostrarDialogoCerrarSesion = false
+            },
+
+            title = {
+                Text(
+                    text = "Cerrar sesión",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+
+            text = {
+                Text(
+                    text = "¿Estás seguro de que deseas cerrar tu sesión de administrador?"
+                )
+            },
+
+            confirmButton = {
+
+                TextButton(
+                    onClick = {
+                        mostrarDialogoCerrarSesion = false
+                        onLogoutClick()
+                    }
+                ) {
+
+                    Text(
+                        text = "Cerrar sesión",
+                        color = Color(0xFFB3261E),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+
+            dismissButton = {
+
+                TextButton(
+                    onClick = {
+                        mostrarDialogoCerrarSesion = false
+                    }
+                ) {
+
+                    Text(
+                        text = "Cancelar",
+                        color = Color.Gray
+                    )
+                }
+            },
+
+            containerColor = Color.White
+        )
     }
 }
 
@@ -467,13 +544,34 @@ fun PreferenciasCard() {
 }
 
 @Composable
-fun SeguridadCard(onLogoutClick: () -> Unit) {
+fun SeguridadCard(
+    onCambiarContrasenaClick: () -> Unit,
+    onCerrarSesionClick: () -> Unit,
+    onLogoutClick: () -> Unit
+) {
     CardBlanca {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(text = "Seguridad", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
 
-            ActionRowItem(icono = Icons.Outlined.Lock, label = "Cambiar contraseña")
+            OutlinedButton(
+                onClick = onCambiarContrasenaClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(10.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF4A7D5E)),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color(0xFF2E5B4B)
+                )
+            ) {
+                Text(
+                    text = "Cambiar contraseña",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
             ActionRowItem(icono = Icons.Outlined.Person, label = "Configuración de cuenta")
             Spacer(modifier = Modifier.height(20.dp))
@@ -488,7 +586,29 @@ fun SeguridadCard(onLogoutClick: () -> Unit) {
             ) {
                 Icon(Icons.AutoMirrored.Outlined.ExitToApp, contentDescription = null, tint = RojoAlerta, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(12.dp))
-                Text(text = "Cerrar sesión", fontSize = 14.sp, color = RojoAlerta, fontWeight = FontWeight.Medium)
+                Button(
+                    onClick = {
+                        onCerrarSesionClick()
+                    },
+
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+
+                    shape = RoundedCornerShape(10.dp),
+
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFCE8E6)
+                    )
+                ) {
+
+                    Text(
+                        text = "Cerrar sesión",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFB3261E)
+                    )
+                }
             }
         }
     }
