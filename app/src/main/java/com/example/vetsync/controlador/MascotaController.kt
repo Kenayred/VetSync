@@ -162,28 +162,65 @@ class MascotaControlador {
         onSuccess: (Mascota) -> Unit,
         onError: (String) -> Unit
     ) {
+        if (mascota.id.isBlank()) {
+            onError("No se encontró el identificador de la mascota.")
+            return
+        }
+
+        // Verificar que la mascota pertenezca al cliente que inició sesión.
+        if (
+            SesionUsuario.idUsuario.isBlank() ||
+            mascota.idDueno != SesionUsuario.idUsuario
+        ) {
+            onError("No tienes permisos para editar esta mascota.")
+            return
+        }
+
         if (mascota.nombre.isBlank()) {
             onError("El nombre de la mascota es obligatorio.")
             return
         }
 
-        if (mascota.especie.isBlank() || mascota.especie == "Seleccione el tipo") {
+        if (
+            mascota.especie.isBlank() ||
+            mascota.especie == "Seleccione el tipo"
+        ) {
             onError("Debes seleccionar una especie o tipo válido.")
             return
         }
 
-        if (mascota.peso < 0.0) {
-            onError("El peso no puede ser negativo.")
+        val edadConvertida = mascota.edad.trim().toIntOrNull()
+
+        if (edadConvertida == null || edadConvertida < 0) {
+            onError("La edad debe ser un número entero igual o mayor que cero.")
             return
         }
 
+        if (!mascota.peso.isFinite() || mascota.peso <= 0.0) {
+            onError("Ingresa un peso válido mayor que cero.")
+            return
+        }
+
+        val mascotaActualizada = mascota.copy(
+            nombre = mascota.nombre.trim(),
+            especie = mascota.especie.trim(),
+            raza = mascota.raza.trim(),
+            edad = edadConvertida.toString(),
+            fechaNacimiento = mascota.fechaNacimiento.trim(),
+            peso = mascota.peso,
+            colorMarcas = mascota.colorMarcas.trim()
+        )
+
         dbManager.editarMascota(
-            mascota = mascota,
+            mascota = mascotaActualizada,
             onSuccess = {
-                onSuccess(mascota)
+                onSuccess(mascotaActualizada)
             },
             onFailure = { excepcion ->
-                onError(excepcion.message ?: "Error desconocido al actualizar la mascota.")
+                onError(
+                    excepcion.message
+                        ?: "Error desconocido al actualizar la mascota."
+                )
             }
         )
     }

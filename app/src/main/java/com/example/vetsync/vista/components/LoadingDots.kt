@@ -4,19 +4,25 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.unit.dp
-import com.example.vetsync.vista.theme.VerdePrincipal
 
 @Composable
 fun LoadingDots() {
-    val infiniteTransition = rememberInfiniteTransition(label = "loading_dots")
 
-    // Lista para simular los 3 puntos
+    val infiniteTransition = rememberInfiniteTransition(
+        label = "loading_dots"
+    )
+
+    val colorPuntos = MaterialTheme.colorScheme.primary
+
+    // Tres puntos animados.
+
     val dots = listOf(0, 1, 2)
 
     Row(
@@ -24,12 +30,17 @@ fun LoadingDots() {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(16.dp)
     ) {
+
         dots.forEach { index ->
+
             val scale by infiniteTransition.animateFloat(
                 initialValue = 0.4f,
                 targetValue = 1.3f,
                 animationSpec = infiniteRepeatable(
-                    animation = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+                    animation = tween(
+                        durationMillis = 500,
+                        easing = FastOutSlowInEasing
+                    ),
                     repeatMode = RepeatMode.Reverse,
                     initialStartOffset = StartOffset(index * 150)
                 ),
@@ -40,7 +51,10 @@ fun LoadingDots() {
                 modifier = Modifier
                     .size(12.dp)
                     .scale(scale)
-                    .background(color = VerdePrincipal, shape = CircleShape)
+                    .background(
+                        color = colorPuntos,
+                        shape = CircleShape
+                    )
             )
         }
     }

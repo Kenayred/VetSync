@@ -1,5 +1,10 @@
 package com.example.vetsync.vista.screens
 
+import android.content.Intent
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,32 +16,26 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.BorderStroke
+import com.example.vetsync.controlador.CitaControlador
 import com.example.vetsync.modelo.Notificacion
 import com.example.vetsync.modelo.NotificacionRepository
 import com.example.vetsync.modelo.SesionUsuario
-import com.example.vetsync.vista.theme.*
+import com.example.vetsync.notificaciones.NotificacionSistema
+import com.example.vetsync.notificaciones.ProgramadorRecordatorios
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import android.content.Intent
-import android.provider.Settings
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.platform.LocalContext
-import com.example.vetsync.controlador.CitaControlador
-import com.example.vetsync.notificaciones.NotificacionSistema
-import com.example.vetsync.notificaciones.ProgramadorRecordatorios
 
 @Composable
 fun NotificacionesScreen() {
 
     val usuarioId = SesionUsuario.idUsuario
     val context = LocalContext.current
+    val colorScheme = MaterialTheme.colorScheme
 
     val controladorCitas = remember {
         CitaControlador()
@@ -52,24 +51,17 @@ fun NotificacionesScreen() {
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.StartActivityForResult()
         ) {
-
             permisoSistemaHabilitado =
                 NotificacionSistema.tienePermiso(context)
 
-            // Si el cliente habilitó las notificaciones,
-            // recuperamos la programación de sus recordatorios.
             if (permisoSistemaHabilitado) {
-
                 controladorCitas.obtenerCitasUsuario(
-
                     onSuccess = { citas ->
-
                         ProgramadorRecordatorios.sincronizarRecordatorios(
                             context = context.applicationContext,
                             citas = citas
                         )
                     },
-
                     onError = { error ->
                         android.util.Log.w(
                             "VetSync",
@@ -114,18 +106,15 @@ fun NotificacionesScreen() {
         notificaciones
     }
 
-    // Escuchamos los cambios de Firestore.
+    // Escuchar los cambios de Firestore.
     DisposableEffect(usuarioId) {
-
         val listener = repository.observarNotificaciones(
             usuarioId = usuarioId,
-
             onSuccess = { lista ->
                 notificaciones = lista
                 cargando = false
                 errorMensaje = null
             },
-
             onFailure = { error ->
                 cargando = false
                 errorMensaje = error.message
@@ -141,18 +130,17 @@ fun NotificacionesScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(FondoCrema)
+            .background(colorScheme.background)
             .padding(
                 horizontal = 20.dp,
                 vertical = 16.dp
             )
     ) {
-
         Text(
             text = "Notificaciones",
             fontSize = 30.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1E221F)
+            color = colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(6.dp))
@@ -160,39 +148,34 @@ fun NotificacionesScreen() {
         Text(
             text = "Mantente al tanto del cuidado de tus mascotas.",
             fontSize = 14.sp,
-            color = GrisTextoSecundario
+            color = colorScheme.onSurfaceVariant
         )
 
+        // Aviso para habilitar las notificaciones del dispositivo.
         if (!permisoSistemaHabilitado) {
-
             Spacer(modifier = Modifier.height(16.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFFF4DF)
+                    containerColor = colorScheme.tertiaryContainer
                 ),
-
                 shape = RoundedCornerShape(14.dp),
-
                 border = BorderStroke(
                     1.dp,
-                    Color(0xFFF0DFC0)
+                    colorScheme.tertiary.copy(alpha = 0.35f)
                 )
             ) {
-
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp)
                 ) {
-
                     Text(
                         text = "Activa los recordatorios",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF78551C)
+                        color = colorScheme.onTertiaryContainer
                     )
 
                     Spacer(modifier = Modifier.height(6.dp))
@@ -202,21 +185,18 @@ fun NotificacionesScreen() {
                                 "seguirán disponibles, pero necesitas " +
                                 "habilitar las notificaciones de Android " +
                                 "para recibir recordatorios en tu dispositivo.",
-
                         fontSize = 13.sp,
                         lineHeight = 19.sp,
-                        color = Color(0xFF78551C)
+                        color = colorScheme.onTertiaryContainer
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))
 
                     OutlinedButton(
                         onClick = {
-
                             val intent = Intent(
                                 Settings.ACTION_APP_NOTIFICATION_SETTINGS
                             ).apply {
-
                                 putExtra(
                                     Settings.EXTRA_APP_PACKAGE,
                                     context.packageName
@@ -225,12 +205,10 @@ fun NotificacionesScreen() {
 
                             abrirAjustesNotificaciones.launch(intent)
                         },
-
                         colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = VerdeVetSync
+                            contentColor = colorScheme.onTertiaryContainer
                         )
                     ) {
-
                         Text("Configurar notificaciones")
                     }
                 }
@@ -249,7 +227,6 @@ fun NotificacionesScreen() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-
                 FilterChip(
                     selected = !mostrarSoloNoLeidas,
                     onClick = {
@@ -259,8 +236,9 @@ fun NotificacionesScreen() {
                         Text("Todas")
                     },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = VerdeClaroIcono,
-                        selectedLabelColor = VerdeVetSync
+                        selectedContainerColor = colorScheme.primaryContainer,
+                        selectedLabelColor = colorScheme.onPrimaryContainer,
+                        labelColor = colorScheme.onSurfaceVariant
                     )
                 )
 
@@ -273,8 +251,9 @@ fun NotificacionesScreen() {
                         Text("No leídas")
                     },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = VerdeClaroIcono,
-                        selectedLabelColor = VerdeVetSync
+                        selectedContainerColor = colorScheme.primaryContainer,
+                        selectedLabelColor = colorScheme.onPrimaryContainer,
+                        labelColor = colorScheme.onSurfaceVariant
                     )
                 )
             }
@@ -283,20 +262,16 @@ fun NotificacionesScreen() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-
                 TextButton(
                     enabled = cantidadNoLeidas > 0 && !marcandoTodas,
                     onClick = {
-
                         marcandoTodas = true
 
                         repository.marcarTodasComoLeidas(
                             usuarioId = usuarioId,
-
                             onSuccess = {
                                 marcandoTodas = false
                             },
-
                             onFailure = { error ->
                                 marcandoTodas = false
                                 errorMensaje = error.message
@@ -305,11 +280,10 @@ fun NotificacionesScreen() {
                         )
                     }
                 ) {
-
                     if (marcandoTodas) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(16.dp),
-                            color = VerdeVetSync,
+                            color = colorScheme.primary,
                             strokeWidth = 2.dp
                         )
 
@@ -322,7 +296,7 @@ fun NotificacionesScreen() {
                         } else {
                             "Marcar todas como leídas"
                         },
-                        color = VerdeVetSync,
+                        color = colorScheme.primary,
                         fontSize = 12.sp
                     )
                 }
@@ -332,21 +306,18 @@ fun NotificacionesScreen() {
         }
 
         when {
-
             cargando -> {
-
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
-                        color = VerdeVetSync
+                        color = colorScheme.primary
                     )
                 }
             }
 
             errorMensaje != null -> {
-
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
@@ -354,14 +325,13 @@ fun NotificacionesScreen() {
                     Text(
                         text = errorMensaje
                             ?: "Ocurrió un error.",
-                        color = Color(0xFFB3261E),
+                        color = colorScheme.error,
                         fontSize = 14.sp
                     )
                 }
             }
 
             notificacionesFiltradas.isEmpty() -> {
-
                 TarjetaNotificacionesVacia(
                     titulo = if (mostrarSoloNoLeidas) {
                         "Todo al día"
@@ -378,30 +348,24 @@ fun NotificacionesScreen() {
             }
 
             else -> {
-
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-
                     items(
                         items = notificacionesFiltradas,
                         key = { it.id }
                     ) { notificacion ->
-
                         NotificacionItem(
                             notificacion = notificacion,
                             onMarcarLeida = {
-
                                 repository.marcarComoLeida(
                                     usuarioId = usuarioId,
                                     notificacionId = notificacion.id,
-
                                     onSuccess = {
-                                        // El listener actualizará
-                                        // automáticamente la pantalla.
+                                        // Firestore actualiza la pantalla
+                                        // mediante el listener activo.
                                     },
-
                                     onFailure = { error ->
                                         errorMensaje = error.message
                                             ?: "No se pudo actualizar la notificación."
@@ -421,30 +385,29 @@ private fun TarjetaNotificacionesVacia(
     titulo: String = "No tienes notificaciones",
     mensaje: String = "Aquí aparecerán tus avisos."
 ) {
+    val colorScheme = MaterialTheme.colorScheme
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = colorScheme.surface
         ),
         border = BorderStroke(
             1.dp,
-            Color(0xFFEEECE8)
+            colorScheme.outlineVariant
         )
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Icon(
                 imageVector = Icons.Outlined.Notifications,
                 contentDescription = "Notificaciones",
-                tint = VerdeVetSync,
+                tint = colorScheme.primary,
                 modifier = Modifier.size(48.dp)
             )
 
@@ -454,7 +417,7 @@ private fun TarjetaNotificacionesVacia(
                 text = titulo,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E221F)
+                color = colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -462,7 +425,7 @@ private fun TarjetaNotificacionesVacia(
             Text(
                 text = mensaje,
                 fontSize = 14.sp,
-                color = GrisTextoSecundario,
+                color = colorScheme.onSurfaceVariant,
                 lineHeight = 21.sp
             )
         }
@@ -474,45 +437,47 @@ private fun NotificacionItem(
     notificacion: Notificacion,
     onMarcarLeida: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (notificacion.leida) {
-                Color.White
+                colorScheme.surface
             } else {
-                Color(0xFFF0F6EF)
+                colorScheme.primaryContainer
             }
         ),
         border = BorderStroke(
             1.dp,
-            Color(0xFFE5E8E5)
+            colorScheme.outlineVariant
         )
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 Text(
                     text = notificacion.titulo,
                     modifier = Modifier.weight(1f),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E221F)
+                    color = if (notificacion.leida) {
+                        colorScheme.onSurface
+                    } else {
+                        colorScheme.onPrimaryContainer
+                    }
                 )
 
                 if (!notificacion.leida) {
-
                     Surface(
-                        color = VerdeClaroIcono,
+                        color = colorScheme.secondaryContainer,
+                        contentColor = colorScheme.onSecondaryContainer,
                         shape = RoundedCornerShape(50)
                     ) {
                         Text(
@@ -522,8 +487,7 @@ private fun NotificacionItem(
                                 vertical = 4.dp
                             ),
                             fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = VerdeVetSync
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
@@ -534,7 +498,11 @@ private fun NotificacionItem(
             Text(
                 text = notificacion.mensaje,
                 fontSize = 14.sp,
-                color = GrisTextoSecundario,
+                color = if (notificacion.leida) {
+                    colorScheme.onSurfaceVariant
+                } else {
+                    colorScheme.onPrimaryContainer
+                },
                 lineHeight = 20.sp
             )
 
@@ -543,19 +511,24 @@ private fun NotificacionItem(
             Text(
                 text = formatearFecha(notificacion.fechaCreacion),
                 fontSize = 12.sp,
-                color = GrisTextoSecundario
+                color = if (notificacion.leida) {
+                    colorScheme.onSurfaceVariant
+                } else {
+                    colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
+                }
             )
 
             if (!notificacion.leida) {
-
                 Spacer(modifier = Modifier.height(8.dp))
 
                 TextButton(
-                    onClick = onMarcarLeida
+                    onClick = onMarcarLeida,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = colorScheme.onPrimaryContainer
+                    )
                 ) {
                     Text(
                         text = "Marcar como leída",
-                        color = VerdeVetSync,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -565,7 +538,6 @@ private fun NotificacionItem(
 }
 
 private fun formatearFecha(fecha: Long): String {
-
     if (fecha <= 0L) {
         return "Fecha no disponible"
     }

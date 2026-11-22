@@ -16,7 +16,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,7 +26,6 @@ import com.example.vetsync.modelo.EstadoCita
 import com.example.vetsync.modelo.Mascota
 import com.example.vetsync.modelo.Servicio
 import com.example.vetsync.modelo.SesionUsuario
-import com.example.vetsync.vista.theme.*
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -35,6 +33,9 @@ import java.time.LocalTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import com.example.vetsync.modelo.ImagenUtils
 
 private val etapasReserva = listOf(
     "Mascota",
@@ -57,6 +58,8 @@ fun AgendarCitaScreen(
     onBackClick: () -> Unit = {},
     onCitaCreada: () -> Unit = {}
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     var mascotas by remember {
         mutableStateOf<List<Mascota>>(emptyList())
     }
@@ -378,7 +381,7 @@ fun AgendarCitaScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .background(FondoCrema)
+                .background(colorScheme.background)
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
             // Encabezado.
@@ -401,7 +404,7 @@ fun AgendarCitaScreen(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Regresar",
-                        tint = VerdeVetSync
+                        tint = colorScheme.primary
                     )
                 }
 
@@ -410,13 +413,13 @@ fun AgendarCitaScreen(
                         text = "Nueva cita",
                         fontSize = 23.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E221F)
+                        color = colorScheme.onBackground
                     )
 
                     Text(
                         text = "Cuida la salud de tu mascota",
                         fontSize = 12.sp,
-                        color = GrisTextoSecundario
+                        color = colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -431,7 +434,7 @@ fun AgendarCitaScreen(
             if (cargandoMascotas || cargandoServicios) {
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth(),
-                    color = VerdeVetSync
+                    color = colorScheme.primary
                 )
             }
 
@@ -439,7 +442,7 @@ fun AgendarCitaScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                        containerColor = colorScheme.surface
                     ),
                     shape = RoundedCornerShape(14.dp)
                 ) {
@@ -448,7 +451,7 @@ fun AgendarCitaScreen(
                     ) {
                         Text(
                             text = errorCarga.orEmpty(),
-                            color = RojoAlerta
+                            color = colorScheme.error
                         )
 
                         TextButton(
@@ -477,7 +480,7 @@ fun AgendarCitaScreen(
                             text = "Seleccionar mascota",
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF252925)
+                            color = colorScheme.onBackground
                         )
 
                         Spacer(modifier = Modifier.height(6.dp))
@@ -485,7 +488,7 @@ fun AgendarCitaScreen(
                         Text(
                             text = "¿Para quién es la cita de hoy?",
                             fontSize = 14.sp,
-                            color = GrisTextoSecundario
+                            color = colorScheme.onSurfaceVariant
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -501,6 +504,10 @@ fun AgendarCitaScreen(
                             val seleccionada =
                                 item.id == mascotaSeleccionadaId
 
+                            val bitmapMascota = remember(item.fotoUrl) {
+                                ImagenUtils.base64ABitmap(item.fotoUrl)
+                            }
+
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -513,16 +520,16 @@ fun AgendarCitaScreen(
                                 border = BorderStroke(
                                     width = if (seleccionada) 1.5.dp else 1.dp,
                                     color = if (seleccionada) {
-                                        VerdeVetSync
+                                        colorScheme.primary
                                     } else {
-                                        Color(0xFFE7E2DC)
+                                        colorScheme.outlineVariant
                                     }
                                 ),
                                 colors = CardDefaults.cardColors(
                                     containerColor = if (seleccionada) {
-                                        Color(0xFFF0F5EF)
+                                        colorScheme.primaryContainer
                                     } else {
-                                        Color.White
+                                        colorScheme.surface
                                     }
                                 )
                             ) {
@@ -537,18 +544,27 @@ fun AgendarCitaScreen(
                                         modifier = Modifier
                                             .size(48.dp)
                                             .clip(CircleShape)
-                                            .background(VerdeClaroIcono),
+                                            .background(colorScheme.surfaceVariant),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Text(
-                                            text = item.nombre
-                                                .firstOrNull()
-                                                ?.uppercase()
-                                                ?: "?",
-                                            color = VerdeVetSync,
-                                            fontSize = 20.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
+                                        if (bitmapMascota != null) {
+                                            Image(
+                                                bitmap = bitmapMascota,
+                                                contentDescription = "Foto de ${item.nombre}",
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier.fillMaxSize()
+                                            )
+                                        } else {
+                                            Text(
+                                                text = item.nombre
+                                                    .firstOrNull()
+                                                    ?.uppercase()
+                                                    ?: "?",
+                                                color = colorScheme.onSurfaceVariant,
+                                                fontSize = 20.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
                                     }
 
                                     Column(
@@ -558,7 +574,7 @@ fun AgendarCitaScreen(
                                             text = item.nombre,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 16.sp,
-                                            color = Color(0xFF252925)
+                                            color = colorScheme.onSurface
                                         )
 
                                         Spacer(
@@ -568,14 +584,14 @@ fun AgendarCitaScreen(
                                         Text(
                                             text = "${item.especie} · ${item.raza}",
                                             fontSize = 13.sp,
-                                            color = GrisTextoSecundario
+                                            color = colorScheme.onSurfaceVariant
                                         )
 
                                         if (item.edad.isNotBlank()) {
                                             Text(
                                                 text = "Edad: ${item.edad}",
                                                 fontSize = 12.sp,
-                                                color = GrisTextoSecundario
+                                                color = colorScheme.onSurfaceVariant
                                             )
                                         }
                                     }
@@ -588,7 +604,7 @@ fun AgendarCitaScreen(
                                         },
                                         enabled = !guardandoCita,
                                         colors = RadioButtonDefaults.colors(
-                                            selectedColor = VerdeVetSync
+                                            selectedColor = colorScheme.primary
                                         )
                                     )
                                 }
@@ -601,7 +617,7 @@ fun AgendarCitaScreen(
                             text = "Seleccionar servicio",
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF252925)
+                            color = colorScheme.onBackground
                         )
 
                         Spacer(modifier = Modifier.height(6.dp))
@@ -609,7 +625,7 @@ fun AgendarCitaScreen(
                         Text(
                             text = "Elige el motivo de la visita de tu mascota.",
                             fontSize = 14.sp,
-                            color = GrisTextoSecundario
+                            color = colorScheme.onSurfaceVariant
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -630,16 +646,16 @@ fun AgendarCitaScreen(
                                 border = BorderStroke(
                                     width = if (seleccionada) 1.5.dp else 1.dp,
                                     color = if (seleccionada) {
-                                        VerdeVetSync
+                                        colorScheme.primary
                                     } else {
-                                        Color(0xFFE7E2DC)
+                                        colorScheme.outlineVariant
                                     }
                                 ),
                                 colors = CardDefaults.cardColors(
                                     containerColor = if (seleccionada) {
-                                        Color(0xFFF0F5EF)
+                                        colorScheme.primaryContainer
                                     } else {
-                                        Color.White
+                                        colorScheme.surface
                                     }
                                 )
                             ) {
@@ -654,14 +670,13 @@ fun AgendarCitaScreen(
                                         modifier = Modifier
                                             .size(42.dp)
                                             .clip(CircleShape)
-                                            .background(VerdeClaroIcono),
+                                            .background(colorScheme.primaryContainer),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
-                                            imageVector =
-                                                Icons.Outlined.DateRange,
+                                            imageVector = Icons.Outlined.DateRange,
                                             contentDescription = null,
-                                            tint = VerdeVetSync
+                                            tint = colorScheme.onPrimaryContainer
                                         )
                                     }
 
@@ -672,7 +687,7 @@ fun AgendarCitaScreen(
                                             text = item.nombre,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 15.sp,
-                                            color = Color(0xFF252925)
+                                            color = colorScheme.onSurface
                                         )
 
                                         if (item.descripcion.isNotBlank()) {
@@ -683,7 +698,7 @@ fun AgendarCitaScreen(
                                             Text(
                                                 text = item.descripcion,
                                                 fontSize = 12.sp,
-                                                color = GrisTextoSecundario
+                                                color = colorScheme.onSurfaceVariant
                                             )
                                         }
                                     }
@@ -691,7 +706,7 @@ fun AgendarCitaScreen(
                                     Text(
                                         text = formatearCosto(item.costo),
                                         fontWeight = FontWeight.Bold,
-                                        color = VerdeVetSync,
+                                        color = colorScheme.primary,
                                         fontSize = 14.sp
                                     )
                                 }
@@ -710,7 +725,7 @@ fun AgendarCitaScreen(
                             Card(
                                 shape = RoundedCornerShape(12.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = Color(0xFFEFF4EE)
+                                    containerColor = colorScheme.primaryContainer
                                 )
                             ) {
                                 Row(
@@ -722,13 +737,13 @@ fun AgendarCitaScreen(
                                     Text(
                                         text = "Costo del servicio",
                                         modifier = Modifier.weight(1f),
-                                        color = GrisTextoSecundario
+                                        color = colorScheme.onPrimaryContainer
                                     )
 
                                     Text(
                                         text = formatearCosto(seleccionado.costo),
                                         fontWeight = FontWeight.Bold,
-                                        color = VerdeVetSync
+                                        color = colorScheme.onPrimaryContainer
                                     )
                                 }
                             }
@@ -740,7 +755,7 @@ fun AgendarCitaScreen(
                             text = "Seleccionar fecha",
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF252925)
+                            color = colorScheme.onBackground
                         )
 
                         Spacer(modifier = Modifier.height(6.dp))
@@ -750,7 +765,7 @@ fun AgendarCitaScreen(
                                 "Elige un día para la consulta de ${it.nombre}."
                             } ?: "Elige el día de la consulta.",
                             fontSize = 14.sp,
-                            color = GrisTextoSecundario
+                            color = colorScheme.onSurfaceVariant
                         )
 
                         Spacer(modifier = Modifier.height(18.dp))
@@ -759,7 +774,7 @@ fun AgendarCitaScreen(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = Color.White
+                                containerColor = colorScheme.surface
                             )
                         ) {
                             Column(
@@ -768,7 +783,7 @@ fun AgendarCitaScreen(
                                 Text(
                                     text = "Fecha de la cita",
                                     fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFF252925)
+                                    color = colorScheme.onSurface
                                 )
 
                                 Spacer(
@@ -784,8 +799,7 @@ fun AgendarCitaScreen(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Icon(
-                                        imageVector =
-                                            Icons.Outlined.DateRange,
+                                        imageVector = Icons.Outlined.DateRange,
                                         contentDescription = null
                                     )
 
@@ -809,7 +823,7 @@ fun AgendarCitaScreen(
                                             "Sábados: 09:00–16:00. " +
                                             "Domingos: cerrado.",
                                     fontSize = 12.sp,
-                                    color = GrisTextoSecundario,
+                                    color = colorScheme.onSurfaceVariant,
                                     lineHeight = 18.sp
                                 )
                             }
@@ -821,7 +835,7 @@ fun AgendarCitaScreen(
                             text = "Seleccionar horario",
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF252925)
+                            color = colorScheme.onBackground
                         )
 
                         Spacer(modifier = Modifier.height(6.dp))
@@ -831,7 +845,7 @@ fun AgendarCitaScreen(
                                 formatoFechaVisible
                             ) ?: "Selecciona la fecha de tu consulta.",
                             fontSize = 14.sp,
-                            color = GrisTextoSecundario
+                            color = colorScheme.onSurfaceVariant
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -851,13 +865,13 @@ fun AgendarCitaScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     CircularProgressIndicator(
-                                        color = VerdeVetSync
+                                        color = colorScheme.primary
                                     )
                                 }
 
                                 Text(
                                     text = "Consultando disponibilidad...",
-                                    color = GrisTextoSecundario
+                                    color = colorScheme.onSurfaceVariant
                                 )
                             }
 
@@ -896,7 +910,7 @@ fun AgendarCitaScreen(
                                         Text(
                                             text = titulo,
                                             fontWeight = FontWeight.SemiBold,
-                                            color = Color(0xFF252925)
+                                            color = colorScheme.onSurface
                                         )
 
                                         Spacer(
@@ -936,9 +950,9 @@ fun AgendarCitaScreen(
                                                         colors =
                                                             FilterChipDefaults.filterChipColors(
                                                                 selectedContainerColor =
-                                                                    VerdeVetSync,
+                                                                    colorScheme.primary,
                                                                 selectedLabelColor =
-                                                                    Color.White
+                                                                    colorScheme.onPrimary
                                                             )
                                                     )
                                                 }
@@ -965,7 +979,7 @@ fun AgendarCitaScreen(
                                 Text(
                                     text = "Los horarios ocupados no se pueden seleccionar.",
                                     fontSize = 12.sp,
-                                    color = GrisTextoSecundario
+                                    color = colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -976,7 +990,7 @@ fun AgendarCitaScreen(
                             text = "Confirmar cita",
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF252925)
+                            color = colorScheme.onBackground
                         )
 
                         Spacer(modifier = Modifier.height(6.dp))
@@ -984,7 +998,7 @@ fun AgendarCitaScreen(
                         Text(
                             text = "Revisa los datos antes de enviar tu solicitud.",
                             fontSize = 14.sp,
-                            color = GrisTextoSecundario
+                            color = colorScheme.onSurfaceVariant
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -1049,8 +1063,9 @@ fun AgendarCitaScreen(
                             maxLines = 4,
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = VerdeVetSync,
-                                focusedLabelColor = VerdeVetSync
+                                focusedBorderColor = colorScheme.primary,
+                                focusedLabelColor = colorScheme.primary,
+                                cursorColor = colorScheme.primary
                             )
                         )
 
@@ -1060,7 +1075,7 @@ fun AgendarCitaScreen(
                                 .fillMaxWidth()
                                 .wrapContentWidth(Alignment.End),
                             fontSize = 11.sp,
-                            color = GrisTextoSecundario
+                            color = colorScheme.onSurfaceVariant
                         )
 
                         Spacer(modifier = Modifier.height(14.dp))
@@ -1069,7 +1084,7 @@ fun AgendarCitaScreen(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFFF0E9E4)
+                                containerColor = colorScheme.surfaceVariant
                             )
                         ) {
                             Column(
@@ -1079,7 +1094,7 @@ fun AgendarCitaScreen(
                                     text = "Costo estimado",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 16.sp,
-                                    color = Color(0xFF252925)
+                                    color = colorScheme.onSurface
                                 )
 
                                 Spacer(
@@ -1093,14 +1108,16 @@ fun AgendarCitaScreen(
                                 ) {
                                     Text(
                                         text = servicioSeleccionado?.nombre
-                                            ?: "Servicio"
+                                            ?: "Servicio",
+                                        color = colorScheme.onSurfaceVariant
                                     )
 
                                     Text(
                                         text = formatearCosto(
                                             servicioSeleccionado?.costo ?: 0.0
                                         ),
-                                        fontWeight = FontWeight.SemiBold
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colorScheme.onSurface
                                     )
                                 }
 
@@ -1115,7 +1132,8 @@ fun AgendarCitaScreen(
                                 ) {
                                     Text(
                                         text = "Total estimado",
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
+                                        color = colorScheme.onSurface
                                     )
 
                                     Text(
@@ -1124,7 +1142,7 @@ fun AgendarCitaScreen(
                                         ),
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 19.sp,
-                                        color = VerdeVetSync
+                                        color = colorScheme.primary
                                     )
                                 }
 
@@ -1138,7 +1156,7 @@ fun AgendarCitaScreen(
                                             "se informarán durante la atención.",
                                     fontSize = 11.sp,
                                     lineHeight = 16.sp,
-                                    color = GrisTextoSecundario
+                                    color = colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -1152,7 +1170,7 @@ fun AgendarCitaScreen(
                         ) {
                             Surface(
                                 shape = RoundedCornerShape(20.dp),
-                                color = BeigePendiente
+                                color = colorScheme.tertiaryContainer
                             ) {
                                 Text(
                                     text = "Pendiente de confirmación",
@@ -1162,7 +1180,7 @@ fun AgendarCitaScreen(
                                     ),
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = TextoPendiente
+                                    color = colorScheme.onTertiaryContainer
                                 )
                             }
                         }
@@ -1174,7 +1192,7 @@ fun AgendarCitaScreen(
 
                     Text(
                         text = errorMensaje.orEmpty(),
-                        color = RojoAlerta,
+                        color = colorScheme.error,
                         fontSize = 13.sp,
                         lineHeight = 18.sp
                     )
@@ -1230,13 +1248,14 @@ fun AgendarCitaScreen(
                         .height(50.dp),
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = VerdeVetSync
+                        containerColor = colorScheme.primary,
+                        contentColor = colorScheme.onPrimary
                     )
                 ) {
                     if (guardandoCita) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(21.dp),
-                            color = Color.White,
+                            color = colorScheme.onPrimary,
                             strokeWidth = 2.dp
                         )
                     } else {
@@ -1272,7 +1291,7 @@ fun AgendarCitaScreen(
                         mostrarCalendario = false
                     }
                 ) {
-                    Text("Aceptar", color = VerdeVetSync)
+                    Text("Aceptar")
                 }
             },
             dismissButton = {
@@ -1294,6 +1313,8 @@ fun AgendarCitaScreen(
 private fun IndicadorEtapasReserva(
     pasoActual: Int
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.Top
@@ -1309,9 +1330,9 @@ private fun IndicadorEtapasReserva(
                         .clip(CircleShape)
                         .background(
                             if (indice <= pasoActual) {
-                                VerdeVetSync
+                                colorScheme.primary
                             } else {
-                                Color(0xFFE4E1DD)
+                                colorScheme.surfaceVariant
                             }
                         ),
                     contentAlignment = Alignment.Center
@@ -1323,9 +1344,9 @@ private fun IndicadorEtapasReserva(
                             (indice + 1).toString()
                         },
                         color = if (indice <= pasoActual) {
-                            Color.White
+                            colorScheme.onPrimary
                         } else {
-                            GrisTextoSecundario
+                            colorScheme.onSurfaceVariant
                         },
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
@@ -1343,9 +1364,9 @@ private fun IndicadorEtapasReserva(
                         FontWeight.Normal
                     },
                     color = if (indice <= pasoActual) {
-                        VerdeVetSync
+                        colorScheme.primary
                     } else {
-                        GrisTextoSecundario
+                        colorScheme.onSurfaceVariant
                     }
                 )
             }
@@ -1358,14 +1379,16 @@ private fun MensajePaso(
     texto: String,
     esError: Boolean = false
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (esError) {
-                Color(0xFFFFF0EF)
+                colorScheme.errorContainer
             } else {
-                Color.White
+                colorScheme.surface
             }
         )
     ) {
@@ -1373,9 +1396,9 @@ private fun MensajePaso(
             text = texto,
             modifier = Modifier.padding(16.dp),
             color = if (esError) {
-                RojoAlerta
+                colorScheme.onErrorContainer
             } else {
-                GrisTextoSecundario
+                colorScheme.onSurfaceVariant
             },
             fontSize = 14.sp,
             lineHeight = 20.sp
@@ -1390,13 +1413,15 @@ private fun TarjetaResumen(
     detalle: String,
     onEditar: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 10.dp),
         shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = colorScheme.surface
         )
     ) {
         Column(
@@ -1410,7 +1435,7 @@ private fun TarjetaResumen(
                     text = titulo,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 12.sp,
-                    color = GrisTextoSecundario,
+                    color = colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f)
                 )
 
@@ -1423,7 +1448,7 @@ private fun TarjetaResumen(
                 ) {
                     Text(
                         text = "Editar",
-                        color = VerdeVetSync,
+                        color = colorScheme.primary,
                         fontSize = 12.sp
                     )
                 }
@@ -1433,7 +1458,7 @@ private fun TarjetaResumen(
                 text = valor,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF252925)
+                color = colorScheme.onSurface
             )
 
             if (detalle.isNotBlank()) {
@@ -1442,7 +1467,7 @@ private fun TarjetaResumen(
                 Text(
                     text = detalle,
                     fontSize = 12.sp,
-                    color = GrisTextoSecundario
+                    color = colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -1455,10 +1480,12 @@ private fun PantallaCitaSolicitada(
     onVerCitas: () -> Unit,
     onVolver: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(FondoCrema)
+            .background(colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -1468,14 +1495,14 @@ private fun PantallaCitaSolicitada(
             modifier = Modifier
                 .size(76.dp)
                 .clip(CircleShape)
-                .background(VerdeClaroIcono),
+                .background(colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "✓",
                 fontSize = 42.sp,
                 fontWeight = FontWeight.Bold,
-                color = VerdeVetSync
+                color = colorScheme.onPrimaryContainer
             )
         }
 
@@ -1485,7 +1512,7 @@ private fun PantallaCitaSolicitada(
             text = "¡Cita solicitada!",
             fontSize = 27.sp,
             fontWeight = FontWeight.Bold,
-            color = VerdeVetSync
+            color = colorScheme.primary
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -1494,7 +1521,7 @@ private fun PantallaCitaSolicitada(
             text = "Hemos recibido tu solicitud y está pendiente de confirmación.",
             fontSize = 14.sp,
             lineHeight = 21.sp,
-            color = GrisTextoSecundario
+            color = colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(22.dp))
@@ -1503,7 +1530,7 @@ private fun PantallaCitaSolicitada(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(18.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White
+                containerColor = colorScheme.surface
             )
         ) {
             Column(
@@ -1514,7 +1541,7 @@ private fun PantallaCitaSolicitada(
                     text = "Resumen de la cita",
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF252925)
+                    color = colorScheme.onSurface
                 )
 
                 ResumenFila(
@@ -1558,7 +1585,8 @@ private fun PantallaCitaSolicitada(
                 .height(50.dp),
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = VerdeVetSync
+                containerColor = colorScheme.primary,
+                contentColor = colorScheme.onPrimary
             )
         ) {
             Text("Ver mis citas")
@@ -1583,6 +1611,8 @@ private fun ResumenFila(
     etiqueta: String,
     valor: String
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -1592,7 +1622,7 @@ private fun ResumenFila(
             text = etiqueta,
             modifier = Modifier.weight(1f),
             fontSize = 13.sp,
-            color = GrisTextoSecundario
+            color = colorScheme.onSurfaceVariant
         )
 
         Text(
@@ -1600,7 +1630,7 @@ private fun ResumenFila(
             modifier = Modifier.weight(1.3f),
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF252925)
+            color = colorScheme.onSurface
         )
     }
 }

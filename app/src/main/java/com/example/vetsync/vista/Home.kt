@@ -40,7 +40,9 @@ sealed class SubPantallaHome {
 @Composable
 fun HomeScreen(
     nombreUsuario: String = "Laura",
-    onNavigateToLogin: () -> Unit = {}
+    onNavigateToLogin: () -> Unit = {},
+    modoOscuro: Boolean = false,
+    onModoOscuroChange: (Boolean) -> Unit = {}
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -185,7 +187,7 @@ fun HomeScreen(
         }
         null -> {
             Scaffold(
-                containerColor = FondoCrema,
+                containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
                 topBar = {
                     HomeTopBar(
                         mostrarFotoPerfil = (selectedTab != 4),
@@ -273,8 +275,10 @@ fun HomeScreen(
                                             usuarioId = usuarioId,
                                             mostrar = mostrar
                                         )
-                                }
-                            )
+                                },
+                                modoOscuro = modoOscuro,
+                                onModoOscuroChange = onModoOscuroChange
+                           )
                         }
                     }
                 }

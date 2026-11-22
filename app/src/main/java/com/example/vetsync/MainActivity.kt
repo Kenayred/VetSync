@@ -1,40 +1,44 @@
 package com.example.vetsync
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Build
 import android.widget.Toast
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import com.example.vetsync.controlador.UsuarioControlador
+import com.example.vetsync.controlador.CitaControlador
 import com.example.vetsync.modelo.RolUsuario
+import com.example.vetsync.modelo.SesionUsuario
+import com.example.vetsync.modelo.PreferenciasTemaRepository
 import com.example.vetsync.vista.AdminHomeScreen
 import com.example.vetsync.vista.HomeScreen
 import com.example.vetsync.vista.LoginScreen
 import com.example.vetsync.vista.RegisterScreen
 import com.example.vetsync.vista.screens.LoadingScreen
 import com.example.vetsync.vista.theme.VetSyncAppTheme
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
-import androidx.compose.ui.platform.LocalContext
 import com.example.vetsync.notificaciones.NotificacionSistema
-import android.util.Log
-import com.example.vetsync.controlador.CitaControlador
-import com.example.vetsync.modelo.SesionUsuario
 import com.example.vetsync.notificaciones.ProgramadorRecordatorios
-import android.content.Context
 import com.example.vetsync.util.GestorIdioma
 
 class MainActivity : ComponentActivity() {
+
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(
             GestorIdioma.aplicarConfiguracion(newBase)
@@ -56,9 +60,35 @@ class MainActivity : ComponentActivity() {
         )
 
         setContent {
-            VetSyncAppTheme {
 
-                val context = LocalContext.current
+            val context = LocalContext.current
+
+            // Repositorio de preferencias del tema.
+            val preferenciasTemaRepository = remember(context) {
+                PreferenciasTemaRepository(context)
+            }
+
+            // Estado global del modo oscuro.
+            var modoOscuro by remember {
+                mutableStateOf(false)
+            }
+
+            // Aplicar el tema seleccionado a toda la aplicación.
+            VetSyncAppTheme(
+                darkTheme = modoOscuro
+            ) {
+
+                // Adaptar los iconos de las barras del sistema.
+                SideEffect {
+
+                    val controller = WindowCompat.getInsetsController(
+                        window,
+                        window.decorView
+                    )
+
+                    controller.isAppearanceLightStatusBars = !modoOscuro
+                    controller.isAppearanceLightNavigationBars = !modoOscuro
+                }
 
                 var permisoSolicitado by remember {
                     mutableStateOf(false)
@@ -70,10 +100,8 @@ class MainActivity : ComponentActivity() {
                         contract = ActivityResultContracts.RequestPermission()
                     ) { autorizado ->
 
-                        // La aplicación seguirá funcionando aunque el usuario
-                        // decida no autorizar las notificaciones.
                         if (!autorizado) {
-                            android.util.Log.d(
+                            Log.d(
                                 "VetSync",
                                 "El usuario no autorizó las notificaciones."
                             )
@@ -97,7 +125,7 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf(true)
                 }
 
-                // Solicitar el permiso cuando el cliente acceda a su inicio.
+                // Solicitar permiso cuando el cliente acceda a su inicio.
                 LaunchedEffect(isLoading, pantallaActual) {
 
                     if (
@@ -123,12 +151,19 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // Recuperar la sesión al iniciar la aplicación.
+                // --------------------------------------------------
+                // RECUPERAR LA SESIÓN AL INICIAR LA APLICACIÓN
+                // --------------------------------------------------
+
                 LaunchedEffect(Unit) {
 
                     usuarioControlador.restaurarSesion(
 
                         onSuccess = { usuario ->
+
+                            // Recuperar el tema guardado para esta cuenta.
+                            modoOscuro = preferenciasTemaRepository
+                                .obtenerModoOscuro(SesionUsuario.idUsuario)
 
                             pantallaActual =
                                 if (usuario.rol == RolUsuario.ADMINISTRADOR) {
@@ -142,6 +177,7 @@ class MainActivity : ComponentActivity() {
 
                         onNoSession = {
 
+                            modoOscuro = false
                             pantallaActual = "login"
                             isLoading = false
                         },
@@ -154,6 +190,7 @@ class MainActivity : ComponentActivity() {
                                 Toast.LENGTH_LONG
                             ).show()
 
+                            modoOscuro = false
                             pantallaActual = "login"
                             isLoading = false
                         }
@@ -201,6 +238,10 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                // --------------------------------------------------
+                // NAVEGACIÓN PRINCIPAL
+                // --------------------------------------------------
+
                 if (isLoading) {
 
                     LoadingScreen()
@@ -209,22 +250,41 @@ class MainActivity : ComponentActivity() {
 
                     when (pantallaActual) {
 
+                        // ------------------------------------------
+                        // LOGIN
+                        // ------------------------------------------
+
                         "login" -> {
 
                             LoginScreen(
+
                                 onNavigateToRegister = {
                                     pantallaActual = "register"
                                 },
 
                                 onLoginSuccess = {
+
+                                    // Recuperar la preferencia del cliente.
+                                    modoOscuro = preferenciasTemaRepository
+                                        .obtenerModoOscuro(SesionUsuario.idUsuario)
+
                                     pantallaActual = "home"
                                 },
 
                                 onNavigateToAdmin = {
+
+                                    // Recuperar la preferencia del administrador.
+                                    modoOscuro = preferenciasTemaRepository
+                                        .obtenerModoOscuro(SesionUsuario.idUsuario)
+
                                     pantallaActual = "adminHome"
                                 }
                             )
                         }
+
+                        // ------------------------------------------
+                        // REGISTRO
+                        // ------------------------------------------
 
                         "register" -> {
 
@@ -235,43 +295,105 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
+                        // ------------------------------------------
+                        // INICIO DEL CLIENTE
+                        // ------------------------------------------
+
                         "home" -> {
 
                             HomeScreen(
+
                                 onNavigateToLogin = {
-                                    ProgramadorRecordatorios.cancelarTodosLosRecordatorios(
-                                        context.applicationContext
-                                    )
+
+                                    ProgramadorRecordatorios
+                                        .cancelarTodosLosRecordatorios(
+                                            context.applicationContext
+                                        )
 
                                     usuarioControlador.cerrarSesion()
+
+                                    // Restablecer el tema al cerrar sesión.
+                                    modoOscuro = false
+
                                     pantallaActual = "login"
+                                },
+
+                                modoOscuro = modoOscuro,
+
+                                onModoOscuroChange = { nuevoModo ->
+
+                                    modoOscuro = nuevoModo
+
+                                    preferenciasTemaRepository.guardarModoOscuro(
+                                        usuarioId = SesionUsuario.idUsuario,
+                                        modoOscuro = nuevoModo
+                                    )
                                 }
                             )
                         }
+
+                        // ------------------------------------------
+                        // INICIO DEL ADMINISTRADOR
+                        // ------------------------------------------
 
                         "adminHome" -> {
 
                             AdminHomeScreen(
+
                                 onNavigateToLogin = {
-                                    ProgramadorRecordatorios.cancelarTodosLosRecordatorios(
-                                        context.applicationContext
-                                    )
+
+                                    ProgramadorRecordatorios
+                                        .cancelarTodosLosRecordatorios(
+                                            context.applicationContext
+                                        )
 
                                     usuarioControlador.cerrarSesion()
+
+                                    // Restablecer el tema al cerrar sesión.
+                                    modoOscuro = false
+
                                     pantallaActual = "login"
+                                },
+
+                                modoOscuro = modoOscuro,
+
+                                onModoOscuroChange = { nuevoModo ->
+
+                                    modoOscuro = nuevoModo
+
+                                    preferenciasTemaRepository.guardarModoOscuro(
+                                        usuarioId = SesionUsuario.idUsuario,
+                                        modoOscuro = nuevoModo
+                                    )
                                 }
                             )
                         }
 
+                        // ------------------------------------------
+                        // RUTA ALTERNATIVA
+                        // ------------------------------------------
+
                         else -> {
+
                             LoginScreen(
+
                                 onNavigateToRegister = {
                                     pantallaActual = "register"
                                 },
+
                                 onLoginSuccess = {
+
+                                    modoOscuro = preferenciasTemaRepository
+                                        .obtenerModoOscuro(SesionUsuario.idUsuario)
+
                                     pantallaActual = "home"
                                 },
+
                                 onNavigateToAdmin = {
+
+                                    modoOscuro = preferenciasTemaRepository
+                                        .obtenerModoOscuro(SesionUsuario.idUsuario)
+
                                     pantallaActual = "adminHome"
                                 }
                             )

@@ -9,12 +9,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.DateRange
-import androidx.compose.material.icons.outlined.MedicalServices
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -23,16 +21,16 @@ import com.example.vetsync.controlador.NotaClinicaControlador
 import com.example.vetsync.modelo.Mascota
 import com.example.vetsync.modelo.NotaClinica
 import com.example.vetsync.modelo.SesionUsuario
-import com.example.vetsync.vista.theme.*
+import com.example.vetsync.vista.components.LoadingDots
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import com.example.vetsync.vista.components.LoadingDots
 
 @Composable
 fun HistorialClinicoScreen(
     mascota: Mascota? = null,
     onBackClick: () -> Unit = {}
 ) {
+    val colorScheme = MaterialTheme.colorScheme
 
     val controladorMascota = remember {
         MascotaControlador()
@@ -83,9 +81,7 @@ fun HistorialClinicoScreen(
         SesionUsuario.idUsuario,
         recargar
     ) {
-
         if (mascota == null) {
-
             cargandoMascotas = true
             errorMascotas = null
 
@@ -102,9 +98,7 @@ fun HistorialClinicoScreen(
                     cargandoMascotas = false
                 }
             )
-
         } else {
-
             mascotas = listOf(mascota)
             mascotaSeleccionada = mascota
             cargandoMascotas = false
@@ -120,7 +114,6 @@ fun HistorialClinicoScreen(
         SesionUsuario.idUsuario,
         recargar
     ) {
-
         val mascotaActual = mascotaSeleccionada
 
         if (mascotaActual == null) {
@@ -153,7 +146,7 @@ fun HistorialClinicoScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(FondoCrema)
+            .background(colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(
                 horizontal = 20.dp,
@@ -166,15 +159,13 @@ fun HistorialClinicoScreen(
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             IconButton(
                 onClick = onBackClick
             ) {
-
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Regresar",
-                    tint = VerdeVetSync
+                    tint = colorScheme.primary
                 )
             }
 
@@ -182,7 +173,7 @@ fun HistorialClinicoScreen(
                 text = "Historial clínico",
                 fontSize = 23.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E221F)
+                color = colorScheme.onBackground
             )
         }
 
@@ -198,7 +189,7 @@ fun HistorialClinicoScreen(
                 text = "Selecciona una mascota",
                 fontSize = 19.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E221F)
+                color = colorScheme.onBackground
             )
 
             Spacer(modifier = Modifier.height(6.dp))
@@ -206,7 +197,7 @@ fun HistorialClinicoScreen(
             Text(
                 text = "Consulta los registros médicos de tus compañeros.",
                 fontSize = 14.sp,
-                color = GrisTextoSecundario
+                color = colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(18.dp))
@@ -244,12 +235,12 @@ fun HistorialClinicoScreen(
                         shape = RoundedCornerShape(16.dp),
 
                         colors = CardDefaults.cardColors(
-                            containerColor = Color.White
+                            containerColor = colorScheme.surface
                         ),
 
                         border = BorderStroke(
                             1.dp,
-                            Color(0xFFEEECE8)
+                            colorScheme.outlineVariant
                         )
                     ) {
 
@@ -269,7 +260,7 @@ fun HistorialClinicoScreen(
                                     text = item.nombre,
                                     fontSize = 17.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF1E221F)
+                                    color = colorScheme.onSurface
                                 )
 
                                 Spacer(
@@ -279,7 +270,7 @@ fun HistorialClinicoScreen(
                                 Text(
                                     text = "${item.especie} • ${item.raza}",
                                     fontSize = 13.sp,
-                                    color = GrisTextoSecundario
+                                    color = colorScheme.onSurfaceVariant
                                 )
                             }
 
@@ -289,7 +280,8 @@ fun HistorialClinicoScreen(
                                 },
 
                                 colors = ButtonDefaults.buttonColors(
-                                    containerColor = VerdeVetSync
+                                    containerColor = colorScheme.primary,
+                                    contentColor = colorScheme.onPrimary
                                 ),
 
                                 shape = RoundedCornerShape(10.dp)
@@ -316,12 +308,12 @@ fun HistorialClinicoScreen(
                 shape = RoundedCornerShape(18.dp),
 
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White
+                    containerColor = colorScheme.surface
                 ),
 
                 border = BorderStroke(
                     1.dp,
-                    Color(0xFFEEECE8)
+                    colorScheme.outlineVariant
                 )
             ) {
 
@@ -338,7 +330,7 @@ fun HistorialClinicoScreen(
                         Icon(
                             imageVector = Icons.Outlined.DateRange,
                             contentDescription = null,
-                            tint = VerdeVetSync,
+                            tint = colorScheme.primary,
                             modifier = Modifier.size(28.dp)
                         )
 
@@ -352,13 +344,13 @@ fun HistorialClinicoScreen(
                                 text = mascotaActual.nombre,
                                 fontSize = 19.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1E221F)
+                                color = colorScheme.onSurface
                             )
 
                             Text(
                                 text = "${mascotaActual.especie} • ${mascotaActual.raza}",
                                 fontSize = 13.sp,
-                                color = GrisTextoSecundario
+                                color = colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -396,7 +388,7 @@ fun HistorialClinicoScreen(
                 text = "Registros médicos",
                 fontSize = 19.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E221F)
+                color = colorScheme.onBackground
             )
 
             Spacer(
@@ -459,6 +451,7 @@ fun HistorialClinicoScreen(
 private fun NotaClinicaCard(
     nota: NotaClinica
 ) {
+    val colorScheme = MaterialTheme.colorScheme
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -466,12 +459,12 @@ private fun NotaClinicaCard(
         shape = RoundedCornerShape(18.dp),
 
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = colorScheme.surface
         ),
 
         border = BorderStroke(
             1.dp,
-            Color(0xFFEEECE8)
+            colorScheme.outlineVariant
         )
     ) {
 
@@ -488,7 +481,7 @@ private fun NotaClinicaCard(
                 Icon(
                     imageVector = Icons.Outlined.DateRange,
                     contentDescription = null,
-                    tint = VerdeVetSync
+                    tint = colorScheme.primary
                 )
 
                 Spacer(
@@ -499,13 +492,13 @@ private fun NotaClinicaCard(
                     text = formatearFechaClinica(nota.fecha),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = VerdeVetSync
+                    color = colorScheme.primary
                 )
             }
 
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 14.dp),
-                color = Color(0xFFEEECE8)
+                color = colorScheme.outlineVariant
             )
 
             if (nota.motivo.isNotBlank()) {
@@ -558,6 +551,7 @@ private fun CampoClinico(
     titulo: String,
     contenido: String
 ) {
+    val colorScheme = MaterialTheme.colorScheme
 
     Column(
         modifier = Modifier
@@ -569,7 +563,7 @@ private fun CampoClinico(
             text = titulo,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,
-            color = GrisTextoSecundario
+            color = colorScheme.onSurfaceVariant
         )
 
         Spacer(
@@ -579,7 +573,7 @@ private fun CampoClinico(
         Text(
             text = contenido,
             fontSize = 14.sp,
-            color = Color(0xFF1E221F),
+            color = colorScheme.onSurface,
             lineHeight = 20.sp
         )
     }
@@ -595,6 +589,25 @@ private fun EstadoHistorial(
     esError: Boolean = false,
     onRetry: (() -> Unit)? = null
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
+    val fondo = if (esError) {
+        colorScheme.errorContainer
+    } else {
+        colorScheme.surface
+    }
+
+    val colorTexto = if (esError) {
+        colorScheme.onErrorContainer
+    } else {
+        colorScheme.onSurfaceVariant
+    }
+
+    val colorIcono = if (esError) {
+        colorScheme.error
+    } else {
+        colorScheme.primary
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -602,12 +615,13 @@ private fun EstadoHistorial(
         shape = RoundedCornerShape(18.dp),
 
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = fondo
         ),
 
         border = BorderStroke(
             1.dp,
-            Color(0xFFEEECE8)
+            if (esError) colorScheme.error.copy(alpha = 0.35f)
+            else colorScheme.outlineVariant
         )
     ) {
 
@@ -622,7 +636,7 @@ private fun EstadoHistorial(
             Icon(
                 imageVector = Icons.Outlined.DateRange,
                 contentDescription = null,
-                tint = if (esError) RojoAlerta else VerdeVetSync,
+                tint = colorIcono,
                 modifier = Modifier.size(42.dp)
             )
 
@@ -633,7 +647,7 @@ private fun EstadoHistorial(
             Text(
                 text = mensaje,
                 fontSize = 14.sp,
-                color = GrisTextoSecundario
+                color = colorTexto
             )
 
             if (onRetry != null) {
@@ -643,7 +657,14 @@ private fun EstadoHistorial(
                 )
 
                 OutlinedButton(
-                    onClick = onRetry
+                    onClick = onRetry,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = if (esError) {
+                            colorScheme.onErrorContainer
+                        } else {
+                            colorScheme.primary
+                        }
+                    )
                 ) {
                     Text("Intentar nuevamente")
                 }

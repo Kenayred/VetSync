@@ -14,26 +14,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -51,13 +33,11 @@ import com.example.vetsync.modelo.EstadoCita
 import com.example.vetsync.modelo.ImagenUtils
 import com.example.vetsync.modelo.Mascota
 import com.example.vetsync.modelo.SesionUsuario
+import com.example.vetsync.notificaciones.ProgramadorRecordatorios
 import com.example.vetsync.vista.ReprogramarCitaDialog
-import com.example.vetsync.vista.theme.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import com.example.vetsync.notificaciones.ProgramadorRecordatorios
-import androidx.compose.runtime.DisposableEffect
 
 private val formatoFechaTarjeta = DateTimeFormatter.ofPattern(
     "d MMM yyyy",
@@ -75,6 +55,7 @@ fun CitasScreen(
     }
 ) {
     val context = LocalContext.current
+    val colorScheme = MaterialTheme.colorScheme
 
     var citas by remember {
         mutableStateOf<List<Cita>>(emptyList())
@@ -122,11 +103,8 @@ fun CitasScreen(
 
         controladorCitas.obtenerCitasUsuario(
             onSuccess = { lista ->
-
-                // Actualizamos las citas de la pantalla.
                 citas = lista
 
-                // Sincronizamos los recordatorios locales.
                 ProgramadorRecordatorios.sincronizarRecordatorios(
                     context = context.applicationContext,
                     citas = lista
@@ -134,7 +112,6 @@ fun CitasScreen(
 
                 cargando = false
             },
-
             onError = { mensaje ->
                 errorCarga = mensaje
                 cargando = false
@@ -152,8 +129,6 @@ fun CitasScreen(
                     mascotas = resultado
                 },
                 onError = {
-                    // Si no se pueden cargar las fotos,
-                    // las tarjetas mostrarán los avatares de iniciales.
                     mascotas = emptyList()
                 }
             )
@@ -162,54 +137,38 @@ fun CitasScreen(
         }
     }
 
-    // =====================================================
-    // OBSERVAR CITAS Y SINCRONIZAR RECORDATORIOS
-    // =====================================================
-
+    // Observar las citas en tiempo real y sincronizar recordatorios.
     DisposableEffect(SesionUsuario.idUsuario) {
-
         val idUsuario = SesionUsuario.idUsuario
 
         if (idUsuario.isBlank()) {
-
             citas = emptyList()
             errorCarga = null
             cargando = false
 
             onDispose { }
-
         } else {
-
             cargando = true
             errorCarga = null
 
             val listener = controladorCitas.observarCitasUsuario(
-
                 onSuccess = { lista ->
-
-                    // Actualizar las citas visibles.
                     citas = lista
-
                     errorCarga = null
                     cargando = false
 
-                    // Sincronizar los recordatorios locales.
                     ProgramadorRecordatorios.sincronizarRecordatorios(
                         context = context.applicationContext,
                         citas = lista
                     )
                 },
-
                 onError = { mensaje ->
-
                     errorCarga = mensaje
                     cargando = false
                 }
             )
 
             onDispose {
-                // Liberar el listener cuando se abandone
-                // la pantalla o cambie la sesión.
                 listener?.remove()
             }
         }
@@ -244,263 +203,260 @@ fun CitasScreen(
             }
         )
     } else {
-
-            Box(
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(colorScheme.background)
+        ) {
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(FondoCrema)
+                    .padding(horizontal = 18.dp, vertical = 12.dp)
             ) {
-                Column(
+                Text(
+                    text = "Mis citas",
+                    fontSize = 29.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onBackground
+                )
+
+                Spacer(modifier = Modifier.height(5.dp))
+
+                Text(
+                    text = "Gestiona los servicios programados para tus mascotas.",
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    color = colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                Row(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 18.dp, vertical = 12.dp)
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Encabezado de la pantalla.
-                    Text(
-                        text = "Mis citas",
-                        fontSize = 29.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF252925)
+                    FilterChip(
+                        selected = filtroSeleccionado == null,
+                        onClick = {
+                            filtroSeleccionado = null
+                        },
+                        label = {
+                            Text("Todas")
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = colorScheme.primaryContainer,
+                            selectedLabelColor = colorScheme.onPrimaryContainer,
+                            labelColor = colorScheme.onSurfaceVariant
+                        )
                     )
 
-                    Spacer(modifier = Modifier.height(5.dp))
-
-                    Text(
-                        text = "Gestiona los servicios programados para tus mascotas.",
-                        fontSize = 14.sp,
-                        lineHeight = 20.sp,
-                        color = GrisTextoSecundario
-                    )
-
-                    Spacer(modifier = Modifier.height(18.dp))
-
-                    // Filtros de estado.
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+                    EstadoCita.values().forEach { estado ->
                         FilterChip(
-                            selected = filtroSeleccionado == null,
+                            selected = filtroSeleccionado == estado,
                             onClick = {
-                                filtroSeleccionado = null
+                                filtroSeleccionado = estado
                             },
                             label = {
-                                Text("Todas")
+                                Text(estado.etiqueta)
                             },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = VerdeVetSync,
-                                selectedLabelColor = Color.White
+                                selectedContainerColor = colorScheme.primaryContainer,
+                                selectedLabelColor = colorScheme.onPrimaryContainer,
+                                labelColor = colorScheme.onSurfaceVariant
                             )
                         )
+                    }
+                }
 
-                        EstadoCita.values().forEach { estado ->
-                            FilterChip(
-                                selected = filtroSeleccionado == estado,
-                                onClick = {
-                                    filtroSeleccionado = estado
-                                },
-                                label = {
-                                    Text(estado.etiqueta)
-                                },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = VerdeVetSync,
-                                    selectedLabelColor = Color.White
+                Spacer(modifier = Modifier.height(14.dp))
+
+                when {
+                    cargando -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                CircularProgressIndicator(
+                                    color = colorScheme.primary
                                 )
-                            )
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                Text(
+                                    text = "Cargando tus citas...",
+                                    color = colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    when {
-                        cargando -> {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                                contentAlignment = Alignment.Center
+                    errorCarga != null -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                                Text(
+                                    text = errorCarga.orEmpty(),
+                                    color = colorScheme.error
+                                )
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                OutlinedButton(
+                                    onClick = {
+                                        cargarCitas()
+                                    }
                                 ) {
-                                    CircularProgressIndicator(
-                                        color = VerdeVetSync
-                                    )
-
-                                    Spacer(modifier = Modifier.height(12.dp))
-
-                                    Text(
-                                        text = "Cargando tus citas...",
-                                        color = GrisTextoSecundario
-                                    )
+                                    Text("Intentar nuevamente")
                                 }
                             }
                         }
+                    }
 
-                        errorCarga != null -> {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                                contentAlignment = Alignment.Center
+                    citasFiltradas.isEmpty() -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                                Box(
+                                    modifier = Modifier
+                                        .size(72.dp)
+                                        .clip(CircleShape)
+                                        .background(colorScheme.primaryContainer),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Text(
-                                        text = errorCarga.orEmpty(),
-                                        color = MaterialTheme.colorScheme.error
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(32.dp),
+                                        tint = colorScheme.onPrimaryContainer
                                     )
+                                }
 
-                                    Spacer(modifier = Modifier.height(12.dp))
+                                Spacer(modifier = Modifier.height(16.dp))
 
-                                    OutlinedButton(
+                                Text(
+                                    text = if (filtroSeleccionado == null) {
+                                        "Todavía no tienes citas"
+                                    } else {
+                                        "No hay citas con este estado"
+                                    },
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colorScheme.onBackground
+                                )
+
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Text(
+                                    text = if (filtroSeleccionado == null) {
+                                        "Agenda una visita para tu mascota."
+                                    } else {
+                                        "Prueba otro filtro para consultar tus citas."
+                                    },
+                                    fontSize = 13.sp,
+                                    color = colorScheme.onSurfaceVariant
+                                )
+
+                                if (filtroSeleccionado != null) {
+                                    Spacer(modifier = Modifier.height(10.dp))
+
+                                    TextButton(
                                         onClick = {
-                                            cargarCitas()
+                                            filtroSeleccionado = null
                                         }
                                     ) {
-                                        Text("Intentar nuevamente")
-                                    }
-                                }
-                            }
-                        }
-
-                        citasFiltradas.isEmpty() -> {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(72.dp)
-                                            .clip(CircleShape)
-                                            .background(VerdeClaroIcono),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Add,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(32.dp),
-                                            tint = VerdeVetSync
+                                        Text(
+                                            "Ver todas las citas",
+                                            color = colorScheme.primary
                                         )
                                     }
-
-                                    Spacer(modifier = Modifier.height(16.dp))
-
-                                    Text(
-                                        text = if (filtroSeleccionado == null) {
-                                            "Todavía no tienes citas"
-                                        } else {
-                                            "No hay citas con este estado"
-                                        },
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF252925)
-                                    )
-
-                                    Spacer(modifier = Modifier.height(6.dp))
-
-                                    Text(
-                                        text = if (filtroSeleccionado == null) {
-                                            "Agenda una visita para tu mascota."
-                                        } else {
-                                            "Prueba otro filtro para consultar tus citas."
-                                        },
-                                        fontSize = 13.sp,
-                                        color = GrisTextoSecundario
-                                    )
-
-                                    if (filtroSeleccionado != null) {
-                                        Spacer(modifier = Modifier.height(10.dp))
-
-                                        TextButton(
-                                            onClick = {
-                                                filtroSeleccionado = null
-                                            }
-                                        ) {
-                                            Text(
-                                                "Ver todas las citas",
-                                                color = VerdeVetSync
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        else -> {
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                                contentPadding = PaddingValues(
-                                    bottom = 86.dp
-                                )
-                            ) {
-                                items(
-                                    items = citasFiltradas,
-                                    key = { it.id }
-                                ) { cita ->
-                                    TarjetaCitaCliente(
-                                        cita = cita,
-                                        mascota = mascotasPorId[cita.mascotaId],
-                                        onVerDetalles = {
-                                            citaSeleccionada = cita
-                                        },
-                                        onReprogramar = {
-                                            citaParaReprogramar = cita
-                                        },
-                                        onCancelar = {
-                                            citaParaCancelar = cita
-                                        }
-                                    )
                                 }
                             }
                         }
                     }
-                }
 
-                // El botón queda por encima de la lista.
-                Button(
-                    onClick = onAgendarCitaClick,
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = 18.dp, bottom = 10.dp)
-                        .height(50.dp),
-                    shape = RoundedCornerShape(17.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = VerdeVetSync
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(
-                        defaultElevation = 5.dp
-                    ),
-                    contentPadding = PaddingValues(
-                        horizontal = 18.dp,
-                        vertical = 8.dp
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-
-                    Spacer(modifier = Modifier.width(6.dp))
-
-                    Text(
-                        text = "Nueva cita",
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    else -> {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(bottom = 86.dp)
+                        ) {
+                            items(
+                                items = citasFiltradas,
+                                key = { it.id }
+                            ) { cita ->
+                                TarjetaCitaCliente(
+                                    cita = cita,
+                                    mascota = mascotasPorId[cita.mascotaId],
+                                    onVerDetalles = {
+                                        citaSeleccionada = cita
+                                    },
+                                    onReprogramar = {
+                                        citaParaReprogramar = cita
+                                    },
+                                    onCancelar = {
+                                        citaParaCancelar = cita
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
             }
+
+            Button(
+                onClick = onAgendarCitaClick,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 18.dp, bottom = 10.dp)
+                    .height(50.dp),
+                shape = RoundedCornerShape(17.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colorScheme.primary,
+                    contentColor = colorScheme.onPrimary
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 5.dp
+                ),
+                contentPadding = PaddingValues(
+                    horizontal = 18.dp,
+                    vertical = 8.dp
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+
+                Spacer(modifier = Modifier.width(6.dp))
+
+                Text(
+                    text = "Nueva cita",
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
     }
 
     // Confirmación de cancelación.
@@ -556,12 +512,12 @@ fun CitasScreen(
                     }
                 ) {
                     Text(
-                        if (cancelando) {
+                        text = if (cancelando) {
                             "Cancelando..."
                         } else {
                             "Sí, cancelar"
                         },
-                        color = MaterialTheme.colorScheme.error
+                        color = colorScheme.error
                     )
                 }
             },
@@ -575,7 +531,7 @@ fun CitasScreen(
                     Text("Conservar cita")
                 }
             },
-            containerColor = FondoCrema
+            containerColor = colorScheme.surface
         )
     }
 
@@ -610,11 +566,17 @@ private fun TarjetaCitaCliente(
     onReprogramar: () -> Unit,
     onCancelar: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(17.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = colorScheme.surface
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            colorScheme.outlineVariant
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 2.dp
@@ -640,7 +602,7 @@ private fun TarjetaCitaCliente(
                         text = cita.nombreMascota,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF252925),
+                        color = colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -657,7 +619,7 @@ private fun TarjetaCitaCliente(
                         Text(
                             text = descripcionMascota,
                             fontSize = 12.sp,
-                            color = GrisTextoSecundario,
+                            color = colorScheme.onSurfaceVariant,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -668,7 +630,7 @@ private fun TarjetaCitaCliente(
                     Text(
                         text = cita.nombreServicio,
                         fontSize = 13.sp,
-                        color = VerdeVetSync,
+                        color = colorScheme.primary,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -694,7 +656,7 @@ private fun TarjetaCitaCliente(
                     Text(
                         text = "Fecha",
                         fontSize = 11.sp,
-                        color = GrisTextoSecundario
+                        color = colorScheme.onSurfaceVariant
                     )
 
                     Spacer(modifier = Modifier.height(3.dp))
@@ -703,7 +665,7 @@ private fun TarjetaCitaCliente(
                         text = formatearFechaCita(cita.fecha),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF252925)
+                        color = colorScheme.onSurface
                     )
                 }
 
@@ -713,7 +675,7 @@ private fun TarjetaCitaCliente(
                     Text(
                         text = "Hora",
                         fontSize = 11.sp,
-                        color = GrisTextoSecundario
+                        color = colorScheme.onSurfaceVariant
                     )
 
                     Spacer(modifier = Modifier.height(3.dp))
@@ -722,7 +684,7 @@ private fun TarjetaCitaCliente(
                         text = cita.hora,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF252925)
+                        color = colorScheme.onSurface
                     )
                 }
 
@@ -732,7 +694,7 @@ private fun TarjetaCitaCliente(
                     Text(
                         text = "Costo",
                         fontSize = 11.sp,
-                        color = GrisTextoSecundario
+                        color = colorScheme.onSurfaceVariant
                     )
 
                     Spacer(modifier = Modifier.height(3.dp))
@@ -742,9 +704,9 @@ private fun TarjetaCitaCliente(
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (cita.estado == EstadoCita.CANCELADA) {
-                            GrisTextoSecundario
+                            colorScheme.onSurfaceVariant
                         } else {
-                            VerdeVetSync
+                            colorScheme.primary
                         }
                     )
                 }
@@ -769,7 +731,7 @@ private fun TarjetaCitaCliente(
                     Text(
                         text = "Ver detalles",
                         fontSize = 12.sp,
-                        color = VerdeVetSync
+                        color = colorScheme.primary
                     )
                 }
 
@@ -784,7 +746,7 @@ private fun TarjetaCitaCliente(
                         Text(
                             text = "Reprogramar",
                             fontSize = 12.sp,
-                            color = VerdeVetSync
+                            color = colorScheme.primary
                         )
                     }
 
@@ -798,7 +760,7 @@ private fun TarjetaCitaCliente(
                         Text(
                             text = "Cancelar",
                             fontSize = 12.sp,
-                            color = RojoAlerta
+                            color = colorScheme.error
                         )
                     }
                 }
@@ -812,6 +774,8 @@ private fun FotoMascotaCita(
     mascota: Mascota?,
     nombre: String
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     val bitmap = remember(mascota?.fotoUrl) {
         mascota?.fotoUrl
             ?.takeIf { it.isNotBlank() }
@@ -832,7 +796,7 @@ private fun FotoMascotaCita(
                 .clip(CircleShape)
                 .border(
                     width = 2.dp,
-                    color = VerdeClaroIcono,
+                    color = colorScheme.primaryContainer,
                     shape = CircleShape
                 )
         )
@@ -841,14 +805,14 @@ private fun FotoMascotaCita(
             modifier = Modifier
                 .size(66.dp)
                 .clip(CircleShape)
-                .background(VerdeClaroIcono),
+                .background(colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = nombre.firstOrNull()?.uppercase() ?: "?",
                 fontSize = 25.sp,
                 fontWeight = FontWeight.Bold,
-                color = VerdeVetSync
+                color = colorScheme.onPrimaryContainer
             )
         }
     }
@@ -858,23 +822,26 @@ private fun FotoMascotaCita(
 private fun EstadoCitaBadge(
     estado: EstadoCita
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     val fondo = when (estado) {
-        EstadoCita.PENDIENTE -> BeigePendiente
-        EstadoCita.CONFIRMADA -> Color(0xFFD7E7D9)
-        EstadoCita.COMPLETADA -> Color(0xFFE5EBE6)
-        EstadoCita.CANCELADA -> Color(0xFFFFDEDC)
+        EstadoCita.PENDIENTE -> colorScheme.tertiaryContainer
+        EstadoCita.CONFIRMADA -> colorScheme.secondaryContainer
+        EstadoCita.COMPLETADA -> colorScheme.surfaceVariant
+        EstadoCita.CANCELADA -> colorScheme.errorContainer
     }
 
     val texto = when (estado) {
-        EstadoCita.PENDIENTE -> TextoPendiente
-        EstadoCita.CONFIRMADA -> Color(0xFF365C3F)
-        EstadoCita.COMPLETADA -> Color(0xFF4F6254)
-        EstadoCita.CANCELADA -> RojoAlerta
+        EstadoCita.PENDIENTE -> colorScheme.onTertiaryContainer
+        EstadoCita.CONFIRMADA -> colorScheme.onSecondaryContainer
+        EstadoCita.COMPLETADA -> colorScheme.onSurfaceVariant
+        EstadoCita.CANCELADA -> colorScheme.onErrorContainer
     }
 
     Surface(
         shape = RoundedCornerShape(8.dp),
-        color = fondo
+        color = fondo,
+        contentColor = texto
     ) {
         Text(
             text = estado.etiqueta,
@@ -892,8 +859,8 @@ private fun EstadoCitaBadge(
 
 @Composable
 private fun DividerCita() {
-    androidx.compose.material3.HorizontalDivider(
-        color = Color(0xFFEFEAE5),
+    HorizontalDivider(
+        color = MaterialTheme.colorScheme.outlineVariant,
         thickness = 1.dp
     )
 }
@@ -920,13 +887,14 @@ private fun DetalleCitaScreen(
     onReprogramar: () -> Unit,
     onCancelar: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(FondoCrema)
+            .background(colorScheme.background)
             .padding(horizontal = 18.dp, vertical = 10.dp)
     ) {
-        // Encabezado.
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -941,7 +909,7 @@ private fun DetalleCitaScreen(
                 Text(
                     text = "←",
                     fontSize = 25.sp,
-                    color = VerdeVetSync
+                    color = colorScheme.primary
                 )
             }
 
@@ -949,13 +917,12 @@ private fun DetalleCitaScreen(
                 text = "Detalle de cita",
                 fontSize = 23.sp,
                 fontWeight = FontWeight.Bold,
-                color = VerdeVetSync
+                color = colorScheme.primary
             )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Contenido desplazable.
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -966,7 +933,7 @@ private fun DetalleCitaScreen(
                 text = cita.nombreServicio,
                 fontSize = 25.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF252925)
+                color = colorScheme.onBackground
             )
 
             Spacer(modifier = Modifier.height(5.dp))
@@ -974,7 +941,7 @@ private fun DetalleCitaScreen(
             Text(
                 text = "Ref. #${cita.id.takeLast(8).uppercase(Locale.ROOT)}",
                 fontSize = 12.sp,
-                color = GrisTextoSecundario
+                color = colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(9.dp))
@@ -983,12 +950,16 @@ private fun DetalleCitaScreen(
 
             Spacer(modifier = Modifier.height(18.dp))
 
-            // Tarjeta del paciente.
+            // Información del paciente.
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White
+                    containerColor = colorScheme.surface
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    colorScheme.outlineVariant
                 ),
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 1.dp
@@ -1001,7 +972,7 @@ private fun DetalleCitaScreen(
                         text = "Paciente",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF252925)
+                        color = colorScheme.onSurface
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -1023,18 +994,15 @@ private fun DetalleCitaScreen(
                                 text = cita.nombreMascota,
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF252925)
+                                color = colorScheme.onSurface
                             )
 
                             Spacer(modifier = Modifier.height(4.dp))
 
                             val descripcionMascota = mascota?.let {
-                                listOf(
-                                    it.especie,
-                                    it.raza
-                                ).filter { dato ->
-                                    dato.isNotBlank()
-                                }.joinToString(" · ")
+                                listOf(it.especie, it.raza)
+                                    .filter { dato -> dato.isNotBlank() }
+                                    .joinToString(" · ")
                             }.orEmpty()
 
                             Text(
@@ -1042,18 +1010,16 @@ private fun DetalleCitaScreen(
                                     "Mascota registrada"
                                 },
                                 fontSize = 13.sp,
-                                color = GrisTextoSecundario
+                                color = colorScheme.onSurfaceVariant
                             )
 
                             if (mascota?.edad?.isNotBlank() == true) {
-                                Spacer(
-                                    modifier = Modifier.height(3.dp)
-                                )
+                                Spacer(modifier = Modifier.height(3.dp))
 
                                 Text(
                                     text = "Edad: ${mascota.edad}",
                                     fontSize = 12.sp,
-                                    color = GrisTextoSecundario
+                                    color = colorScheme.onSurfaceVariant
                                 )
                             }
                         }
@@ -1063,12 +1029,16 @@ private fun DetalleCitaScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Tarjeta del veterinario.
+            // Información del veterinario.
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White
+                    containerColor = colorScheme.surface
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    colorScheme.outlineVariant
                 ),
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 1.dp
@@ -1085,14 +1055,14 @@ private fun DetalleCitaScreen(
                         modifier = Modifier
                             .size(44.dp)
                             .clip(CircleShape)
-                            .background(VerdeClaroIcono),
+                            .background(colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "V",
                             fontSize = 19.sp,
                             fontWeight = FontWeight.Bold,
-                            color = VerdeVetSync
+                            color = colorScheme.onPrimaryContainer
                         )
                     }
 
@@ -1101,7 +1071,7 @@ private fun DetalleCitaScreen(
                             text = "Veterinario",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF252925)
+                            color = colorScheme.onSurface
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
@@ -1109,7 +1079,7 @@ private fun DetalleCitaScreen(
                         Text(
                             text = cita.veterinario,
                             fontSize = 13.sp,
-                            color = GrisTextoSecundario
+                            color = colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -1122,7 +1092,11 @@ private fun DetalleCitaScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White
+                    containerColor = colorScheme.surface
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    colorScheme.outlineVariant
                 ),
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 1.dp
@@ -1135,7 +1109,7 @@ private fun DetalleCitaScreen(
                         text = "Fecha y hora",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF252925)
+                        color = colorScheme.onSurface
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -1150,7 +1124,7 @@ private fun DetalleCitaScreen(
                             Text(
                                 text = "Fecha",
                                 fontSize = 12.sp,
-                                color = GrisTextoSecundario
+                                color = colorScheme.onSurfaceVariant
                             )
 
                             Spacer(modifier = Modifier.height(4.dp))
@@ -1159,7 +1133,7 @@ private fun DetalleCitaScreen(
                                 text = formatearFechaCita(cita.fecha),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF252925)
+                                color = colorScheme.onSurface
                             )
                         }
 
@@ -1169,7 +1143,7 @@ private fun DetalleCitaScreen(
                             Text(
                                 text = "Hora",
                                 fontSize = 12.sp,
-                                color = GrisTextoSecundario
+                                color = colorScheme.onSurfaceVariant
                             )
 
                             Spacer(modifier = Modifier.height(4.dp))
@@ -1178,7 +1152,7 @@ private fun DetalleCitaScreen(
                                 text = cita.hora,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF252925)
+                                color = colorScheme.onSurface
                             )
                         }
                     }
@@ -1193,7 +1167,7 @@ private fun DetalleCitaScreen(
                         text = "Motivo de visita",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF252925)
+                        color = colorScheme.onSurface
                     )
 
                     Spacer(modifier = Modifier.height(5.dp))
@@ -1204,7 +1178,7 @@ private fun DetalleCitaScreen(
                         },
                         fontSize = 13.sp,
                         lineHeight = 19.sp,
-                        color = GrisTextoSecundario
+                        color = colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -1216,7 +1190,11 @@ private fun DetalleCitaScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White
+                    containerColor = colorScheme.surface
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    colorScheme.outlineVariant
                 ),
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 1.dp
@@ -1229,7 +1207,7 @@ private fun DetalleCitaScreen(
                         text = "Desglose estimado",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF252925)
+                        color = colorScheme.onSurface
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -1243,7 +1221,7 @@ private fun DetalleCitaScreen(
                             text = cita.nombreServicio,
                             modifier = Modifier.weight(1f),
                             fontSize = 13.sp,
-                            color = GrisTextoSecundario
+                            color = colorScheme.onSurfaceVariant
                         )
 
                         Spacer(modifier = Modifier.width(10.dp))
@@ -1251,7 +1229,7 @@ private fun DetalleCitaScreen(
                         Text(
                             text = formatearCosto(cita.costo),
                             fontSize = 13.sp,
-                            color = Color(0xFF252925)
+                            color = colorScheme.onSurface
                         )
                     }
 
@@ -1270,14 +1248,14 @@ private fun DetalleCitaScreen(
                             text = "Total estimado",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF252925)
+                            color = colorScheme.onSurface
                         )
 
                         Text(
                             text = formatearCosto(cita.costo),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
-                            color = VerdeVetSync
+                            color = colorScheme.primary
                         )
                     }
 
@@ -1288,7 +1266,7 @@ private fun DetalleCitaScreen(
                                 "para el servicio solicitado.",
                         fontSize = 11.sp,
                         lineHeight = 16.sp,
-                        color = GrisTextoSecundario
+                        color = colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -1296,7 +1274,7 @@ private fun DetalleCitaScreen(
             Spacer(modifier = Modifier.height(20.dp))
         }
 
-        // Acciones disponibles según el estado.
+        // Acciones disponibles únicamente para citas pendientes.
         if (cita.estado == EstadoCita.PENDIENTE) {
             Button(
                 onClick = onCancelar,
@@ -1305,8 +1283,8 @@ private fun DetalleCitaScreen(
                     .height(48.dp),
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFFDEDC),
-                    contentColor = RojoAlerta
+                    containerColor = colorScheme.errorContainer,
+                    contentColor = colorScheme.onErrorContainer
                 )
             ) {
                 Text(
@@ -1324,7 +1302,8 @@ private fun DetalleCitaScreen(
                     .height(48.dp),
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = VerdeVetSync
+                    containerColor = colorScheme.primary,
+                    contentColor = colorScheme.onPrimary
                 )
             ) {
                 Text(

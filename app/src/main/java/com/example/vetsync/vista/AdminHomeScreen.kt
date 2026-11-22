@@ -30,7 +30,9 @@ sealed class SubPantallaAdminHome {
 @Composable
 fun AdminHomeScreen(
     nombreUsuario: String = "Laura",
-    onNavigateToLogin: () -> Unit = {}
+    onNavigateToLogin: () -> Unit = {},
+    modoOscuro: Boolean = false,
+    onModoOscuroChange: (Boolean) -> Unit = {}
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
@@ -98,7 +100,7 @@ fun AdminHomeScreen(
 
         is SubPantallaAdminHome.Notificaciones -> {
             Scaffold(
-                containerColor = FondoCrema,
+                containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
                 topBar = {
                     AdminHomeTopBar(
                         mostrarFotoPerfil = false,
@@ -138,7 +140,7 @@ fun AdminHomeScreen(
         is SubPantallaAdminHome.EditarPerfil -> {
 
             Scaffold(
-                containerColor = FondoCrema,
+                containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
 
                 topBar = {
                     AdminHomeTopBar(
@@ -207,7 +209,7 @@ fun AdminHomeScreen(
         is SubPantallaAdminHome.InformacionClinica -> {
 
             Scaffold(
-                containerColor = FondoCrema,
+                containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
 
                 topBar = {
                     AdminHomeTopBar(
@@ -258,7 +260,7 @@ fun AdminHomeScreen(
 
         null -> {
             Scaffold(
-                containerColor = FondoCrema,
+                containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
                 topBar = {
                     AdminHomeTopBar(
                         mostrarFotoPerfil = (selectedTab != 4),
@@ -336,7 +338,9 @@ fun AdminHomeScreen(
                                             usuarioId = usuarioId,
                                             mostrar = mostrar
                                         )
-                                }
+                                },
+                                modoOscuro = modoOscuro,
+                                onModoOscuroChange = onModoOscuroChange
                             )
                         }
                     }

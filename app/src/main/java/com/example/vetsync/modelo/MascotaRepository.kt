@@ -56,11 +56,35 @@ class MascotaRepository{
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
+        if (mascota.id.isBlank()) {
+            onFailure(
+                IllegalArgumentException(
+                    "No se encontró el identificador de la mascota."
+                )
+            )
+            return
+        }
+
+        // Actualizar únicamente los campos editables desde el perfil del cliente.
+        val datosActualizados = hashMapOf<String, Any>(
+            "nombre" to mascota.nombre,
+            "especie" to mascota.especie,
+            "raza" to mascota.raza,
+            "edad" to mascota.edad,
+            "fechaNacimiento" to mascota.fechaNacimiento,
+            "peso" to mascota.peso,
+            "colorMarcas" to mascota.colorMarcas
+        )
+
         db.collection("mascotas")
             .document(mascota.id)
-            .set(mascota)
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { e -> onFailure(e) }
+            .update(datosActualizados)
+            .addOnSuccessListener {
+                onSuccess()
+            }
+            .addOnFailureListener { error ->
+                onFailure(error)
+            }
     }
 
     fun editarMascotaAdmin(

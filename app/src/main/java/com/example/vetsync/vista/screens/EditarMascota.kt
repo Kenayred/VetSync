@@ -41,6 +41,10 @@ fun EditarMascotaScreen(
     var raza by remember { mutableStateOf(mascota.raza) }
     var fechaNacimiento by remember { mutableStateOf(mascota.fechaNacimiento) }
     var colorMarcas by remember { mutableStateOf(mascota.colorMarcas) }
+    var edad by remember(mascota.id) { mutableStateOf(mascota.edad) }
+    var pesoTexto by remember(mascota.id) { mutableStateOf(if (mascota.peso > 0.0) mascota.peso.toString() else "") }
+    var edadError by remember(mascota.id) { mutableStateOf(false) }
+    var pesoError by remember(mascota.id) { mutableStateOf(false) }
 
     var nombreError by remember { mutableStateOf(false) }
     var tipoError by remember { mutableStateOf(false) }
@@ -122,11 +126,41 @@ fun EditarMascotaScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Edad de la mascota (obligatoria)
+            CampoFormularioMascota(
+                label = "Edad (años) *",
+                value = edad,
+                onValueChange = {
+                    edad = it
+                    edadError = false
+                },
+                isError = edadError,
+                placeholder = "Ej. 3",
+                keyboardType = KeyboardType.Number
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Peso de la mascota (obligatorio)
+            CampoFormularioMascota(
+                label = "Peso (kg) *",
+                value = pesoTexto,
+                onValueChange = {
+                    pesoTexto = it
+                    pesoError = false
+                },
+                isError = pesoError,
+                placeholder = "Ej. 18.5",
+                keyboardType = KeyboardType.Decimal
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             CampoFormularioMascota(
                 label = "Color / Marcas",
                 value = colorMarcas,
                 onValueChange = { colorMarcas = it },
-                placeholder = "Ej. 25.5",
+                placeholder = "Ej. Negro con blanco",
                 keyboardType = KeyboardType.Decimal
             )
 
@@ -136,39 +170,82 @@ fun EditarMascotaScreen(
                 onClick = {
                     nombreError = false
                     tipoError = false
+                    edadError = false
+                    pesoError = false
+
                     var hayErrorVisual = false
 
                     if (nombre.isBlank()) {
                         nombreError = true
                         hayErrorVisual = true
                     }
+
                     if (tipo.isBlank() || tipo == "Seleccione el tipo") {
                         tipoError = true
                         hayErrorVisual = true
                     }
 
-                    if (!hayErrorVisual) {
+                    val edadConvertida = edad.trim().toIntOrNull()
 
+                    if (edadConvertida == null || edadConvertida < 0) {
+                        edadError = true
+                        hayErrorVisual = true
+                    }
+
+                    val pesoConvertido = pesoTexto
+                        .trim()
+                        .replace(",", ".")
+                        .toDoubleOrNull()
+
+                    if (
+                        pesoConvertido == null ||
+                        !pesoConvertido.isFinite() ||
+                        pesoConvertido <= 0.0
+                    ) {
+                        pesoError = true
+                        hayErrorVisual = true
+                    }
+
+                    if (
+                        !hayErrorVisual &&
+                        edadConvertida != null &&
+                        pesoConvertido != null
+                    ) {
                         val mascotaActualizada = mascota.copy(
-                            nombre = nombre,
-                            especie = tipo,
-                            raza = raza,
+                            nombre = nombre.trim(),
+                            especie = tipo.trim(),
+                            raza = raza.trim(),
+                            edad = edadConvertida.toString(),
                             fechaNacimiento = fechaNacimiento,
-                            colorMarcas = colorMarcas
+                            peso = pesoConvertido,
+                            colorMarcas = colorMarcas.trim()
                         )
 
                         controlador.editarMascota(
                             mascota = mascotaActualizada,
                             onSuccess = {
-                                Toast.makeText(context, "Mascota actualizada con éxito", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    "Mascota actualizada con éxito",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
                                 onMascotaEditada()
                             },
                             onError = { mensajeError ->
-                                Toast.makeText(context, mensajeError, Toast.LENGTH_LONG).show()
+                                Toast.makeText(
+                                    context,
+                                    mensajeError,
+                                    Toast.LENGTH_LONG
+                                ).show()
                             }
                         )
                     } else {
-                        Toast.makeText(context, "Revisa los campos en rojo", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            "Revisa los campos marcados en rojo",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 },
                 modifier = Modifier

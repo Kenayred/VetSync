@@ -1,6 +1,7 @@
 package com.example.vetsync.vista
 
 import android.net.Uri
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -18,15 +19,17 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material3.*
+import android.widget.Toast
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -37,53 +40,116 @@ import androidx.compose.ui.unit.sp
 import com.example.vetsync.controlador.MascotaControlador
 import com.example.vetsync.modelo.ImagenUtils
 import com.example.vetsync.modelo.SesionUsuario
-import com.example.vetsync.vista.theme.*
-import androidx.compose.material.icons.outlined.DateRange
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DatePickerDefaults
-import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.TextButton
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
-import androidx.compose.material3.SelectableDates
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AgregarMascotaScreen(
-    controlador: MascotaControlador = remember { MascotaControlador() },
+    controlador: MascotaControlador = remember {
+        MascotaControlador()
+    },
     onBackClick: () -> Unit = {},
     onCancelarClick: () -> Unit = {},
     onMascotaGuardada: () -> Unit = {},
     propietarioId: String? = null
 ) {
-    var nombre by remember { mutableStateOf("") }
-    var nombreError by remember { mutableStateOf(false) }
-    var especie by remember { mutableStateOf("") }
-    var especieError by remember { mutableStateOf(false) }
-    var especiePersonalizada by remember { mutableStateOf("") }
-    var especiePersonalizadaError by remember {mutableStateOf(false) }
-    var raza by remember { mutableStateOf("") }
-    var razaError by remember { mutableStateOf(false) }
-    var edad by remember { mutableStateOf("") }
-    var edadError by remember { mutableStateOf(false) }
-    var sexo by remember { mutableStateOf("") }
-    var sexoError by remember { mutableStateOf(false) }
-    var fechaNacimiento by remember { mutableStateOf("") }
-    var fechaNacError by remember { mutableStateOf(false) }
-    var peso by remember { mutableStateOf("") }
-    var pesoError by remember { mutableStateOf(false) }
-    var colorMarcas by remember { mutableStateOf("") }
-    var observaciones by remember { mutableStateOf("") }
 
-    // Estado para guardar la imagen convertida en Base64
-    var fotoBase64 by remember { mutableStateOf("") }
+    val colorScheme = MaterialTheme.colorScheme
 
-    val opcionesEspecie = listOf("Perro", "Gato", "Ave", "Conejo", "Otro")
-    val opcionesSexo = listOf("Macho", "Hembra")
+    var nombre by remember {
+        mutableStateOf("")
+    }
+
+    var nombreError by remember {
+        mutableStateOf(false)
+    }
+
+    var especie by remember {
+        mutableStateOf("")
+    }
+
+    var especieError by remember {
+        mutableStateOf(false)
+    }
+
+    var especiePersonalizada by remember {
+        mutableStateOf("")
+    }
+
+    var especiePersonalizadaError by remember {
+        mutableStateOf(false)
+    }
+
+    var raza by remember {
+        mutableStateOf("")
+    }
+
+    var razaError by remember {
+        mutableStateOf(false)
+    }
+
+    var edad by remember {
+        mutableStateOf("")
+    }
+
+    var edadError by remember {
+        mutableStateOf(false)
+    }
+
+    var sexo by remember {
+        mutableStateOf("")
+    }
+
+    var sexoError by remember {
+        mutableStateOf(false)
+    }
+
+    var fechaNacimiento by remember {
+        mutableStateOf("")
+    }
+
+    var fechaNacError by remember {
+        mutableStateOf(false)
+    }
+
+    var peso by remember {
+        mutableStateOf("")
+    }
+
+    var pesoError by remember {
+        mutableStateOf(false)
+    }
+
+    var colorMarcas by remember {
+        mutableStateOf("")
+    }
+
+    var observaciones by remember {
+        mutableStateOf("")
+    }
+
+    // Fotografía convertida en Base64.
+
+    var fotoBase64 by remember {
+        mutableStateOf("")
+    }
+
+    val opcionesEspecie = listOf(
+        "Perro",
+        "Gato",
+        "Ave",
+        "Conejo",
+        "Otro"
+    )
+
+    val opcionesSexo = listOf(
+        "Macho",
+        "Hembra"
+    )
 
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -93,24 +159,37 @@ fun AgregarMascotaScreen(
     val selectorImagenLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
+
         if (uri != null) {
-            fotoBase64 = ImagenUtils.uriABase64(context, uri)
+            fotoBase64 = ImagenUtils.uriABase64(
+                context,
+                uri
+            )
         }
     }
 
     Scaffold(
-        containerColor = FondoCrema,
+        containerColor = colorScheme.background,
+
         topBar = {
-            AgregarMascotaTopBar(onBackClick = onBackClick)
+            AgregarMascotaTopBar(
+                onBackClick = onBackClick
+            )
         }
+
     ) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(scrollState)
-                .padding(horizontal = 20.dp, vertical = 12.dp)
+                .padding(
+                    horizontal = 20.dp,
+                    vertical = 12.dp
+                )
         ) {
+
             Text(
                 text = if (esRegistroAdministrador) {
                     "Registrar paciente"
@@ -119,9 +198,11 @@ fun AgregarMascotaScreen(
                 },
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E221F)
+                color = colorScheme.onBackground
             )
+
             Spacer(modifier = Modifier.height(6.dp))
+
             Text(
                 text = if (esRegistroAdministrador) {
                     "Ingresa los datos de la mascota del cliente seleccionado."
@@ -129,7 +210,7 @@ fun AgregarMascotaScreen(
                     "Ingresa los detalles del nuevo paciente para mantener su registro al día."
                 },
                 fontSize = 14.sp,
-                color = GrisTextoSecundario,
+                color = colorScheme.onSurfaceVariant,
                 lineHeight = 20.sp
             )
 
@@ -138,38 +219,64 @@ fun AgregarMascotaScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
+                colors = CardDefaults.cardColors(
+                    containerColor = colorScheme.surface
+                ),
+                border = BorderStroke(
+                    1.dp,
+                    colorScheme.outlineVariant
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 0.5.dp
+                )
             ) {
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(18.dp)
                 ) {
+
+                    // --------------------------------------------------
+                    // FOTOGRAFÍA
+                    // --------------------------------------------------
+
                     SubirFotoMascotaBox(
                         fotoBase64 = fotoBase64,
-                        onClick = { selectorImagenLauncher.launch("image/*") }
+                        onClick = {
+                            selectorImagenLauncher.launch("image/*")
+                        }
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
 
+                    // --------------------------------------------------
+                    // NOMBRE
+                    // --------------------------------------------------
+
                     CampoFormularioMascota(
                         label = "Nombre",
                         value = nombre,
-                        onValueChange = { nombre = it },
+                        onValueChange = {
+                            nombre = it
+                            nombreError = false
+                        },
                         isError = nombreError,
                         placeholder = "Ej. Firulais"
                     )
-                    if(nombreError){
-                        Text(
-                            text = "El nombre es obligatorio",
-                            color = RojoAlerta,
-                            fontSize = 12.sp,
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp)
+
+                    if (nombreError) {
+
+                        TextoErrorMascota(
+                            texto = "El nombre es obligatorio"
                         )
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
+
+                    // --------------------------------------------------
+                    // ESPECIE
+                    // --------------------------------------------------
 
                     DropdownFormularioMascota(
                         label = "Especie",
@@ -177,7 +284,9 @@ fun AgregarMascotaScreen(
                         isError = especieError,
                         placeholder = "Selecciona especie",
                         opciones = opcionesEspecie,
+
                         onOptionSelected = {
+
                             especie = it
                             especieError = false
 
@@ -188,21 +297,24 @@ fun AgregarMascotaScreen(
                         }
                     )
 
-                    if(especieError){
-                        Text(
-                            text = "La especie es obligatoria",
-                            color = RojoAlerta,
-                            fontSize = 12.sp,
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp)
+                    if (especieError) {
+
+                        TextoErrorMascota(
+                            texto = "La especie es obligatoria"
                         )
                     }
 
-                    if(especie == "Otro"){
+                    // Especie personalizada.
+
+                    if (especie == "Otro") {
+
                         Spacer(modifier = Modifier.height(14.dp))
+
                         CampoFormularioMascota(
                             label = "Especificar especie",
                             value = especiePersonalizada,
                             onValueChange = {
+
                                 especiePersonalizada = it
 
                                 if (it.isNotBlank()) {
@@ -214,57 +326,67 @@ fun AgregarMascotaScreen(
                         )
 
                         if (especiePersonalizadaError) {
-                            Text(
-                                text = "Debes especificar la especie",
-                                color = RojoAlerta,
-                                fontSize = 12.sp,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(start = 16.dp, top = 4.dp)
+
+                            TextoErrorMascota(
+                                texto = "Debes especificar la especie"
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    // --------------------------------------------------
+                    // RAZA
+                    // --------------------------------------------------
+
                     CampoFormularioMascota(
                         label = "Raza",
                         value = raza,
-                        onValueChange = { raza = it },
+                        onValueChange = {
+                            raza = it
+                            razaError = false
+                        },
                         isError = razaError,
                         placeholder = "Ej. Golden Retriever"
                     )
 
-                    if(razaError){
-                        Text(
-                            text = "La raza es obligatoria",
-                            color = RojoAlerta,
-                            fontSize = 12.sp,
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp)
+                    if (razaError) {
+
+                        TextoErrorMascota(
+                            texto = "La raza es obligatoria"
                         )
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    // --------------------------------------------------
+                    // EDAD
+                    // --------------------------------------------------
+
                     CampoFormularioMascota(
                         label = "Edad (Años)",
                         value = edad,
-                        onValueChange = { edad = it },
+                        onValueChange = {
+                            edad = it
+                            edadError = false
+                        },
                         isError = edadError,
                         placeholder = "2",
                         keyboardType = KeyboardType.Number
                     )
 
-                    if(edadError){
-                        Text(
-                            text = "La edad es obligatoria. Ingresa una edad igual o mayor que 0.",
-                            color = RojoAlerta,
-                            fontSize = 12.sp,
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp)
+                    if (edadError) {
+
+                        TextoErrorMascota(
+                            texto = "La edad es obligatoria. Ingresa una edad igual o mayor que 0."
                         )
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
+
+                    // --------------------------------------------------
+                    // SEXO
+                    // --------------------------------------------------
 
                     DropdownFormularioMascota(
                         label = "Sexo",
@@ -272,72 +394,95 @@ fun AgregarMascotaScreen(
                         placeholder = "Selecciona sexo",
                         isError = sexoError,
                         opciones = opcionesSexo,
-                        onOptionSelected = { sexo = it }
+                        onOptionSelected = {
+                            sexo = it
+                            sexoError = false
+                        }
                     )
 
-                    if(sexoError){
-                        Text(
-                            text = "El sexo es obligatorio",
-                            color = RojoAlerta,
-                            fontSize = 12.sp,
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp)
+                    if (sexoError) {
+
+                        TextoErrorMascota(
+                            texto = "El sexo es obligatorio"
                         )
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
+
+                    // --------------------------------------------------
+                    // FECHA DE NACIMIENTO
+                    // --------------------------------------------------
 
                     SelectorFechaMascota(
                         label = "Fecha de Nacimiento",
                         value = fechaNacimiento,
                         isError = fechaNacError,
-                        onValueChange = { fechaNacimiento = it },
+                        onValueChange = {
+                            fechaNacimiento = it
+                            fechaNacError = false
+                        },
                         placeholder = "Selecciona una fecha"
                     )
 
-                    if(fechaNacError){
-                        Text(
-                            text = "La fecha de Nacimiento es obligatoria",
-                            color = RojoAlerta,
-                            fontSize = 12.sp,
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp)
+                    if (fechaNacError) {
+
+                        TextoErrorMascota(
+                            texto = "La fecha de Nacimiento es obligatoria"
                         )
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    // --------------------------------------------------
+                    // PESO
+                    // --------------------------------------------------
+
                     CampoFormularioMascota(
                         label = "Peso (kg)",
                         value = peso,
-                        onValueChange = { peso = it },
+                        onValueChange = {
+                            peso = it
+                            pesoError = false
+                        },
                         isError = pesoError,
                         placeholder = "Ej. 15.5",
                         keyboardType = KeyboardType.Decimal
                     )
 
-                    if(pesoError){
-                        Text(
-                            text = "El peso es obligatorio",
-                            color = RojoAlerta,
-                            fontSize = 12.sp,
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 4.dp)
+                    if (pesoError) {
+
+                        TextoErrorMascota(
+                            texto = "El peso es obligatorio"
                         )
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    // --------------------------------------------------
+                    // COLOR Y MARCAS
+                    // --------------------------------------------------
+
                     CampoFormularioMascota(
                         label = "Color / Marcas",
                         value = colorMarcas,
-                        onValueChange = { colorMarcas = it },
+                        onValueChange = {
+                            colorMarcas = it
+                        },
                         placeholder = "Ej. Blanco con manchas negras"
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    // --------------------------------------------------
+                    // OBSERVACIONES
+                    // --------------------------------------------------
+
                     CampoFormularioMascota(
                         label = "Observaciones o Condiciones Especiales",
                         value = observaciones,
-                        onValueChange = { observaciones = it },
+                        onValueChange = {
+                            observaciones = it
+                        },
                         placeholder = "Alergias, comportamientos, etc.",
                         singleLine = false,
                         minHeight = 96
@@ -346,11 +491,15 @@ fun AgregarMascotaScreen(
                     Spacer(modifier = Modifier.height(22.dp))
 
                     HorizontalDivider(
-                        color = Color(0xFFEEEEEE),
+                        color = colorScheme.outlineVariant,
                         thickness = 1.dp
                     )
 
                     Spacer(modifier = Modifier.height(18.dp))
+
+                    // --------------------------------------------------
+                    // CANCELAR
+                    // --------------------------------------------------
 
                     OutlinedButton(
                         onClick = onCancelarClick,
@@ -358,12 +507,15 @@ fun AgregarMascotaScreen(
                             .fillMaxWidth()
                             .height(46.dp),
                         shape = RoundedCornerShape(50),
-                        border = BorderStroke(1.dp, BordeInputMascota),
+                        border = BorderStroke(
+                            1.dp,
+                            colorScheme.outline
+                        ),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = Color.White,
-                            contentColor = Color(0xFF3A4D3E)
+                            contentColor = colorScheme.onSurface
                         )
                     ) {
+
                         Text(
                             text = "Cancelar",
                             fontSize = 14.sp,
@@ -373,11 +525,17 @@ fun AgregarMascotaScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
+                    // --------------------------------------------------
+                    // GUARDAR MASCOTA
+                    // --------------------------------------------------
+
                     Button(
                         onClick = {
+
                             var errorVisual = false
+
                             nombreError = false
-                            especieError =false
+                            especieError = false
                             especiePersonalizadaError = false
                             razaError = false
                             edadError = false
@@ -385,33 +543,42 @@ fun AgregarMascotaScreen(
                             fechaNacError = false
                             pesoError = false
 
-                            if(nombre.isBlank()){
+                            if (nombre.isBlank()) {
                                 nombreError = true
                                 errorVisual = true
                             }
-                            if(especie.isBlank()){
+
+                            if (especie.isBlank()) {
                                 especieError = true
                                 errorVisual = true
                             }
-                            if(raza.isBlank()){
+
+                            if (raza.isBlank()) {
                                 razaError = true
                                 errorVisual = true
                             }
+
                             val edadConvertida = edad.trim().toIntOrNull()
 
-                            if (edadConvertida == null || edadConvertida < 0) {
+                            if (
+                                edadConvertida == null ||
+                                edadConvertida < 0
+                            ) {
                                 edadError = true
                                 errorVisual = true
                             }
-                            if(sexo.isBlank()){
+
+                            if (sexo.isBlank()) {
                                 sexoError = true
                                 errorVisual = true
                             }
-                            if(fechaNacimiento.isBlank()){
+
+                            if (fechaNacimiento.isBlank()) {
                                 fechaNacError = true
                                 errorVisual = true
                             }
-                            if(peso.isBlank()){
+
+                            if (peso.isBlank()) {
                                 pesoError = true
                                 errorVisual = true
                             }
@@ -424,7 +591,8 @@ fun AgregarMascotaScreen(
                                 errorVisual = true
                             }
 
-                            if(!errorVisual){
+                            if (!errorVisual) {
+
                                 val especieFinal = if (especie == "Otro") {
                                     especiePersonalizada.trim()
                                 } else {
@@ -432,32 +600,36 @@ fun AgregarMascotaScreen(
                                 }
 
                                 val onRegistroExitoso: () -> Unit = {
+
                                     val mensaje = if (esRegistroAdministrador) {
                                         "¡Paciente registrado con éxito!"
                                     } else {
                                         "¡Mascota registrada con éxito!"
                                     }
 
-                                    android.widget.Toast.makeText(
+                                    Toast.makeText(
                                         context,
                                         mensaje,
-                                        android.widget.Toast.LENGTH_SHORT
+                                        Toast.LENGTH_SHORT
                                     ).show()
 
                                     onMascotaGuardada()
                                 }
 
-                                val onRegistroError: (String) -> Unit = { mensajeError ->
-                                    android.widget.Toast.makeText(
+                                val onRegistroError: (String) -> Unit = {
+                                        mensajeError ->
+
+                                    Toast.makeText(
                                         context,
                                         mensajeError,
-                                        android.widget.Toast.LENGTH_SHORT
+                                        Toast.LENGTH_SHORT
                                     ).show()
                                 }
 
                                 if (propietarioId == null) {
 
                                     // Registro normal del cliente.
+
                                     controlador.registrarMascota(
                                         idUsuario = SesionUsuario.idUsuario,
                                         nombre = nombre,
@@ -476,7 +648,8 @@ fun AgregarMascotaScreen(
 
                                 } else {
 
-                                    // Registro realizado por el administrador para un cliente.
+                                    // Registro administrativo para un cliente.
+
                                     controlador.registrarMascotaParaCliente(
                                         propietarioId = propietarioId,
                                         nombre = nombre,
@@ -494,21 +667,28 @@ fun AgregarMascotaScreen(
                                     )
                                 }
                             }
-
                         },
+
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(48.dp),
+
                         shape = RoundedCornerShape(50),
-                        colors = ButtonDefaults.buttonColors(containerColor = VerdeVetSync)
+
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colorScheme.primary,
+                            contentColor = colorScheme.onPrimary
+                        )
                     ) {
+
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = null,
-                            tint = Color.White,
                             modifier = Modifier.size(18.dp)
                         )
+
                         Spacer(modifier = Modifier.width(8.dp))
+
                         Text(
                             text = if (esRegistroAdministrador) {
                                 "Registrar paciente"
@@ -516,8 +696,7 @@ fun AgregarMascotaScreen(
                                 "Guardar mascota"
                             },
                             fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.White
+                            fontWeight = FontWeight.Medium
                         )
                     }
                 }
@@ -528,106 +707,184 @@ fun AgregarMascotaScreen(
     }
 }
 
+// --------------------------------------------------
+// TEXTO DE ERROR REUTILIZABLE
+// --------------------------------------------------
+
 @Composable
-fun AgregarMascotaTopBar(onBackClick: () -> Unit) {
+private fun TextoErrorMascota(
+    texto: String
+) {
+
+    Text(
+        text = texto,
+        color = MaterialTheme.colorScheme.error,
+        fontSize = 12.sp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                start = 16.dp,
+                top = 4.dp
+            )
+    )
+}
+
+// --------------------------------------------------
+// BARRA SUPERIOR
+// --------------------------------------------------
+
+@Composable
+fun AgregarMascotaTopBar(
+    onBackClick: () -> Unit
+) {
+
+    val colorScheme = MaterialTheme.colorScheme
+
     Column {
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .background(FondoCrema)
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .background(colorScheme.background)
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = 14.dp
+                ),
             verticalAlignment = Alignment.CenterVertically
         ) {
+
             IconButton(
                 onClick = onBackClick,
                 modifier = Modifier.size(32.dp)
             ) {
+
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Regresar",
-                    tint = Color(0xFF3B3B3B),
+                    tint = colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(22.dp)
                 )
             }
+
             Spacer(modifier = Modifier.width(8.dp))
+
             Text(
                 text = "VetSync",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
-                color = VerdeVetSync
+                color = colorScheme.primary
             )
         }
-        HorizontalDivider(color = Color(0xFFE5E0D8), thickness = 1.dp)
+
+        HorizontalDivider(
+            color = colorScheme.outlineVariant,
+            thickness = 1.dp
+        )
     }
 }
+
+// --------------------------------------------------
+// SUBIR FOTOGRAFÍA DE LA MASCOTA
+// --------------------------------------------------
 
 @Composable
 fun SubirFotoMascotaBox(
     fotoBase64: String = "",
     onClick: () -> Unit
 ) {
-    val dashEffect = PathEffect.dashPathEffect(floatArrayOf(14f, 10f), 0f)
-    val borderColor = Color(0xFFC8D1C9)
-    val imageBitmap = remember(fotoBase64) { ImagenUtils.base64ABitmap(fotoBase64) }
+
+    val colorScheme = MaterialTheme.colorScheme
+
+    val dashEffect = PathEffect.dashPathEffect(
+        floatArrayOf(14f, 10f),
+        0f
+    )
+
+    val borderColor = colorScheme.outline
+
+    val imageBitmap = remember(fotoBase64) {
+        ImagenUtils.base64ABitmap(fotoBase64)
+    }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(170.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(FondoInputMascota)
+            .background(colorScheme.surfaceVariant)
             .drawBehind {
+
                 drawRoundRect(
                     color = borderColor,
-                    style = Stroke(width = 3f, pathEffect = dashEffect),
+                    style = Stroke(
+                        width = 3f,
+                        pathEffect = dashEffect
+                    ),
                     cornerRadius = CornerRadius(16.dp.toPx())
                 )
             }
-            .clickable { onClick() },
+            .clickable {
+                onClick()
+            },
         contentAlignment = Alignment.Center
     ) {
+
         if (imageBitmap != null) {
+
             Image(
                 bitmap = imageBitmap,
                 contentDescription = "Foto seleccionada",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
+
         } else {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
                 Box(
                     modifier = Modifier
                         .size(64.dp)
                         .clip(CircleShape)
-                        .background(VerdeClaroIcono),
+                        .background(colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
+
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Subir foto",
-                        tint = VerdeVetSync,
+                        tint = colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(30.dp)
                     )
                 }
+
                 Spacer(modifier = Modifier.height(12.dp))
+
                 Text(
                     text = "Subir foto de la mascota",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = VerdeVetSync
+                    color = colorScheme.onSurface
                 )
+
                 Spacer(modifier = Modifier.height(2.dp))
+
                 Text(
                     text = "JPG, PNG hasta 5MB",
                     fontSize = 11.sp,
-                    color = GrisTextoSecundario
+                    color = colorScheme.onSurfaceVariant
                 )
             }
         }
     }
 }
 
+// --------------------------------------------------
+// CAMPO DE FORMULARIO
+// --------------------------------------------------
 
 @Composable
 fun CampoFormularioMascota(
@@ -640,42 +897,73 @@ fun CampoFormularioMascota(
     singleLine: Boolean = true,
     minHeight: Int = 52
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
+
+    val colorScheme = MaterialTheme.colorScheme
+
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+
         Text(
             text = label,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
-            color = TextoLabelMascota
+            color = colorScheme.onSurfaceVariant
         )
+
         Spacer(modifier = Modifier.height(6.dp))
+
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
+
             placeholder = {
                 Text(
                     text = placeholder,
                     fontSize = 13.sp,
-                    color = PlaceholderMascota
+                    color = colorScheme.onSurfaceVariant
                 )
             },
+
             isError = isError,
             singleLine = singleLine,
-            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+
+            keyboardOptions = KeyboardOptions(
+                keyboardType = keyboardType
+            ),
+
             shape = RoundedCornerShape(12.dp),
+
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = minHeight.dp),
+
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = FondoInputMascota,
-                unfocusedContainerColor = FondoInputMascota,
-                focusedBorderColor = VerdeVetSync,
-                unfocusedBorderColor = BordeInputMascota,
-                cursorColor = VerdeVetSync,
-                errorBorderColor = RojoAlerta
+
+                focusedContainerColor = colorScheme.surfaceVariant,
+                unfocusedContainerColor = colorScheme.surfaceVariant,
+
+                focusedBorderColor = colorScheme.primary,
+                unfocusedBorderColor = colorScheme.outline,
+
+                focusedLabelColor = colorScheme.primary,
+                unfocusedLabelColor = colorScheme.onSurfaceVariant,
+
+                focusedTextColor = colorScheme.onSurface,
+                unfocusedTextColor = colorScheme.onSurface,
+
+                cursorColor = colorScheme.primary,
+
+                errorBorderColor = colorScheme.error,
+                errorCursorColor = colorScheme.error
             )
         )
     }
 }
+
+// --------------------------------------------------
+// DROPDOWN DE FORMULARIO
+// --------------------------------------------------
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -687,61 +975,100 @@ fun DropdownFormularioMascota(
     opciones: List<String>,
     onOptionSelected: (String) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxWidth()) {
+    val colorScheme = MaterialTheme.colorScheme
+
+    var expanded by remember {
+        mutableStateOf(false)
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+
         Text(
             text = label,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
-            color = TextoLabelMascota
+            color = colorScheme.onSurfaceVariant
         )
+
         Spacer(modifier = Modifier.height(6.dp))
+
         ExposedDropdownMenuBox(
             expanded = expanded,
-            onExpandedChange = { expanded = !expanded }
+            onExpandedChange = {
+                expanded = !expanded
+            }
         ) {
+
             OutlinedTextField(
                 value = selectedValue,
                 onValueChange = {},
                 readOnly = true,
                 isError = isError,
+
                 placeholder = {
                     Text(
                         text = placeholder,
                         fontSize = 13.sp,
-                        color = Color(0xFF2B2B2B)
+                        color = colorScheme.onSurfaceVariant
                     )
                 },
+
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.KeyboardArrowDown,
                         contentDescription = null,
-                        tint = Color(0xFF4A4A4A)
+                        tint = colorScheme.onSurfaceVariant
                     )
                 },
+
                 shape = RoundedCornerShape(12.dp),
+
                 modifier = Modifier
                     .menuAnchor()
                     .fillMaxWidth(),
+
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = FondoInputMascota,
-                    unfocusedContainerColor = FondoInputMascota,
-                    focusedBorderColor = VerdeVetSync,
-                    unfocusedBorderColor = BordeInputMascota,
-                    errorBorderColor = RojoAlerta
+
+                    focusedContainerColor = colorScheme.surfaceVariant,
+                    unfocusedContainerColor = colorScheme.surfaceVariant,
+
+                    focusedBorderColor = colorScheme.primary,
+                    unfocusedBorderColor = colorScheme.outline,
+
+                    focusedTextColor = colorScheme.onSurface,
+                    unfocusedTextColor = colorScheme.onSurface,
+
+                    focusedLabelColor = colorScheme.primary,
+                    unfocusedLabelColor = colorScheme.onSurfaceVariant,
+
+                    errorBorderColor = colorScheme.error
                 )
             )
 
             ExposedDropdownMenu(
                 expanded = expanded,
-                onDismissRequest = { expanded = false },
-                modifier = Modifier.background(Color.White)
+                onDismissRequest = {
+                    expanded = false
+                },
+                modifier = Modifier.background(colorScheme.surface)
             ) {
+
                 opciones.forEach { opcion ->
+
                     DropdownMenuItem(
-                        text = { Text(text = opcion, fontSize = 14.sp) },
+                        text = {
+                            Text(
+                                text = opcion,
+                                fontSize = 14.sp,
+                                color = colorScheme.onSurface
+                            )
+                        },
+
                         onClick = {
+
                             onOptionSelected(opcion)
                             expanded = false
                         }
@@ -752,6 +1079,10 @@ fun DropdownFormularioMascota(
     }
 }
 
+// --------------------------------------------------
+// SELECTOR DE FECHA
+// --------------------------------------------------
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectorFechaMascota(
@@ -761,104 +1092,179 @@ fun SelectorFechaMascota(
     isError: Boolean = false,
     placeholder: String
 ) {
-    var mostrarCalendario by remember { mutableStateOf(false) }
+
+    val colorScheme = MaterialTheme.colorScheme
+
+    var mostrarCalendario by remember {
+        mutableStateOf(false)
+    }
+
     val datePickerState = rememberDatePickerState(
         selectableDates = object : SelectableDates {
 
             override fun isSelectableDate(
                 utcTimeMillis: Long
             ): Boolean {
+
                 return utcTimeMillis <= System.currentTimeMillis()
             }
 
             override fun isSelectableYear(
                 year: Int
             ): Boolean {
+
                 return year <= LocalDate.now().year
             }
         }
     )
 
     if (mostrarCalendario) {
+
         DatePickerDialog(
-            onDismissRequest = { mostrarCalendario = false },
+
+            onDismissRequest = {
+                mostrarCalendario = false
+            },
+
             confirmButton = {
+
                 TextButton(
                     onClick = {
+
                         mostrarCalendario = false
+
                         datePickerState.selectedDateMillis?.let { millis ->
-                            val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+
+                            val sdf = SimpleDateFormat(
+                                "dd/MM/yyyy",
+                                Locale.getDefault()
+                            )
+
                             sdf.timeZone = TimeZone.getTimeZone("UTC")
-                            onValueChange(sdf.format(Date(millis)))
+
+                            onValueChange(
+                                sdf.format(Date(millis))
+                            )
                         }
                     }
                 ) {
-                    Text("Aceptar", color = VerdeVetSync, fontWeight = FontWeight.Bold)
+
+                    Text(
+                        "Aceptar",
+                        color = colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             },
+
             dismissButton = {
-                TextButton(onClick = { mostrarCalendario = false }) {
-                    Text("Cancelar", color = GrisTextoSecundario)
+
+                TextButton(
+                    onClick = {
+                        mostrarCalendario = false
+                    }
+                ) {
+
+                    Text(
+                        "Cancelar",
+                        color = colorScheme.onSurfaceVariant
+                    )
                 }
             },
-            colors = DatePickerDefaults.colors(containerColor = Color.White)
+
+            colors = DatePickerDefaults.colors(
+                containerColor = colorScheme.surface
+            )
         ) {
+
             DatePicker(
                 state = datePickerState,
+
                 colors = DatePickerDefaults.colors(
-                    titleContentColor = VerdeVetSync,
-                    headlineContentColor = VerdeVetSync,
-                    selectedDayContainerColor = VerdeVetSync,
-                    selectedDayContentColor = Color.White,
-                    todayDateBorderColor = VerdeVetSync,
-                    todayContentColor = VerdeVetSync
+                    containerColor = colorScheme.surface,
+                    titleContentColor = colorScheme.onSurface,
+                    headlineContentColor = colorScheme.onSurface,
+                    selectedDayContainerColor = colorScheme.primary,
+                    selectedDayContentColor = colorScheme.onPrimary,
+                    todayDateBorderColor = colorScheme.primary,
+                    todayContentColor = colorScheme.primary
                 )
             )
         }
     }
 
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+
         Text(
             text = label,
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
-            color = TextoLabelMascota
+            color = colorScheme.onSurfaceVariant
         )
+
         Spacer(modifier = Modifier.height(6.dp))
 
-        Box(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+
             OutlinedTextField(
                 value = value,
                 onValueChange = {},
                 readOnly = true,
                 isError = isError,
+
                 placeholder = {
-                    Text(text = placeholder, fontSize = 13.sp, color = PlaceholderMascota)
+                    Text(
+                        text = placeholder,
+                        fontSize = 13.sp,
+                        color = colorScheme.onSurfaceVariant
+                    )
                 },
+
                 trailingIcon = {
+
                     Icon(
                         imageVector = Icons.Outlined.DateRange,
                         contentDescription = "Seleccionar fecha",
-                        tint = Color(0xFF4A4A4A)
+                        tint = colorScheme.onSurfaceVariant
                     )
                 },
+
                 shape = RoundedCornerShape(12.dp),
+
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 52.dp),
+
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = FondoInputMascota,
-                    unfocusedContainerColor = FondoInputMascota,
-                    focusedBorderColor = VerdeVetSync,
-                    unfocusedBorderColor = BordeInputMascota,
-                    errorBorderColor = RojoAlerta
+
+                    focusedContainerColor = colorScheme.surfaceVariant,
+                    unfocusedContainerColor = colorScheme.surfaceVariant,
+
+                    focusedBorderColor = colorScheme.primary,
+                    unfocusedBorderColor = colorScheme.outline,
+
+                    focusedTextColor = colorScheme.onSurface,
+                    unfocusedTextColor = colorScheme.onSurface,
+
+                    focusedLabelColor = colorScheme.primary,
+                    unfocusedLabelColor = colorScheme.onSurfaceVariant,
+
+                    errorBorderColor = colorScheme.error
                 )
             )
-            // Esta capa invisible intercepta el clic y abre el calendario
+
+            // Capa invisible que abre el calendario.
+
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .clickable { mostrarCalendario = true }
+                    .clickable {
+                        mostrarCalendario = true
+                    }
             )
         }
     }
