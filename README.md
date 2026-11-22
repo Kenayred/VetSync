@@ -1,4 +1,4 @@
-<img width="1001" height="918" alt="image" src="https://github.com/user-attachments/assets/840da3bd-8ae0-452a-9242-cbb31c51e3b0" /># 🐾 VetSync – Sistema Inteligente de Gestión Veterinaria
+# 🐾 VetSync – Sistema Inteligente de Gestión Veterinaria
 
 <p align="center">
   <strong>Proyecto de Cátedra – ByteForge</strong><br>
