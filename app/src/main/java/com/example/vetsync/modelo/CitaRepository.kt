@@ -446,17 +446,37 @@ class CitaRepository {
                     )
                 }
 
-                if (nuevoEstado == EstadoCita.CONFIRMADA) {
-                    agregarNotificacionAlLote(
-                        lote = lote,
-                        usuarioId = "ADMINISTRADOR",
-                        mascotaId = mascotaId,
-                        citaId = idCita,
-                        tipo = "CITA_CONFIRMADA_ADMIN",
-                        titulo = "Cita confirmada",
-                        mensaje = "La cita de $nombreMascota para el $fecha " +
-                                "a las $hora ha sido confirmada."
-                    )
+                when (nuevoEstado) {
+
+                    EstadoCita.CONFIRMADA -> {
+
+                        agregarNotificacionAlLote(
+                            lote = lote,
+                            usuarioId = "ADMINISTRADOR",
+                            mascotaId = mascotaId,
+                            citaId = idCita,
+                            tipo = "CITA_CONFIRMADA_ADMIN",
+                            titulo = "Cita confirmada",
+                            mensaje = "La cita de $nombreMascota para el $fecha " +
+                                    "a las $hora ha sido confirmada."
+                        )
+                    }
+
+                    EstadoCita.CANCELADA -> {
+
+                        agregarNotificacionAlLote(
+                            lote = lote,
+                            usuarioId = "ADMINISTRADOR",
+                            mascotaId = mascotaId,
+                            citaId = idCita,
+                            tipo = "CITA_CANCELADA_ADMIN",
+                            titulo = "Cita cancelada",
+                            mensaje = "La cita de $nombreMascota programada para " +
+                                    "el $fecha a las $hora ha sido cancelada."
+                        )
+                    }
+
+                    else -> Unit
                 }
 
                 lote.commit()
@@ -561,6 +581,19 @@ class CitaRepository {
                     mensaje = "La cita de $nombreMascota cambió de " +
                             "$fechaAnterior a las $horaAnterior a " +
                             "$nuevaFecha a las $nuevaHora."
+                )
+
+                // Notificación administrativa.
+                agregarNotificacionAlLote(
+                    lote = lote,
+                    usuarioId = "ADMINISTRADOR",
+                    mascotaId = mascotaId,
+                    citaId = idCita,
+                    tipo = "CITA_REPROGRAMADA_ADMIN",
+                    titulo = "Cita reprogramada",
+                    mensaje = "La cita de $nombreMascota fue reprogramada. " +
+                            "Horario anterior: $fechaAnterior a las $horaAnterior. " +
+                            "Nuevo horario: $nuevaFecha a las $nuevaHora."
                 )
 
                 lote.commit()

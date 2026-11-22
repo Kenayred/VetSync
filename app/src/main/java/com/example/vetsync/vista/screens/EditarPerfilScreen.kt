@@ -237,20 +237,44 @@ fun EditarPerfilScreen(
             // Guardar Cambios
             Button(
                 onClick = {
+
+                    val correoCambio = correo.trim() != usuario.correo.trim()
+
                     isLoading = true
+
                     controlador.actualizarPerfil(
                         nuevoNombre = nombre,
                         nuevoUsername = username,
                         nuevoTelefono = telefono,
                         nuevoCorreo = correo,
+
                         onSuccess = {
                             isLoading = false
-                            Toast.makeText(context, "Perfil actualizado", Toast.LENGTH_SHORT).show()
-                            onPerfilActualizado() // Acción para regresar al perfil
+
+                            val mensaje = if (correoCambio) {
+                                "Perfil actualizado. Revisa tu nuevo correo para confirmar el cambio."
+                            } else {
+                                "Perfil actualizado correctamente."
+                            }
+
+                            Toast.makeText(
+                                context,
+                                mensaje,
+                                Toast.LENGTH_LONG
+                            ).show()
+
+                            onPerfilActualizado()
                         },
+
                         onError = { mensajeError ->
+
                             isLoading = false
-                            Toast.makeText(context, mensajeError, Toast.LENGTH_SHORT).show()
+
+                            Toast.makeText(
+                                context,
+                                mensajeError,
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                     )
                 },

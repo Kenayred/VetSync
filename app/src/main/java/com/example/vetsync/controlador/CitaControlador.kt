@@ -415,24 +415,23 @@ class CitaControlador {
         onSuccess: (List<Cita>) -> Unit,
         onError: (String) -> Unit
     ) {
-        val idPropietario = SesionUsuario.idUsuario
-
-        if (idPropietario.isBlank()) {
-            onError("No hay una sesión activa.")
+        // Verificar que la sesión corresponda a un administrador.
+        if (
+            SesionUsuario.usuarioActual?.rol !=
+            RolUsuario.ADMINISTRADOR
+        ) {
+            onError("No tienes permisos para consultar todas las citas.")
             return
         }
 
-        citaRepository.obtenerCitasPorPropietario(
-            idPropietario = idPropietario,
-
-            onSuccess = { citas ->
-                onSuccess(citas)
-            },
+        // Consultar todas las citas de la clínica.
+        citaRepository.obtenerTodasLasCitasAdmin(
+            onSuccess = onSuccess,
 
             onFailure = { error ->
                 onError(
                     error.message
-                        ?: "No se pudieron recuperar las citas."
+                        ?: "No se pudieron recuperar las citas administrativas."
                 )
             }
         )

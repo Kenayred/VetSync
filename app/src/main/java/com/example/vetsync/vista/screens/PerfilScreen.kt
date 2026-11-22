@@ -308,7 +308,7 @@ fun PerfilScreen(
 
             text = {
                 Text(
-                    text = "¿Estás seguro de que deseas cerrar tu sesión de administrador?"
+                    text = "¿Estás seguro de que deseas cerrar tu sesión?"
                 )
             },
 

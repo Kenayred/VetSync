@@ -23,63 +23,11 @@ import com.example.vetsync.vista.theme.*
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import android.content.Intent
-import android.provider.Settings
-import android.util.Log
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.platform.LocalContext
-import com.example.vetsync.controlador.CitaControlador
-import com.example.vetsync.notificaciones.NotificacionSistema
-import com.example.vetsync.notificaciones.ProgramadorRecordatorios
 
 @Composable
 fun AdminNotificacionesScreen() {
 
     val usuarioId = SesionUsuario.idUsuario
-    val context = LocalContext.current
-
-    val controladorCitas = remember {
-        CitaControlador()
-    }
-
-    var permisoSistemaHabilitado by remember(usuarioId) {
-        mutableStateOf(
-            NotificacionSistema.tienePermiso(context)
-        )
-    }
-
-    val abrirAjustesNotificaciones =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.StartActivityForResult()
-        ) {
-
-            permisoSistemaHabilitado =
-                NotificacionSistema.tienePermiso(context)
-
-            // Si el admin habilitó las notificaciones,
-            // recuperamos la programación de sus recordatorios.
-            if (permisoSistemaHabilitado) {
-
-                controladorCitas.obtenerCitasAdmin(
-
-                    onSuccess = { citas ->
-
-                        ProgramadorRecordatorios.sincronizarRecordatorios(
-                            context = context.applicationContext,
-                            citas = citas
-                        )
-                    },
-
-                    onError = { error ->
-                        Log.w(
-                            "VetSync",
-                            "No se pudieron recuperar los recordatorios: $error"
-                        )
-                    }
-                )
-            }
-        }
 
     val repository = remember {
         NotificacionRepository()
@@ -163,80 +111,6 @@ fun AdminNotificacionesScreen() {
             fontSize = 14.sp,
             color = GrisTextoSecundario
         )
-
-        if (!permisoSistemaHabilitado) {
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFFF4DF)
-                ),
-
-                shape = RoundedCornerShape(14.dp),
-
-                border = BorderStroke(
-                    1.dp,
-                    Color(0xFFF0DFC0)
-                )
-            ) {
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-
-                    Text(
-                        text = "Activa los recordatorios",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF78551C)
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Text(
-                        text = "Las notificaciones dentro de VetSync " +
-                                "seguirán disponibles, pero necesitas " +
-                                "habilitar las notificaciones de Android " +
-                                "para recibir recordatorios en tu dispositivo.",
-
-                        fontSize = 13.sp,
-                        lineHeight = 19.sp,
-                        color = Color(0xFF78551C)
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    OutlinedButton(
-                        onClick = {
-
-                            val intent = Intent(
-                                Settings.ACTION_APP_NOTIFICATION_SETTINGS
-                            ).apply {
-
-                                putExtra(
-                                    Settings.EXTRA_APP_PACKAGE,
-                                    context.packageName
-                                )
-                            }
-
-                            abrirAjustesNotificaciones.launch(intent)
-                        },
-
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = VerdeVetSync
-                        )
-                    ) {
-
-                        Text("Configurar notificaciones")
-                    }
-                }
-            }
-        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
