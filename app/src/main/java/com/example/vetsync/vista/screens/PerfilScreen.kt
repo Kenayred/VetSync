@@ -278,7 +278,8 @@ fun PerfilScreen(
                 },
                 onCerrarSesionClick = {
                     mostrarDialogoCerrarSesion = true
-                }
+                },
+                onLogoutClick = onLogoutClick
             )
             Spacer(modifier = Modifier.height(30.dp)) // Espacio para el BottomNavigation
         }
@@ -560,11 +561,17 @@ fun SeguridadCard(
                     .fillMaxWidth()
                     .height(48.dp),
                 shape = RoundedCornerShape(10.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF4A7D5E)),
+                border = BorderStroke(1.dp, Color(0xFF4A7D5E)),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = Color(0xFF2E5B4B)
                 )
             ) {
+                Icon(
+                    imageVector = Icons.Outlined.Lock,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Cambiar contraseña",
                     fontSize = 14.sp,
@@ -575,40 +582,36 @@ fun SeguridadCard(
             Spacer(modifier = Modifier.height(16.dp))
             ActionRowItem(icono = Icons.Outlined.Person, label = "Configuración de cuenta")
             Spacer(modifier = Modifier.height(20.dp))
-            Divider(color = GrisBordeCard, thickness = 1.dp)
+            HorizontalDivider(color = GrisBordeCard, thickness = 1.dp)
             Spacer(modifier = Modifier.height(20.dp))
 
-            Row(
+            Button(
+                onClick = onCerrarSesionClick,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onLogoutClick() },
-                verticalAlignment = Alignment.CenterVertically
+                    .height(48.dp),
+                shape = RoundedCornerShape(10.dp),
+                border = BorderStroke(1.dp, Color(0xFFF5C2BE)),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFCE8E6),
+                    contentColor = Color(0xFFB3261E)
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 0.dp,
+                    pressedElevation = 0.dp
+                )
             ) {
-                Icon(Icons.AutoMirrored.Outlined.ExitToApp, contentDescription = null, tint = RojoAlerta, modifier = Modifier.size(20.dp))
-                Spacer(modifier = Modifier.width(12.dp))
-                Button(
-                    onClick = {
-                        onCerrarSesionClick()
-                    },
-
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-
-                    shape = RoundedCornerShape(10.dp),
-
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFCE8E6)
-                    )
-                ) {
-
-                    Text(
-                        text = "Cerrar sesión",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFB3261E)
-                    )
-                }
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.ExitToApp,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Cerrar sesión",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

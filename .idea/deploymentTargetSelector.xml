@@ -7,7 +7,7 @@
         <DialogSelection />
       </SelectionState>
       <SelectionState runConfigName="MainActivity">
-        <option name="selectionMode" value="DIALOG" />
+        <option name="selectionMode" value="DROPDOWN" />
         <DropdownSelection timestamp="2026-11-09T03:16:10.130219500Z">
           <Target type="DEFAULT_BOOT">
             <handle>
