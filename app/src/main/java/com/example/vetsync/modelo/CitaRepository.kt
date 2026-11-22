@@ -49,6 +49,7 @@ class CitaRepository {
             convertirAMapa(citaNueva)
         )
 
+        // 1. Notificacion para el Cliente
         agregarNotificacionAlLote(
             lote = lote,
             usuarioId = citaNueva.propietarioId,
@@ -59,6 +60,18 @@ class CitaRepository {
             mensaje = "Tu solicitud de cita para ${citaNueva.nombreMascota} " +
                     "fue recibida para el ${citaNueva.fecha} a las " +
                     "${citaNueva.hora}. Está pendiente de confirmación."
+        )
+
+        // 2. Notificación para el Administrador / Veterinario
+        agregarNotificacionAlLote(
+            lote = lote,
+            usuarioId = "ADMINISTRADOR",
+            mascotaId = citaNueva.mascotaId,
+            citaId = citaNueva.id,
+            tipo = "NUEVA_CITA_PENDIENTE",
+            titulo = "Nueva solicitud de cita",
+            mensaje = "Se ha solicitado una cita para ${citaNueva.nombreMascota} " +
+                    "el ${citaNueva.fecha} a las ${citaNueva.hora}. Pendiente de revisión."
         )
 
         lote.commit()
@@ -433,6 +446,19 @@ class CitaRepository {
                     )
                 }
 
+                if (nuevoEstado == EstadoCita.CONFIRMADA) {
+                    agregarNotificacionAlLote(
+                        lote = lote,
+                        usuarioId = "ADMINISTRADOR",
+                        mascotaId = mascotaId,
+                        citaId = idCita,
+                        tipo = "CITA_CONFIRMADA_ADMIN",
+                        titulo = "Cita confirmada",
+                        mensaje = "La cita de $nombreMascota para el $fecha " +
+                                "a las $hora ha sido confirmada."
+                    )
+                }
+
                 lote.commit()
                     .addOnSuccessListener {
                         onSuccess()
@@ -550,9 +576,9 @@ class CitaRepository {
             }
     }
 
-    private fun agregarNotificacionAlLote(
+    fun agregarNotificacionAlLote(
         lote: WriteBatch,
-        usuarioId: String,
+        usuarioId: String = "",
         mascotaId: String,
         citaId: String,
         tipo: String,

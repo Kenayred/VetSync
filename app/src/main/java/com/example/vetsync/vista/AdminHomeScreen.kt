@@ -15,7 +15,7 @@ import com.example.vetsync.vista.theme.*
 import com.example.vetsync.modelo.SesionUsuario
 import com.example.vetsync.modelo.Usuario
 import com.example.vetsync.vista.screens.CitasScreen
-import com.example.vetsync.vista.screens.NotificacionesScreen
+import com.example.vetsync.vista.screens.AdminNotificacionesScreen
 import com.example.vetsync.modelo.Mascota
 import com.example.vetsync.vista.screens.AdminCitasScreen
 import com.example.vetsync.vista.screens.AdminPacientesScreen
@@ -24,7 +24,7 @@ import com.example.vetsync.vista.screens.AdminReportesScreen
 import com.example.vetsync.controlador.UsuarioControlador
 
 sealed class SubPantallaAdminHome {
-
+    data object Notificaciones : SubPantallaAdminHome()
 }
 @Composable
 fun AdminHomeScreen(
@@ -34,6 +34,37 @@ fun AdminHomeScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
 
     var subPantallaActual by remember { mutableStateOf<SubPantallaAdminHome?>(null) }
+
+    val usuarioId = SesionUsuario.idUsuario
+
+    val notificacionRepository = remember {
+        com.example.vetsync.modelo.NotificacionRepository()
+    }
+
+    var notificacionesNoLeidas by remember(usuarioId) {
+        mutableIntStateOf(0)
+    }
+
+    DisposableEffect(usuarioId) {
+
+        val listener = notificacionRepository.observarNotificacionesAdmin(
+            usuarioId = usuarioId,
+
+            onSuccess = { lista ->
+                notificacionesNoLeidas = lista.count {
+                    !it.leida
+                }
+            },
+
+            onFailure = {
+                notificacionesNoLeidas = 0
+            }
+        )
+
+        onDispose {
+            listener?.remove()
+        }
+    }
 
     BackHandler(
         enabled = subPantallaActual != null || selectedTab != 0
@@ -47,6 +78,39 @@ fun AdminHomeScreen(
 
     when (val pantalla = subPantallaActual) {
 
+        is SubPantallaAdminHome.Notificaciones -> {
+            Scaffold(
+                containerColor = FondoCrema,
+                topBar = {
+                    AdminHomeTopBar(
+                        mostrarFotoPerfil = false,
+                        onNotificationsClick = {
+                            // Ya estás en notificaciones; opcionalmente puedes volver atrás:
+                            subPantallaActual = null
+                        },
+                        notificacionesNoLeidas = notificacionesNoLeidas
+                    )
+                },
+                bottomBar = {
+                    AdminHomeBottomNavigationBar(
+                        selectedTab = selectedTab,
+                        onTabSelected = { tab ->
+                            subPantallaActual = null
+                            selectedTab = tab
+                        }
+                    )
+                }
+            ) { paddingValues ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                ) {
+                    AdminNotificacionesScreen()
+                }
+            }
+        }
+
         null -> {
             Scaffold(
                 containerColor = FondoCrema,
@@ -54,8 +118,9 @@ fun AdminHomeScreen(
                     AdminHomeTopBar(
                         mostrarFotoPerfil = (selectedTab != 4),
                         onNotificationsClick = {
-                            selectedTab = 3
-                        }
+                            subPantallaActual = SubPantallaAdminHome.Notificaciones
+                        },
+                        notificacionesNoLeidas = notificacionesNoLeidas
                     )
                 },
                 bottomBar = {
@@ -76,12 +141,11 @@ fun AdminHomeScreen(
                             onNavigateToCitas = {
                                 selectedTab = 1
                             },
-
                             onNavigateToPacientes = {
                                 selectedTab = 2
                             }
                         )
-                        1 ->{
+                        1 -> {
                             AdminCitasScreen()
                         }
                         2 -> {
@@ -93,17 +157,9 @@ fun AdminHomeScreen(
                         4 -> {
                             AdminPerfilScreen(
                                 usuario = SesionUsuario.usuarioActual,
-
                                 onLogoutClick = {
-
-                                    // Cerrar Firebase Authentication
-                                    // y limpiar la sesión local.
                                     UsuarioControlador().cerrarSesion()
-
-                                    // Restablecer la navegación.
                                     selectedTab = 0
-
-                                    // Regresar a la pantalla de inicio de sesión.
                                     onNavigateToLogin()
                                 }
                             )

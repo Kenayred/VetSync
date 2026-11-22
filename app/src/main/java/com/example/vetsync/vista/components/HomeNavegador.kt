@@ -139,7 +139,8 @@ fun HomeTopBar(
 @Composable
 fun AdminHomeTopBar(
     mostrarFotoPerfil: Boolean = true,
-    onNotificationsClick: () -> Unit = {}
+    onNotificationsClick: () -> Unit = {},
+    notificacionesNoLeidas: Int = 0
 ) {
 
     val usuario = SesionUsuario.usuarioActual
@@ -208,13 +209,31 @@ fun AdminHomeTopBar(
                     modifier = Modifier.size(26.dp)
                 )
 
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .offset(x = 2.dp, y = (-1).dp)
-                        .clip(CircleShape)
-                        .background(RojoAlerta)
-                )
+                if (notificacionesNoLeidas > 0) {
+                    Surface(
+                        modifier = Modifier.offset(
+                            x = 5.dp,
+                            y = (-5).dp
+                        ),
+                        color = RojoAlerta,
+                        shape = CircleShape
+                    ) {
+                        Text(
+                            text = if (notificacionesNoLeidas > 9) {
+                                "9+"
+                            } else {
+                                notificacionesNoLeidas.toString()
+                            },
+                            modifier = Modifier.padding(
+                                horizontal = 4.dp,
+                                vertical = 2.dp
+                            ),
+                            color = Color.White,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
     }

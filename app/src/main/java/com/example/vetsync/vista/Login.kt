@@ -40,7 +40,7 @@ fun LoginScreen(
 ) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var keepSession by remember { mutableStateOf(false) }
+    //var keepSession by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMensaje by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
@@ -169,16 +169,16 @@ fun LoginScreen(
             Text(text="¿Olvidaste tu contraseña?", color=VerdePrincipal)
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Checkbox(
-                checked = keepSession,
-                onCheckedChange = { keepSession = it }
-            )
-            Text("Mantener sesión iniciada")
-        }
+//        Row(
+//            modifier = Modifier.fillMaxWidth(),
+//            verticalAlignment = Alignment.CenterVertically
+//        ) {
+//            Checkbox(
+//                checked = keepSession,
+//                onCheckedChange = { keepSession = it }
+//            )
+//            Text("Mantener sesión iniciada")
+//        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
