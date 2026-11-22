@@ -123,7 +123,10 @@ class NotaClinicaRepository {
             .collection("notas_clinicas")
             .document()
 
-        val referenciaNotificacion = db.collection("notificaciones")
+        val referenciaNotificacionCliente = db.collection("notificaciones")
+            .document()
+
+        val referenciaNotificacionAdmin = db.collection("notificaciones")
             .document()
 
         val fechaCreacion = System.currentTimeMillis()
@@ -232,8 +235,8 @@ class NotaClinicaRepository {
                 EstadoCita.COMPLETADA.name
             )
 
-            // 3. Crear la notificación para el propietario.
-            val datosNotificacion = mapOf(
+            // 3. Crear la notificación para el propietario (Cliente).
+            val datosNotificacionCliente = mapOf(
                 "usuarioId" to propietarioId,
                 "mascotaId" to mascotaId,
                 "citaId" to nota.citaId,
@@ -249,8 +252,29 @@ class NotaClinicaRepository {
             )
 
             transaccion.set(
-                referenciaNotificacion,
-                datosNotificacion
+                referenciaNotificacionCliente,
+                datosNotificacionCliente
+            )
+
+            // 4. Crear la notificación para el Administrador / Veterinario.
+            val datosNotificacionAdmin = mapOf(
+                "usuarioId" to "ADMINISTRADOR",
+                "mascotaId" to mascotaId,
+                "citaId" to nota.citaId,
+                "tipo" to "CITA_COMPLETADA_ADMIN",
+                "titulo" to "Consulta finalizada",
+                "mensaje" to (
+                        "Se completó la atención de $nombreMascota " +
+                                "correspondiente al $fechaCita a las $fechaHoraCita " +
+                                "y se registró su nota clínica."
+                        ),
+                "leida" to false,
+                "fechaCreacion" to fechaCreacion
+            )
+
+            transaccion.set(
+                referenciaNotificacionAdmin,
+                datosNotificacionAdmin
             )
 
             notaGuardada

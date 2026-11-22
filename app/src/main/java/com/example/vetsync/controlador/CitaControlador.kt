@@ -17,12 +17,16 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import com.google.firebase.firestore.ListenerRegistration
+import com.example.vetsync.modelo.NotificacionRepository
+import com.example.vetsync.vista.screens.NotificacionesScreen
 
 class CitaControlador {
 
     private val citaRepository = CitaRepository()
     private val mascotaRepository = MascotaRepository()
     private val servicioRepository = ServicioRepository()
+
+    private val notificacionRepository = NotificacionRepository()
 
     private val formatoFecha =
         DateTimeFormatter.ISO_LOCAL_DATE
@@ -380,6 +384,34 @@ class CitaControlador {
     // --------------------------------------------------
 
     fun obtenerCitasUsuario(
+        onSuccess: (List<Cita>) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val idPropietario = SesionUsuario.idUsuario
+
+        if (idPropietario.isBlank()) {
+            onError("No hay una sesión activa.")
+            return
+        }
+
+        citaRepository.obtenerCitasPorPropietario(
+            idPropietario = idPropietario,
+
+            onSuccess = { citas ->
+                onSuccess(citas)
+            },
+
+            onFailure = { error ->
+                onError(
+                    error.message
+                        ?: "No se pudieron recuperar las citas."
+                )
+            }
+        )
+    }
+
+
+    fun obtenerCitasAdmin(
         onSuccess: (List<Cita>) -> Unit,
         onError: (String) -> Unit
     ) {

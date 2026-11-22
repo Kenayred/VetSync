@@ -1954,7 +1954,7 @@ fun BuscadorFiltrosPacientesCard(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Chips de Filtro
-            val opcionesFiltro = listOf("Todos", "Caninos", "Felinos", "Exóticos")
+            val opcionesFiltro = listOf("Todos","Perro", "Gato", "Ave", "Conejo", "Otro")
 
             Row(
                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -1980,7 +1980,7 @@ fun FiltroMascotaChip(text: String, isSelected: Boolean, showIcon: Boolean = fal
     val borderColor = if (isSelected) Color.Transparent else Color(0xFFD4D4D4)
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .background(bgColor, RoundedCornerShape(20.dp))
             .border(1.dp, borderColor, RoundedCornerShape(20.dp))
             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -2123,41 +2123,20 @@ private fun coincideFiltroEspecie(
     especieTexto: String,
     filtro: String
 ): Boolean {
-
     val especie = especieTexto.trim().lowercase()
 
-    val esCanino = listOf(
-        "perro",
-        "perra",
-        "perros",
-        "canino",
-        "canina",
-        "caninos",
-        "caninas"
-    ).any { especie.contains(it) }
-
-    val esFelino = listOf(
-        "gato",
-        "gata",
-        "gatos",
-        "felino",
-        "felina",
-        "felinos",
-        "felinas"
-    ).any { especie.contains(it) }
+    val esPerro = listOf("perro", "perra", "perros", "canino", "canina").any { especie.contains(it) }
+    val esGato = listOf("gato", "gata", "gatos", "felino", "felina").any { especie.contains(it) }
+    val esAve = listOf("ave", "aves", "pájaro", "pajaro", "loro", "perico").any { especie.contains(it) }
+    val esConejo = listOf("conejo", "coneja", "conejos").any { especie.contains(it) }
 
     return when (filtro) {
-
         "Todos" -> true
-
-        "Caninos" -> esCanino
-
-        "Felinos" -> esFelino
-
-        "Exóticos" -> especie.isNotBlank() &&
-                !esCanino &&
-                !esFelino
-
+        "Perro" -> esPerro
+        "Gato" -> esGato
+        "Ave" -> esAve
+        "Conejo" -> esConejo
+        "Otro" -> especie.isNotBlank() && !esPerro && !esGato && !esAve && !esConejo
         else -> true
     }
 }

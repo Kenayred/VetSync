@@ -40,10 +40,14 @@ fun LoginScreen(
 ) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var keepSession by remember { mutableStateOf(false) }
+    //var keepSession by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMensaje by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
+    var mostrarDialogoRecuperacion by remember { mutableStateOf(false) }
+    var correoRecuperacion by remember { mutableStateOf("") }
+    var enviandoCorreo by remember { mutableStateOf(false) }
+    var errorRecuperacion by remember { mutableStateOf<String?>(null) }
 
     //INICIALIZACION DE LAUNCHER GOOGLE
 
@@ -161,24 +165,28 @@ fun LoginScreen(
             )
         }
 
-        // Opciones adicionales
         TextButton(
-            onClick = {  },
+            onClick = {
+                correoRecuperacion = username.trim()
+                errorRecuperacion = null
+                mostrarDialogoRecuperacion = true
+            },
+            enabled = !isLoading,
             modifier = Modifier.align(Alignment.End),
         ) {
-            Text(text="¿Olvidaste tu contraseña?", color=VerdePrincipal)
+            Text(text = "¿Olvidaste tu contraseña?", color = VerdePrincipal)
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Checkbox(
-                checked = keepSession,
-                onCheckedChange = { keepSession = it }
-            )
-            Text("Mantener sesión iniciada")
-        }
+//        Row(
+//            modifier = Modifier.fillMaxWidth(),
+//            verticalAlignment = Alignment.CenterVertically
+//        ) {
+//            Checkbox(
+//                checked = keepSession,
+//                onCheckedChange = { keepSession = it }
+//            )
+//            Text("Mantener sesión iniciada")
+//        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -288,6 +296,110 @@ fun LoginScreen(
             TextButton(onClick =  onNavigateToRegister ) {
                 Text(text = "Crear cuenta", fontWeight = FontWeight.Bold, color = VerdePrincipal)
             }
+        }
+
+        if (mostrarDialogoRecuperacion) {
+            AlertDialog(
+                onDismissRequest = {
+                    if (!enviandoCorreo) {
+                        mostrarDialogoRecuperacion = false
+                    }
+                },
+                containerColor = Color.White,
+                title = {
+                    Text(
+                        text = "Recuperar contraseña",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                },
+                text = {
+                    Column {
+                        Text(
+                            text = "Ingresa el correo electrónico asociado a tu cuenta y te enviaremos un enlace para restablecer tu contraseña.",
+                            fontSize = 14.sp,
+                            color = Color.DarkGray
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        OutlinedTextField(
+                            value = correoRecuperacion,
+                            onValueChange = {
+                                correoRecuperacion = it
+                                errorRecuperacion = null
+                            },
+                            enabled = !enviandoCorreo,
+                            label = { Text("Correo electrónico") },
+                            leadingIcon = {
+                                Icon(Icons.Default.Email, contentDescription = null)
+                            },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = VerdePrincipal,
+                                focusedLabelColor = VerdePrincipal,
+                                cursorColor = VerdePrincipal,
+                                focusedLeadingIconColor = VerdePrincipal
+                            )
+                        )
+
+                        if (errorRecuperacion != null) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = errorRecuperacion.orEmpty(),
+                                color = RojoAlerta,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            enviandoCorreo = true
+                            errorRecuperacion = null
+
+                            controlador.enviarCorreoRecuperacion(
+                                correo = correoRecuperacion,
+                                onSuccess = {
+                                    enviandoCorreo = false
+                                    mostrarDialogoRecuperacion = false
+                                    Toast.makeText(
+                                        context,
+                                        "Si el correo está registrado, recibirás un enlace en unos instantes.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                },
+                                onError = { mensaje ->
+                                    enviandoCorreo = false
+                                    errorRecuperacion = mensaje
+                                }
+                            )
+                        },
+                        enabled = !enviandoCorreo,
+                        colors = ButtonDefaults.buttonColors(containerColor = VerdePrincipal)
+                    ) {
+                        if (enviandoCorreo) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("Enviar enlace")
+                        }
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { mostrarDialogoRecuperacion = false },
+                        enabled = !enviandoCorreo
+                    ) {
+                        Text("Cancelar", color = Color.Gray)
+                    }
+                }
+            )
         }
     }
 }

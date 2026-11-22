@@ -22,8 +22,52 @@ class NotificacionRepository {
             return null
         }
 
+
+
         return db.collection("notificaciones")
             .whereEqualTo("usuarioId", usuarioId)
+            .addSnapshotListener { snapshot, error ->
+
+                if (error != null) {
+                    onFailure(error)
+                    return@addSnapshotListener
+                }
+
+                val notificaciones = snapshot?.documents
+                    ?.mapNotNull { documento ->
+                        documento.toObject(
+                            Notificacion::class.java
+                        )?.copy(
+                            id = documento.id
+                        )
+                    }
+                    ?.sortedByDescending {
+                        it.fechaCreacion
+                    } ?: emptyList()
+
+                onSuccess(notificaciones)
+            }
+    }
+
+    fun observarNotificacionesAdmin(
+        usuarioId: String,
+        onSuccess: (List<Notificacion>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ): ListenerRegistration? {
+
+        if (usuarioId.isBlank()) {
+            onFailure(
+                IllegalArgumentException(
+                    "No se pudo identificar al usuario."
+                )
+            )
+            return null
+        }
+
+        val destinatarios = listOf(usuarioId, "ADMINISTRADOR").distinct()
+
+        return db.collection("notificaciones")
+            .whereIn("usuarioId", destinatarios)
             .addSnapshotListener { snapshot, error ->
 
                 if (error != null) {
@@ -50,6 +94,7 @@ class NotificacionRepository {
     fun marcarComoLeida(
         usuarioId: String,
         notificacionId: String,
+        esAdmin: Boolean = false,
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
@@ -69,10 +114,14 @@ class NotificacionRepository {
         referencia.get()
             .addOnSuccessListener { documento ->
 
-                if (
-                    !documento.exists() ||
-                    documento.getString("usuarioId") != usuarioId
-                ) {
+                val destinatarioDoc = documento.getString("usuarioId")
+
+                val tienePermiso = documento.exists() && (
+                        destinatarioDoc == usuarioId ||
+                                (esAdmin && destinatarioDoc == "ADMINISTRADOR")
+                        )
+
+                if (!tienePermiso) {
                     onFailure(
                         SecurityException(
                             "No tienes permiso para modificar esta notificación."
@@ -96,6 +145,7 @@ class NotificacionRepository {
 
     fun marcarTodasComoLeidas(
         usuarioId: String,
+        esAdmin: Boolean = false,
         onSuccess: () -> Unit,
         onFailure: (Exception) -> Unit
     ) {
@@ -108,8 +158,16 @@ class NotificacionRepository {
             return
         }
 
-        db.collection("notificaciones")
-            .whereEqualTo("usuarioId", usuarioId)
+        val consultaBase = if (esAdmin) {
+            val destinatarios = listOf(usuarioId, "ADMINISTRADOR").distinct()
+            db.collection("notificaciones")
+                .whereIn("usuarioId", destinatarios)
+        } else {
+            db.collection("notificaciones")
+                .whereEqualTo("usuarioId", usuarioId)
+        }
+
+        consultaBase
             .whereEqualTo("leida", false)
             .get()
             .addOnSuccessListener { snapshot ->

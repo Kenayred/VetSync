@@ -1,5 +1,6 @@
 package com.example.vetsync.vista.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -8,6 +9,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ExitToApp
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,18 +22,25 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.vetsync.controlador.UsuarioControlador
 import com.example.vetsync.modelo.ImagenUtils
 import com.example.vetsync.modelo.RolUsuario
 import com.example.vetsync.modelo.Usuario
+import com.example.vetsync.vista.components.DialogoCambiarContrasena
 
 @Composable
 fun AdminPerfilScreen(
     usuario: Usuario?,
     modifier: Modifier = Modifier,
+    controlador: UsuarioControlador = remember { UsuarioControlador() },
     onLogoutClick: () -> Unit = {}
 ) {
 
     var mostrarDialogoCerrarSesion by remember {
+        mutableStateOf(false)
+    }
+
+    var mostrarDialogoCambiarContrasena by remember {
         mutableStateOf(false)
     }
 
@@ -71,7 +82,7 @@ fun AdminPerfilScreen(
                 containerColor = Color.White
             ),
             shape = RoundedCornerShape(16.dp),
-            border = androidx.compose.foundation.BorderStroke(
+            border = BorderStroke(
                 1.dp,
                 Color(0xFFE5E5E5)
             )
@@ -212,7 +223,7 @@ fun AdminPerfilScreen(
                 containerColor = Color.White
             ),
             shape = RoundedCornerShape(16.dp),
-            border = androidx.compose.foundation.BorderStroke(
+            border = BorderStroke(
                 1.dp,
                 Color(0xFFE5E5E5)
             )
@@ -239,33 +250,83 @@ fun AdminPerfilScreen(
 
                 Spacer(modifier = Modifier.height(18.dp))
 
+                OutlinedButton(
+                    onClick = {
+                        mostrarDialogoCambiarContrasena = true
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(1.dp, Color(0xFF4A7D5E)),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color(0xFF2E5B4B)
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Lock,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Cambiar contraseña",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                HorizontalDivider(color = Color(0xFFEEEEEE))
+
+                Spacer(modifier = Modifier.height(14.dp))
+
                 Button(
                     onClick = {
                         mostrarDialogoCerrarSesion = true
                     },
-
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),
-
                     shape = RoundedCornerShape(10.dp),
-
+                    border = BorderStroke(1.dp, Color(0xFFF5C2BE)),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFCE8E6)
+                        containerColor = Color(0xFFFCE8E6),
+                        contentColor = Color(0xFFB3261E)
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 0.dp,
+                        pressedElevation = 0.dp
                     )
                 ) {
-
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.ExitToApp,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Cerrar sesión",
                         fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFB3261E)
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(80.dp))
+    }
+
+    // DIÁLOGO CAMBIAR CONTRASEÑA
+
+    if (mostrarDialogoCambiarContrasena) {
+        DialogoCambiarContrasena(
+            controlador = controlador,
+            onDismiss = {
+                mostrarDialogoCambiarContrasena = false
+            }
+        )
     }
 
     // CONFIRMACIÓN DE CIERRE DE SESIÓN
