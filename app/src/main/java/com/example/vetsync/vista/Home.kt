@@ -22,6 +22,8 @@ import com.example.vetsync.modelo.Mascota
 import com.example.vetsync.vista.screens.AgendarCitaScreen
 import com.example.vetsync.vista.screens.HistorialClinicoScreen
 import com.example.vetsync.vista.screens.EditarMascotaScreen
+import androidx.compose.ui.platform.LocalContext
+import com.example.vetsync.modelo.PreferenciasClienteRepository
 
 sealed class SubPantallaHome {
     object AgregarMascota : SubPantallaHome()
@@ -45,6 +47,23 @@ fun HomeScreen(
     var subPantallaActual by remember { mutableStateOf<SubPantallaHome?>(null) }
 
     val usuarioId = SesionUsuario.idUsuario
+    val context = LocalContext.current
+
+// Preferencias persistentes del cliente.
+
+    val preferenciasClienteRepository = remember(context) {
+        PreferenciasClienteRepository(context)
+    }
+
+    var mostrarIndicadorNotificaciones by remember(usuarioId) {
+
+        mutableStateOf(
+            preferenciasClienteRepository
+                .obtenerMostrarIndicadorNotificaciones(usuarioId)
+        )
+    }
+
+// Repositorio de notificaciones.
 
     val notificacionRepository = remember {
         com.example.vetsync.modelo.NotificacionRepository()
@@ -74,6 +93,16 @@ fun HomeScreen(
             listener?.remove()
         }
     }
+
+    // El contador solo se oculta visualmente.
+    // Las notificaciones continúan actualizándose desde Firestore.
+
+    val contadorNotificacionesVisible =
+        if (mostrarIndicadorNotificaciones) {
+            notificacionesNoLeidas
+        } else {
+            0
+        }
 
     BackHandler(
         enabled = subPantallaActual != null || selectedTab != 0
@@ -160,7 +189,7 @@ fun HomeScreen(
                 topBar = {
                     HomeTopBar(
                         mostrarFotoPerfil = (selectedTab != 4),
-                        notificacionesNoLeidas = notificacionesNoLeidas,
+                        notificacionesNoLeidas = contadorNotificacionesVisible,
                         onNotificationsClick = {
                             selectedTab = 3
                         }
@@ -169,7 +198,7 @@ fun HomeScreen(
                 bottomBar = {
                     HomeBottomNavigationBar(
                         selectedTab = selectedTab,
-                        notificacionesNoLeidas = notificacionesNoLeidas,
+                        notificacionesNoLeidas = contadorNotificacionesVisible,
                         onTabSelected = { selectedTab = it }
                     )
                 }
@@ -233,6 +262,17 @@ fun HomeScreen(
                                 },
                                 onEditProfileClick = {
                                     subPantallaActual = SubPantallaHome.EditarPerfil
+                                },
+                                mostrarIndicadorNotificaciones = mostrarIndicadorNotificaciones,
+                                onMostrarIndicadorNotificacionesChange = { mostrar ->
+
+                                    mostrarIndicadorNotificaciones = mostrar
+
+                                    preferenciasClienteRepository
+                                        .guardarMostrarIndicadorNotificaciones(
+                                            usuarioId = usuarioId,
+                                            mostrar = mostrar
+                                        )
                                 }
                             )
                         }

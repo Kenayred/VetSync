@@ -31,8 +31,15 @@ import android.util.Log
 import com.example.vetsync.controlador.CitaControlador
 import com.example.vetsync.modelo.SesionUsuario
 import com.example.vetsync.notificaciones.ProgramadorRecordatorios
+import android.content.Context
+import com.example.vetsync.util.GestorIdioma
 
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(
+            GestorIdioma.aplicarConfiguracion(newBase)
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

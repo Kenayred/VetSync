@@ -4,7 +4,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -13,7 +12,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -24,11 +22,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.vetsync.R
 import com.example.vetsync.modelo.Usuario
 import com.example.vetsync.vista.theme.*
 import com.example.vetsync.modelo.ImagenUtils
@@ -40,13 +36,20 @@ import com.example.vetsync.modelo.EstadoCita
 import com.example.vetsync.vista.components.DialogoCambiarContrasena
 import java.time.LocalDate
 import java.time.LocalTime
+import androidx.compose.ui.res.stringResource
+import com.example.vetsync.R
+import com.example.vetsync.vista.components.SelectorIdioma
 
 @Composable
 fun PerfilScreen(
     usuario: Usuario,
     onLogoutClick: () -> Unit,
     onEditProfileClick: () -> Unit,
-    controlador: UsuarioControlador = remember { UsuarioControlador() }
+    controlador: UsuarioControlador = remember {
+        UsuarioControlador()
+    },
+    mostrarIndicadorNotificaciones: Boolean = true,
+    onMostrarIndicadorNotificacionesChange: (Boolean) -> Unit = {}
 ) {
     var mostrarDialogoCerrarSesion by remember {
         mutableStateOf(false)
@@ -269,7 +272,11 @@ fun PerfilScreen(
             InformacionPersonalCard(usuario)
             Spacer(modifier = Modifier.height(16.dp))
 
-            PreferenciasCard()
+            PreferenciasCard(
+                mostrarIndicadorNotificaciones = mostrarIndicadorNotificaciones,
+                onMostrarIndicadorNotificacionesChange =
+                    onMostrarIndicadorNotificacionesChange
+            )
             Spacer(modifier = Modifier.height(16.dp))
 
             SeguridadCard(
@@ -348,42 +355,6 @@ fun PerfilScreen(
         )
     }
 }
-
-//@Composable
-//fun TopBarPerfil() {
-//    Row(
-//        modifier = Modifier
-//            .fillMaxWidth()
-//            .padding(horizontal = 20.dp, vertical = 14.dp),
-//        horizontalArrangement = Arrangement.SpaceBetween,
-//        verticalAlignment = Alignment.CenterVertically
-//    ) {
-//        Row(verticalAlignment = Alignment.CenterVertically) {
-//            Image(
-//                painter = painterResource(id = android.R.drawable.ic_menu_gallery), // Reemplaza con tu logo/foto
-//                contentDescription = "Avatar TopBar",
-//                modifier = Modifier
-//                    .size(36.dp)
-//                    .clip(CircleShape)
-//                    .border(1.dp, VerdeVetSync.copy(alpha = 0.4f), CircleShape),
-//                contentScale = ContentScale.Crop
-//            )
-//            Spacer(modifier = Modifier.width(10.dp))
-//            Text(
-//                text = "VetSync",
-//                fontSize = 22.sp,
-//                fontWeight = FontWeight.Bold,
-//                color = VerdeVetSync
-//            )
-//        }
-//        Icon(
-//            imageVector = Icons.Outlined.Settings,
-//            contentDescription = "Configuración",
-//            tint = VerdeVetSync,
-//            modifier = Modifier.size(26.dp)
-//        )
-//    }
-//}
 
 private fun esCitaProxima(
     cita: Cita,
@@ -507,42 +478,85 @@ fun InformacionPersonalCard(usuario: Usuario) {
             Spacer(modifier = Modifier.height(12.dp))
             InfoRowItem(icono = Icons.Outlined.Email, label = "Email", valor = usuario.correo)
             Spacer(modifier = Modifier.height(12.dp))
-            InfoRowItem(icono = Icons.Outlined.LocationOn, label = "Ubicación", valor = "San Salvador")
+            InfoRowItem(icono = Icons.Outlined.LocationOn, label = "Ubicación", valor = usuario.ubicacion.ifBlank { "No registrada" })
         }
     }
 }
+
 
 @Composable
-fun PreferenciasCard() {
-    var modoOscuro by remember { mutableStateOf(false) }
-    var notificaciones by remember { mutableStateOf(true) }
+fun PreferenciasCard(
+    mostrarIndicadorNotificaciones: Boolean,
+    onMostrarIndicadorNotificacionesChange: (Boolean) -> Unit
+) {
+
+    var modoOscuro by remember {
+        mutableStateOf(false)
+    }
 
     CardBlanca {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(text = "Preferencias", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+
+        Column(
+            modifier = Modifier.padding(20.dp)
+        ) {
+
+            Text(
+                text = stringResource(R.string.client_preferences),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+
             Spacer(modifier = Modifier.height(16.dp))
 
-            SwitchRowItem(icono = Icons.Outlined.Info, label = "Modo oscuro", checked = modoOscuro, onCheckedChange = { modoOscuro = it })
-            Spacer(modifier = Modifier.height(12.dp))
-            SwitchRowItem(icono = Icons.Outlined.Notifications, label = "Notificaciones", checked = notificaciones, onCheckedChange = { notificaciones = it })
+            // Modo oscuro: se conectará en la etapa final.
+
+            SwitchRowItem(
+                icono = Icons.Outlined.Info,
+                label = stringResource(R.string.client_dark_mode),
+                checked = modoOscuro,
+                onCheckedChange = {
+                    modoOscuro = it
+                }
+            )
+
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Fila de Idioma
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Outlined.Build, contentDescription = null, tint = GrisTextoSecundario, modifier = Modifier.size(20.dp))
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(text = "Idioma", fontSize = 14.sp, modifier = Modifier.weight(1f))
-                Box(
-                    modifier = Modifier
-                        .background(GrisBordeCard, RoundedCornerShape(4.dp))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(text = "Español", fontSize = 12.sp, color = Color.DarkGray)
-                }
-            }
+            // Contador de notificaciones.
+
+            SwitchRowItem(
+                icono = Icons.Outlined.Notifications,
+                label = stringResource(R.string.client_notification_counter),
+                checked = mostrarIndicadorNotificaciones,
+                onCheckedChange = onMostrarIndicadorNotificacionesChange
+            )
+
+            Text(
+                text = stringResource(
+                    R.string.client_notification_counter_description
+                ),
+                fontSize = 11.sp,
+                color = GrisTextoSecundario,
+                modifier = Modifier.padding(
+                    start = 32.dp,
+                    top = 2.dp
+                )
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            HorizontalDivider(
+                color = GrisBordeCard,
+                thickness = 1.dp
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            SelectorIdioma()
         }
     }
 }
+
+
 
 @Composable
 fun SeguridadCard(

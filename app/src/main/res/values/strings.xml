@@ -1,3 +1,47 @@
+
 <resources>
+
     <string name="app_name">VetSync</string>
+
+    <!-- Preferencias -->
+    <string name="preferences_title">Preferencias</string>
+    <string name="language_title">Idioma</string>
+    <string name="language_description">Selecciona el idioma de la aplicación</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_english">Inglés</string>
+    <string name="language_dialog_title">Seleccionar idioma</string>
+    <string name="language_dialog_cancel">Cancelar</string>
+
+    <!-- Perfil administrativo -->
+    <string name="admin_profile_title">Perfil de Administrador</string>
+    <string name="admin_clinic_information">Información de la clínica</string>
+    <string name="admin_security">Seguridad</string>
+    <string name="admin_change_password">Cambiar contraseña</string>
+    <string name="admin_logout">Cerrar sesión</string>
+
+    <!-- Información institucional -->
+    <string name="clinic_name">Nombre de la clínica</string>
+    <string name="clinic_address">Dirección</string>
+    <string name="clinic_phone">Teléfono</string>
+    <string name="clinic_email">Correo institucional</string>
+    <string name="clinic_description">Descripción de la clínica</string>
+    <string name="clinic_save">Guardar información</string>
+    <string name="clinic_schedule">Horario de atención</string>
+
+    <!-- Perfil del cliente -->
+    <string name="client_profile_title">Mi perfil</string>
+    <string name="client_personal_information">Información personal</string>
+    <string name="client_preferences">Preferencias</string>
+    <string name="client_location">Ubicación</string>
+    <string name="client_notifications">Notificaciones</string>
+    <string name="client_dark_mode">Modo oscuro</string>
+    <string name="client_notification_counter">Contador de notificaciones</string>
+    <string name="client_notification_counter_description">Mostrar la cantidad de notificaciones sin leer.</string>
+
+    <!-- Acciones generales -->
+    <string name="action_save">Guardar cambios</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_back">Regresar</string>
+    <string name="action_edit">Editar</string>
+
 </resources>

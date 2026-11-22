@@ -50,6 +50,7 @@ fun EditarPerfilScreen(
     var username by remember { mutableStateOf(usuario.username) }
     var telefono by remember { mutableStateOf(usuario.telefono) }
     var correo by remember { mutableStateOf(usuario.correo) }
+    var ubicacion by remember { mutableStateOf(usuario.ubicacion) }
 
     var isLoading by remember { mutableStateOf(false) }
 
@@ -232,7 +233,33 @@ fun EditarPerfilScreen(
                 )
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Campo: Ubicación
+            OutlinedTextField(
+                value = ubicacion,
+                onValueChange = {
+                    ubicacion = it
+                },
+                label = {
+                    Text("Ubicación")
+                },
+                placeholder = {
+                    Text("Ej. San Salvador, El Salvador")
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                supportingText = {
+                    Text("${ubicacion.length}/150 caracteres")
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = VerdeVetSync,
+                    focusedLabelColor = VerdeVetSync
+                )
+            )
+
 
             // Guardar Cambios
             Button(
@@ -247,6 +274,7 @@ fun EditarPerfilScreen(
                         nuevoUsername = username,
                         nuevoTelefono = telefono,
                         nuevoCorreo = correo,
+                        nuevoUbicacion = ubicacion,
 
                         onSuccess = {
                             isLoading = false

@@ -357,7 +357,8 @@ class UsuarioControlador {
         nuevoTelefono: String,
         nuevoCorreo: String,
         onSuccess: () -> Unit,
-        onError: (String) -> Unit
+        onError: (String) -> Unit,
+        nuevoUbicacion: String? = null
     ) {
         val usuarioActual = SesionUsuario.usuarioActual
 
@@ -370,6 +371,16 @@ class UsuarioControlador {
         val usernameLimpio = nuevoUsername.trim()
         val telefonoLimpio = nuevoTelefono.trim()
         val correoLimpio = nuevoCorreo.trim()
+        val ubicacionLimpia = (
+                nuevoUbicacion ?: usuarioActual.ubicacion
+                ).trim()
+
+        if (ubicacionLimpia.length > 150) {
+            onError(
+                "La ubicación no debe superar los 150 caracteres."
+            )
+            return
+        }
 
         // 1. Validar los campos obligatorios.
         if (
@@ -443,7 +454,8 @@ class UsuarioControlador {
                         "nombre" to nombreLimpio,
                         "username" to usernameLimpio,
                         "telefono" to telefonoLimpio,
-                        "correo" to correoActualFirebase
+                        "correo" to correoActualFirebase,
+                        "ubicacion" to ubicacionLimpia
                     )
 
                     val guardarDatosPerfil: () -> Unit = {
@@ -458,7 +470,8 @@ class UsuarioControlador {
                                     nombre = nombreLimpio,
                                     username = usernameLimpio,
                                     telefono = telefonoLimpio,
-                                    correo = correoActualFirebase
+                                    correo = correoActualFirebase,
+                                    ubicacion = ubicacionLimpia
                                 )
 
                                 SesionUsuario.iniciarSesion(usuarioModificado)

@@ -27,13 +27,24 @@ import com.example.vetsync.modelo.ImagenUtils
 import com.example.vetsync.modelo.RolUsuario
 import com.example.vetsync.modelo.Usuario
 import com.example.vetsync.vista.components.DialogoCambiarContrasena
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Business
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Language
+import com.example.vetsync.vista.components.SelectorIdioma
 
 @Composable
 fun AdminPerfilScreen(
     usuario: Usuario?,
     modifier: Modifier = Modifier,
-    controlador: UsuarioControlador = remember { UsuarioControlador() },
-    onLogoutClick: () -> Unit = {}
+    controlador: UsuarioControlador = remember {
+        UsuarioControlador()
+    },
+    onLogoutClick: () -> Unit = {},
+    onEditProfileClick: () -> Unit = {},
+    onInformacionClinicaClick: () -> Unit = {},
+    mostrarIndicadorNotificaciones: Boolean = true,
+    onMostrarIndicadorNotificacionesChange: (Boolean) -> Unit = {}
 ) {
 
     var mostrarDialogoCerrarSesion by remember {
@@ -202,6 +213,36 @@ fun AdminPerfilScreen(
                         valor = usuario.rol.name
                     )
 
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    OutlinedButton(
+                        onClick = onEditProfileClick,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(
+                            1.dp,
+                            Color(0xFF4A7D5E)
+                        ),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color(0xFF2E5B4B)
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Edit,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(4.dp))
+
+                        Text(
+                            text = "Editar perfil",
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
                 } else {
 
                     Text(
@@ -210,6 +251,205 @@ fun AdminPerfilScreen(
                         color = Color(0xFFB3261E)
                     )
                 }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+
+// --------------------------------------------------
+// INFORMACIÓN DE LA CLÍNICA
+// --------------------------------------------------
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            ),
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(
+                1.dp,
+                Color(0xFFE5E5E5)
+            )
+        ) {
+
+            Column(
+                modifier = Modifier.padding(18.dp)
+            ) {
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Outlined.Business,
+                        contentDescription = null,
+                        tint = Color(0xFF2E5B4B),
+                        modifier = Modifier.size(25.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    Text(
+                        text = "Información de la clínica",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1A1A1A)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Administra los datos institucionales, dirección y medios de contacto de VetSync.",
+                    fontSize = 13.sp,
+                    color = Color.Gray,
+                    lineHeight = 18.sp
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedButton(
+                    onClick = onInformacionClinicaClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(
+                        1.dp,
+                        Color(0xFF4A7D5E)
+                    ),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color(0xFF2E5B4B)
+                    )
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Outlined.Business,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(
+                        text = "Administrar información",
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+
+// --------------------------------------------------
+// PREFERENCIAS DEL ADMINISTRADOR
+// --------------------------------------------------
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            ),
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(
+                1.dp,
+                Color(0xFFE5E5E5)
+            )
+        ) {
+
+            Column(
+                modifier = Modifier.padding(18.dp)
+            ) {
+
+                Text(
+                    text = "Preferencias",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1A1A1A)
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = "Personaliza la forma en que se muestran los avisos administrativos.",
+                    fontSize = 13.sp,
+                    color = Color.Gray,
+                    lineHeight = 18.sp
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Outlined.Notifications,
+                        contentDescription = null,
+                        tint = Color(0xFF2E5B4B),
+                        modifier = Modifier.size(24.dp)
+                    )
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+
+                        Text(
+                            text = "Contador de notificaciones",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF252525)
+                        )
+
+                        Spacer(modifier = Modifier.height(3.dp))
+
+                        Text(
+                            text = "Mostrar la cantidad de notificaciones sin leer.",
+                            fontSize = 11.sp,
+                            color = Color.Gray,
+                            lineHeight = 15.sp
+                        )
+                    }
+
+                    Switch(
+                        checked = mostrarIndicadorNotificaciones,
+                        onCheckedChange = onMostrarIndicadorNotificacionesChange,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFF2E5B4B)
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                HorizontalDivider(
+                    color = Color(0xFFEEEEEE)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    SelectorIdioma()
+                }
+
+                Spacer(modifier = Modifier.height(5.dp))
+
+                Text(
+                    text = "Actualmente la interfaz está disponible en español. La selección de otros idiomas se incorporará con la localización general de la aplicación.",
+                    fontSize = 11.sp,
+                    color = Color.Gray,
+                    lineHeight = 15.sp
+                )
             }
         }
 
