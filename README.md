@@ -147,6 +147,20 @@ A continuación se detallan los módulos y pantallas desarrolladas para esta eta
 ### 🔔 Notificaciones
 - Pantalla dedicada a la bandeja de notificaciones para mantener al cliente informado sobre actualizaciones de la clínica o cambios en el estado de sus servicios.
 
+## 🎨 Diseño UX/UI y Mockups
+
+El diseño de la interfaz de usuario de **VetSync** (incluyendo los flujos de Cliente, Administrador/Veterinario y Modo Oscuro) fue elaborado en **Figma**. 
+
+Puedes explorar el prototipo interactivo y todas las pantallas completas en el siguiente enlace:
+
+👉 **[Ver Mockups y Prototipo Interactivo en Figma](https://www.figma.com/design/0Jpg74BJwsswNO80F35fbi/VetSync?node-id=0-1&t=yz79oJSiThlVsF0x-1)**
+
+### Pantallas incluidas en el diseño:
+* **Acceso:** Splash Screen, Inicio de Sesión y Registro de Usuario.
+* **Flujo del Cliente:** Inicio (Próxima cita y accesos rápidos), Mis Mascotas, Agendamiento Inteligente de Citas y Notificaciones.
+* **Flujo del Administrador/Veterinario:** Gestión de citas, edición de expedientes clínicos y dashboard de estadísticas.
+* **Accesibilidad:** Soporte completo para tema claro y modo oscuro.
+
 ## 📄 Licencia
 
 <p>
