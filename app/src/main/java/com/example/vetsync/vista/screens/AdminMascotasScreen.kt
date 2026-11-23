@@ -1,6 +1,8 @@
 package com.example.vetsync.vista.screens
 
 import android.util.Log
+
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,39 +20,36 @@ import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
 import com.example.vetsync.controlador.MascotaControlador
+import com.example.vetsync.controlador.CitaControlador
+import com.example.vetsync.controlador.NotaClinicaControlador
+import com.example.vetsync.controlador.UsuarioControlador
+
 import com.example.vetsync.modelo.ImagenUtils
 import com.example.vetsync.modelo.Mascota
 import com.example.vetsync.modelo.MascotaConDueno
-import com.example.vetsync.vista.theme.*
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
-import androidx.compose.foundation.BorderStroke
-import com.example.vetsync.controlador.CitaControlador
-import com.example.vetsync.controlador.NotaClinicaControlador
 import com.example.vetsync.modelo.Cita
 import com.example.vetsync.modelo.NotaClinica
-import java.util.Locale
-import com.example.vetsync.controlador.UsuarioControlador
 import com.example.vetsync.modelo.Usuario
+
 import com.example.vetsync.vista.AgregarMascotaScreen
+
+import kotlinx.coroutines.launch
+
+import java.util.Locale
 
 @Composable
 fun AdminPacientesScreen(
@@ -59,6 +58,7 @@ fun AdminPacientesScreen(
     },
     modifier: Modifier = Modifier
 ) {
+    val colorScheme = MaterialTheme.colorScheme
 
     val controladorCitas = remember {
         CitaControlador()
@@ -72,7 +72,7 @@ fun AdminPacientesScreen(
         UsuarioControlador()
     }
 
-// Control de navegación para registrar pacientes.
+    // Control de navegación para registrar pacientes.
     var mostrandoSelectorClientes by remember {
         mutableStateOf(false)
     }
@@ -81,7 +81,7 @@ fun AdminPacientesScreen(
         mutableStateOf<Usuario?>(null)
     }
 
-// Clientes disponibles.
+    // Clientes disponibles.
     var clientesDisponibles by remember {
         mutableStateOf<List<Usuario>>(emptyList())
     }
@@ -212,8 +212,9 @@ fun AdminPacientesScreen(
     }
 
     // --------------------------------------------------
-    // CARGAR CLIENTES PARA REGISTRAR UN NUEVO PACIENTE
+    // CARGAR CLIENTES PARA REGISTRAR UNA NUEVA MASCOTA
     // --------------------------------------------------
+
     LaunchedEffect(
         mostrandoSelectorClientes,
         recargarClientes
@@ -245,6 +246,7 @@ fun AdminPacientesScreen(
     // =====================================================
     // CARGAR INFORMACIÓN DE LA FICHA DEL PACIENTE
     // =====================================================
+
     LaunchedEffect(
         pacienteSeleccionado?.mascota?.id,
         recargarDetalle
@@ -268,10 +270,7 @@ fun AdminPacientesScreen(
         errorCitas = null
         errorHistorial = null
 
-        // -------------------------------------------------
-        // CONSULTAR CITAS DE LA MASCOTA
-        // -------------------------------------------------
-
+        // Consultar citas de la mascota.
         controladorCitas.obtenerCitasMascotaAdmin(
 
             mascotaId = mascotaId,
@@ -300,10 +299,7 @@ fun AdminPacientesScreen(
             }
         )
 
-        // -------------------------------------------------
-        // CONSULTAR HISTORIAL CLÍNICO
-        // -------------------------------------------------
-
+        // Consultar historial clínico.
         controladorNotas.obtenerHistorialMascotaAdmin(
 
             mascotaId = mascotaId,
@@ -337,12 +333,8 @@ fun AdminPacientesScreen(
 
     val listaMostrada = listaMascotas.filter { paciente ->
 
-        val nombreMascota =
-            paciente.mascota.nombre
-
-        val nombreDueno =
-            paciente.nombreDueno
-
+        val nombreMascota = paciente.mascota.nombre
+        val nombreDueno = paciente.nombreDueno
         val consulta = textoBusqueda.trim()
 
         val coincideTexto =
@@ -366,6 +358,7 @@ fun AdminPacientesScreen(
     // =====================================================
     // MOSTRAR EDITOR DE PACIENTE
     // =====================================================
+
     if (pacienteEnEdicion != null) {
 
         val paciente = pacienteEnEdicion!!
@@ -410,6 +403,7 @@ fun AdminPacientesScreen(
     // =====================================================
     // MOSTRAR FICHA INDIVIDUAL O LISTADO
     // =====================================================
+
     if (pacienteSeleccionado != null) {
 
         FichaPacienteAdmin(
@@ -440,12 +434,11 @@ fun AdminPacientesScreen(
     // =====================================================
     // FORMULARIO PARA REGISTRAR UNA NUEVA MASCOTA
     // =====================================================
+
     clienteSeleccionadoParaRegistro?.let { cliente ->
 
         AgregarMascotaScreen(
-
             controlador = controladorMascota,
-
             propietarioId = cliente.id,
 
             onBackClick = {
@@ -458,8 +451,6 @@ fun AdminPacientesScreen(
 
             onMascotaGuardada = {
                 clienteSeleccionadoParaRegistro = null
-
-                // Actualizar el listado de pacientes.
                 recargar++
             }
         )
@@ -470,12 +461,11 @@ fun AdminPacientesScreen(
     // =====================================================
     // SELECTOR DE CLIENTES
     // =====================================================
+
     if (mostrandoSelectorClientes) {
 
         SelectorClientePacienteAdmin(
-
             clientes = clientesDisponibles,
-
             textoBusqueda = textoBusquedaClientes,
 
             onBusquedaChange = {
@@ -483,7 +473,6 @@ fun AdminPacientesScreen(
             },
 
             cargando = cargandoClientes,
-
             error = errorClientes,
 
             onSeleccionarCliente = { cliente ->
@@ -506,13 +495,13 @@ fun AdminPacientesScreen(
     }
 
     // --------------------------------------------------
-    // INTERFAZ
+    // INTERFAZ PRINCIPAL
     // --------------------------------------------------
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(FondoCrema)
+            .background(colorScheme.background)
             .imePadding()
             .verticalScroll(scrollState)
             .padding(
@@ -521,12 +510,13 @@ fun AdminPacientesScreen(
             )
     ) {
 
-        // CABECERA
+        // CABECERA.
+
         Text(
             text = "Pacientes",
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1A1A1A)
+            color = colorScheme.onBackground
         )
 
         Spacer(
@@ -536,7 +526,7 @@ fun AdminPacientesScreen(
         Text(
             text = "Gestión clínica de mascotas registradas.",
             fontSize = 14.sp,
-            color = Color.DarkGray
+            color = colorScheme.onSurfaceVariant
         )
 
         Spacer(
@@ -556,7 +546,8 @@ fun AdminPacientesScreen(
             shape = RoundedCornerShape(12.dp),
 
             colors = ButtonDefaults.buttonColors(
-                containerColor = VerdeVetSync
+                containerColor = colorScheme.primary,
+                contentColor = colorScheme.onPrimary
             )
         ) {
 
@@ -579,24 +570,20 @@ fun AdminPacientesScreen(
             modifier = Modifier.height(18.dp)
         )
 
-        Spacer(
-            modifier = Modifier.height(18.dp)
-        )
-
-        // RESUMEN DE PACIENTES
+        // RESUMEN DE PACIENTES.
 
         Card(
             modifier = Modifier.fillMaxWidth(),
 
             colors = CardDefaults.cardColors(
-                containerColor = Color.White
+                containerColor = colorScheme.surface
             ),
 
             shape = RoundedCornerShape(12.dp),
 
             border = BorderStroke(
                 1.dp,
-                Color(0xFFE5E5E5)
+                colorScheme.outlineVariant
             )
         ) {
 
@@ -611,7 +598,7 @@ fun AdminPacientesScreen(
                 Icon(
                     imageVector = Icons.Default.Pets,
                     contentDescription = null,
-                    tint = Color(0xFF4A7D5E),
+                    tint = colorScheme.primary,
                     modifier = Modifier.size(30.dp)
                 )
 
@@ -629,13 +616,13 @@ fun AdminPacientesScreen(
                         },
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1A1A1A)
+                        color = colorScheme.onSurface
                     )
 
                     Text(
                         text = "Mascotas registradas",
                         fontSize = 12.sp,
-                        color = Color.Gray
+                        color = colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -645,7 +632,7 @@ fun AdminPacientesScreen(
             modifier = Modifier.height(20.dp)
         )
 
-        // BUSCADOR Y FILTROS
+        // BUSCADOR Y FILTROS.
 
         BuscadorFiltrosPacientesCard(
             textoBusqueda = textoBusqueda,
@@ -660,15 +647,12 @@ fun AdminPacientesScreen(
                 filtroSeleccionado = it
             },
 
-            modifier = Modifier.onGloballyPositioned {
-                    coordenadas ->
-
+            modifier = Modifier.onGloballyPositioned { coordenadas ->
                 posicionYBuscador =
                     coordenadas.positionInParent().y
             },
 
             onSearchFocus = {
-
                 coroutineScope.launch {
                     scrollState.animateScrollTo(
                         posicionYBuscador.toInt()
@@ -681,13 +665,11 @@ fun AdminPacientesScreen(
             modifier = Modifier.height(20.dp)
         )
 
-        // RESULTADOS
+        // RESULTADOS.
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-
             verticalAlignment = Alignment.CenterVertically,
-
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
 
@@ -695,13 +677,13 @@ fun AdminPacientesScreen(
                 text = "Listado de pacientes",
                 fontSize = 19.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1A1A1A)
+                color = colorScheme.onSurface
             )
 
             Text(
                 text = "${listaMostrada.size} resultados",
                 fontSize = 12.sp,
-                color = Color.Gray
+                color = colorScheme.onSurfaceVariant
             )
         }
 
@@ -711,7 +693,7 @@ fun AdminPacientesScreen(
 
         when {
 
-            // CARGANDO
+            // CARGANDO.
 
             cargando -> {
 
@@ -728,7 +710,7 @@ fun AdminPacientesScreen(
                     ) {
 
                         CircularProgressIndicator(
-                            color = VerdeVetSync
+                            color = colorScheme.primary
                         )
 
                         Spacer(
@@ -738,13 +720,13 @@ fun AdminPacientesScreen(
                         Text(
                             text = "Cargando pacientes...",
                             fontSize = 13.sp,
-                            color = GrisTextoSecundario
+                            color = colorScheme.onSurfaceVariant
                         )
                     }
                 }
             }
 
-            // ERROR
+            // ERROR.
 
             errorCarga != null -> {
 
@@ -752,7 +734,7 @@ fun AdminPacientesScreen(
                     modifier = Modifier.fillMaxWidth(),
 
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                        containerColor = colorScheme.errorContainer
                     ),
 
                     shape = RoundedCornerShape(14.dp)
@@ -769,7 +751,7 @@ fun AdminPacientesScreen(
                         Text(
                             text = "No se pudieron cargar los pacientes.",
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFB3261E)
+                            color = colorScheme.onErrorContainer
                         )
 
                         Spacer(
@@ -779,7 +761,7 @@ fun AdminPacientesScreen(
                         Text(
                             text = errorCarga.orEmpty(),
                             fontSize = 12.sp,
-                            color = GrisTextoSecundario
+                            color = colorScheme.onErrorContainer
                         )
 
                         Spacer(
@@ -792,7 +774,8 @@ fun AdminPacientesScreen(
                             },
 
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = VerdeVetSync
+                                containerColor = colorScheme.primary,
+                                contentColor = colorScheme.onPrimary
                             )
                         ) {
                             Text("Reintentar")
@@ -801,7 +784,7 @@ fun AdminPacientesScreen(
                 }
             }
 
-            // SIN MASCOTAS REGISTRADAS
+            // SIN MASCOTAS REGISTRADAS.
 
             listaMascotas.isEmpty() -> {
 
@@ -810,7 +793,7 @@ fun AdminPacientesScreen(
                 )
             }
 
-            // SIN RESULTADOS DE BÚSQUEDA
+            // SIN RESULTADOS DE BÚSQUEDA.
 
             listaMostrada.isEmpty() -> {
 
@@ -819,7 +802,7 @@ fun AdminPacientesScreen(
                 )
             }
 
-            // MOSTRAR PACIENTES
+            // MOSTRAR PACIENTES.
 
             else -> {
 
@@ -836,10 +819,11 @@ fun AdminPacientesScreen(
                             .joinToString(" • "),
 
                         estado = "Registrada",
-                        estadoBgColor = Color(0xFFE2EFE7),
-                        estadoTextColor = Color(0xFF2E5B4B),
+                        estadoBgColor = colorScheme.primaryContainer,
+                        estadoTextColor = colorScheme.onPrimaryContainer,
                         nombrePropietario = paciente.nombreDueno,
                         fotoUrl = paciente.mascota.fotoUrl,
+
                         onClick = {
                             pacienteSeleccionado = paciente
                         }
@@ -858,6 +842,10 @@ fun AdminPacientesScreen(
     }
 }
 
+// =====================================================
+// SELECTOR DE CLIENTES
+// =====================================================
+
 @Composable
 private fun SelectorClientePacienteAdmin(
     clientes: List<Usuario>,
@@ -869,6 +857,8 @@ private fun SelectorClientePacienteAdmin(
     onVolver: () -> Unit,
     onReintentar: () -> Unit
 ) {
+
+    val colorScheme = MaterialTheme.colorScheme
 
     val clientesFiltrados = clientes.filter { cliente ->
 
@@ -896,7 +886,7 @@ private fun SelectorClientePacienteAdmin(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(FondoCrema)
+            .background(colorScheme.background)
             .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(
@@ -904,8 +894,6 @@ private fun SelectorClientePacienteAdmin(
                 vertical = 16.dp
             )
     ) {
-
-        // CABECERA
 
         TextButton(
             onClick = onVolver,
@@ -917,7 +905,7 @@ private fun SelectorClientePacienteAdmin(
 
             Text(
                 text = "← Volver a pacientes",
-                color = VerdeVetSync,
+                color = colorScheme.primary,
                 fontSize = 14.sp
             )
         }
@@ -930,7 +918,7 @@ private fun SelectorClientePacienteAdmin(
             text = "Nuevo paciente",
             fontSize = 27.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1A1A1A)
+            color = colorScheme.onBackground
         )
 
         Spacer(
@@ -940,7 +928,7 @@ private fun SelectorClientePacienteAdmin(
         Text(
             text = "Selecciona al propietario al que deseas asociar la nueva mascota.",
             fontSize = 14.sp,
-            color = GrisTextoSecundario,
+            color = colorScheme.onSurfaceVariant,
             lineHeight = 20.sp
         )
 
@@ -948,13 +936,11 @@ private fun SelectorClientePacienteAdmin(
             modifier = Modifier.height(20.dp)
         )
 
-        // BUSCADOR DE CLIENTES
+        // BUSCADOR DE CLIENTES.
 
         OutlinedTextField(
             value = textoBusqueda,
-
             onValueChange = onBusquedaChange,
-
             modifier = Modifier.fillMaxWidth(),
 
             placeholder = {
@@ -976,10 +962,11 @@ private fun SelectorClientePacienteAdmin(
             shape = RoundedCornerShape(12.dp),
 
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = Color.White,
-                focusedContainerColor = Color.White,
-                unfocusedBorderColor = Color(0xFFE5E5E5),
-                focusedBorderColor = VerdeVetSync
+                focusedBorderColor = colorScheme.primary,
+                unfocusedBorderColor = colorScheme.outlineVariant,
+                focusedContainerColor = colorScheme.surface,
+                unfocusedContainerColor = colorScheme.surface,
+                cursorColor = colorScheme.primary
             )
         )
 
@@ -991,14 +978,12 @@ private fun SelectorClientePacienteAdmin(
             text = "Clientes registrados (${clientesFiltrados.size})",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1A1A1A)
+            color = colorScheme.onSurface
         )
 
         Spacer(
             modifier = Modifier.height(14.dp)
         )
-
-        // ESTADOS DE LA CONSULTA
 
         when {
 
@@ -1017,7 +1002,7 @@ private fun SelectorClientePacienteAdmin(
                     ) {
 
                         CircularProgressIndicator(
-                            color = VerdeVetSync
+                            color = colorScheme.primary
                         )
 
                         Spacer(
@@ -1027,7 +1012,7 @@ private fun SelectorClientePacienteAdmin(
                         Text(
                             text = "Consultando clientes...",
                             fontSize = 13.sp,
-                            color = GrisTextoSecundario
+                            color = colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -1039,7 +1024,7 @@ private fun SelectorClientePacienteAdmin(
                     modifier = Modifier.fillMaxWidth(),
 
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                        containerColor = colorScheme.errorContainer
                     ),
 
                     shape = RoundedCornerShape(14.dp)
@@ -1056,7 +1041,7 @@ private fun SelectorClientePacienteAdmin(
                         Text(
                             text = "No se pudieron consultar los clientes.",
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFB3261E)
+                            color = colorScheme.onErrorContainer
                         )
 
                         Spacer(
@@ -1066,7 +1051,7 @@ private fun SelectorClientePacienteAdmin(
                         Text(
                             text = error,
                             fontSize = 12.sp,
-                            color = GrisTextoSecundario
+                            color = colorScheme.onErrorContainer
                         )
 
                         Spacer(
@@ -1077,7 +1062,8 @@ private fun SelectorClientePacienteAdmin(
                             onClick = onReintentar,
 
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = VerdeVetSync
+                                containerColor = colorScheme.primary,
+                                contentColor = colorScheme.onPrimary
                             )
                         ) {
                             Text("Reintentar")
@@ -1112,14 +1098,14 @@ private fun SelectorClientePacienteAdmin(
                             },
 
                         colors = CardDefaults.cardColors(
-                            containerColor = Color.White
+                            containerColor = colorScheme.surface
                         ),
 
                         shape = RoundedCornerShape(14.dp),
 
                         border = BorderStroke(
                             1.dp,
-                            Color(0xFFE5E5E5)
+                            colorScheme.outlineVariant
                         )
                     ) {
 
@@ -1135,7 +1121,7 @@ private fun SelectorClientePacienteAdmin(
                                 modifier = Modifier
                                     .size(48.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFFE2EFE7)),
+                                    .background(colorScheme.primaryContainer),
 
                                 contentAlignment = Alignment.Center
                             ) {
@@ -1143,7 +1129,7 @@ private fun SelectorClientePacienteAdmin(
                                 Icon(
                                     imageVector = Icons.Outlined.Person,
                                     contentDescription = null,
-                                    tint = VerdeVetSync,
+                                    tint = colorScheme.onPrimaryContainer,
                                     modifier = Modifier.size(27.dp)
                                 )
                             }
@@ -1163,7 +1149,7 @@ private fun SelectorClientePacienteAdmin(
 
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF1A1A1A)
+                                    color = colorScheme.onSurface
                                 )
 
                                 Spacer(
@@ -1176,7 +1162,7 @@ private fun SelectorClientePacienteAdmin(
                                     },
 
                                     fontSize = 12.sp,
-                                    color = GrisTextoSecundario
+                                    color = colorScheme.onSurfaceVariant
                                 )
 
                                 if (cliente.telefono.isNotBlank()) {
@@ -1188,7 +1174,7 @@ private fun SelectorClientePacienteAdmin(
                                     Text(
                                         text = "Teléfono: ${cliente.telefono}",
                                         fontSize = 12.sp,
-                                        color = GrisTextoSecundario
+                                        color = colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
@@ -1196,7 +1182,7 @@ private fun SelectorClientePacienteAdmin(
                             Icon(
                                 imageVector = Icons.Default.ChevronRight,
                                 contentDescription = "Seleccionar cliente",
-                                tint = Color.Gray,
+                                tint = colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
@@ -1215,6 +1201,10 @@ private fun SelectorClientePacienteAdmin(
     }
 }
 
+// =====================================================
+// FICHA INDIVIDUAL DEL PACIENTE
+// =====================================================
+
 @Composable
 private fun FichaPacienteAdmin(
     paciente: MascotaConDueno,
@@ -1229,6 +1219,7 @@ private fun FichaPacienteAdmin(
     onReintentar: () -> Unit
 ) {
 
+    val colorScheme = MaterialTheme.colorScheme
     val mascota = paciente.mascota
 
     val bitmapMascota = remember(mascota.fotoUrl) {
@@ -1240,7 +1231,7 @@ private fun FichaPacienteAdmin(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(FondoCrema)
+            .background(colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(
                 horizontal = 20.dp,
@@ -1248,9 +1239,7 @@ private fun FichaPacienteAdmin(
             )
     ) {
 
-        // =================================================
-        // CABECERA
-        // =================================================
+        // CABECERA.
 
         TextButton(
             onClick = onVolver,
@@ -1262,7 +1251,7 @@ private fun FichaPacienteAdmin(
 
             Text(
                 text = "← Volver a pacientes",
-                color = VerdeVetSync,
+                color = colorScheme.primary,
                 fontSize = 14.sp
             )
         }
@@ -1273,27 +1262,25 @@ private fun FichaPacienteAdmin(
             text = "Ficha del paciente",
             fontSize = 27.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1A1A1A)
+            color = colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        // =================================================
-        // INFORMACIÓN PRINCIPAL
-        // =================================================
+        // INFORMACIÓN PRINCIPAL.
 
         Card(
             modifier = Modifier.fillMaxWidth(),
 
             colors = CardDefaults.cardColors(
-                containerColor = Color.White
+                containerColor = colorScheme.surface
             ),
 
             shape = RoundedCornerShape(18.dp),
 
             border = BorderStroke(
                 1.dp,
-                Color(0xFFE5E5E5)
+                colorScheme.outlineVariant
             )
         ) {
 
@@ -1322,7 +1309,7 @@ private fun FichaPacienteAdmin(
                         modifier = Modifier
                             .size(100.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFE2EFE7)),
+                            .background(colorScheme.primaryContainer),
 
                         contentAlignment = Alignment.Center
                     ) {
@@ -1330,7 +1317,7 @@ private fun FichaPacienteAdmin(
                         Icon(
                             imageVector = Icons.Default.Pets,
                             contentDescription = null,
-                            tint = VerdeVetSync,
+                            tint = colorScheme.onPrimaryContainer,
                             modifier = Modifier.size(48.dp)
                         )
                     }
@@ -1342,7 +1329,7 @@ private fun FichaPacienteAdmin(
                     text = mascota.nombre,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1A1A1A)
+                    color = colorScheme.onSurface
                 )
 
                 Spacer(modifier = Modifier.height(5.dp))
@@ -1350,13 +1337,14 @@ private fun FichaPacienteAdmin(
                 Text(
                     text = "${mascota.especie} • ${mascota.raza}",
                     fontSize = 14.sp,
-                    color = GrisTextoSecundario
+                    color = colorScheme.onSurfaceVariant
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Surface(
-                    color = Color(0xFFE2EFE7),
+                    color = colorScheme.primaryContainer,
+                    contentColor = colorScheme.onPrimaryContainer,
                     shape = RoundedCornerShape(20.dp)
                 ) {
 
@@ -1367,8 +1355,7 @@ private fun FichaPacienteAdmin(
                             vertical = 6.dp
                         ),
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF2E5B4B)
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -1376,9 +1363,7 @@ private fun FichaPacienteAdmin(
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        // =================================================
-        // DATOS GENERALES
-        // =================================================
+        // DATOS GENERALES.
 
         TituloSeccionFicha("Información general")
 
@@ -1386,14 +1371,14 @@ private fun FichaPacienteAdmin(
             modifier = Modifier.fillMaxWidth(),
 
             colors = CardDefaults.cardColors(
-                containerColor = Color.White
+                containerColor = colorScheme.surface
             ),
 
             shape = RoundedCornerShape(14.dp),
 
             border = BorderStroke(
                 1.dp,
-                Color(0xFFE5E5E5)
+                colorScheme.outlineVariant
             )
         ) {
 
@@ -1461,11 +1446,10 @@ private fun FichaPacienteAdmin(
             shape = RoundedCornerShape(12.dp),
             border = BorderStroke(
                 1.dp,
-                VerdeVetSync
+                colorScheme.primary
             ),
             colors = ButtonDefaults.outlinedButtonColors(
-                containerColor = Color.White,
-                contentColor = VerdeVetSync
+                contentColor = colorScheme.primary
             )
         ) {
             Text(
@@ -1477,9 +1461,7 @@ private fun FichaPacienteAdmin(
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        // =================================================
-        // PROPIETARIO
-        // =================================================
+        // PROPIETARIO.
 
         TituloSeccionFicha("Información del propietario")
 
@@ -1487,14 +1469,14 @@ private fun FichaPacienteAdmin(
             modifier = Modifier.fillMaxWidth(),
 
             colors = CardDefaults.cardColors(
-                containerColor = Color.White
+                containerColor = colorScheme.surface
             ),
 
             shape = RoundedCornerShape(14.dp),
 
             border = BorderStroke(
                 1.dp,
-                Color(0xFFE5E5E5)
+                colorScheme.outlineVariant
             )
         ) {
 
@@ -1509,7 +1491,7 @@ private fun FichaPacienteAdmin(
                     Icon(
                         imageVector = Icons.Outlined.Person,
                         contentDescription = null,
-                        tint = VerdeVetSync,
+                        tint = colorScheme.primary,
                         modifier = Modifier.size(28.dp)
                     )
 
@@ -1521,13 +1503,13 @@ private fun FichaPacienteAdmin(
                             text = paciente.nombreDueno,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1A1A1A)
+                            color = colorScheme.onSurface
                         )
 
                         Text(
                             text = "Propietario registrado",
                             fontSize = 12.sp,
-                            color = GrisTextoSecundario
+                            color = colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -1543,9 +1525,7 @@ private fun FichaPacienteAdmin(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // =================================================
-        // HISTORIAL DE CITAS
-        // =================================================
+        // HISTORIAL DE CITAS.
 
         TituloSeccionFicha(
             "Historial de citas (${citas.size})"
@@ -1577,18 +1557,22 @@ private fun FichaPacienteAdmin(
 
                 citas.forEach { cita ->
 
+                    val coloresEstado = obtenerColoresEstadoCita(
+                        cita.estado
+                    )
+
                     Card(
                         modifier = Modifier.fillMaxWidth(),
 
                         colors = CardDefaults.cardColors(
-                            containerColor = Color.White
+                            containerColor = colorScheme.surface
                         ),
 
                         shape = RoundedCornerShape(14.dp),
 
                         border = BorderStroke(
                             1.dp,
-                            Color(0xFFE5E5E5)
+                            colorScheme.outlineVariant
                         )
                     ) {
 
@@ -1598,9 +1582,7 @@ private fun FichaPacienteAdmin(
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-
                                 horizontalArrangement = Arrangement.SpaceBetween,
-
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
 
@@ -1609,15 +1591,24 @@ private fun FichaPacienteAdmin(
                                     modifier = Modifier.weight(1f),
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 15.sp,
-                                    color = Color(0xFF1A1A1A)
+                                    color = colorScheme.onSurface
                                 )
 
-                                Text(
-                                    text = cita.estado.etiqueta,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = VerdeVetSync
-                                )
+                                Surface(
+                                    color = coloresEstado.first,
+                                    contentColor = coloresEstado.second,
+                                    shape = RoundedCornerShape(6.dp)
+                                ) {
+                                    Text(
+                                        text = cita.estado.etiqueta,
+                                        modifier = Modifier.padding(
+                                            horizontal = 8.dp,
+                                            vertical = 4.dp
+                                        ),
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
                             }
 
                             Spacer(modifier = Modifier.height(8.dp))
@@ -1658,9 +1649,7 @@ private fun FichaPacienteAdmin(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // =================================================
-        // HISTORIAL CLÍNICO
-        // =================================================
+        // HISTORIAL CLÍNICO.
 
         TituloSeccionFicha(
             "Historial clínico (${historial.size})"
@@ -1696,14 +1685,14 @@ private fun FichaPacienteAdmin(
                         modifier = Modifier.fillMaxWidth(),
 
                         colors = CardDefaults.cardColors(
-                            containerColor = Color.White
+                            containerColor = colorScheme.surface
                         ),
 
                         shape = RoundedCornerShape(14.dp),
 
                         border = BorderStroke(
                             1.dp,
-                            Color(0xFFE5E5E5)
+                            colorScheme.outlineVariant
                         )
                     ) {
 
@@ -1715,7 +1704,7 @@ private fun FichaPacienteAdmin(
                                 text = "Registro clínico",
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = VerdeVetSync
+                                color = colorScheme.primary
                             )
 
                             Spacer(modifier = Modifier.height(8.dp))
@@ -1777,6 +1766,37 @@ private fun FichaPacienteAdmin(
     }
 }
 
+// =====================================================
+// COLORES SEMÁNTICOS PARA ESTADOS DE CITAS
+// =====================================================
+
+@Composable
+private fun obtenerColoresEstadoCita(
+    estado: com.example.vetsync.modelo.EstadoCita
+): Pair<Color, Color> {
+
+    val colorScheme = MaterialTheme.colorScheme
+
+    return when (estado) {
+
+        com.example.vetsync.modelo.EstadoCita.PENDIENTE ->
+            colorScheme.tertiaryContainer to colorScheme.onTertiaryContainer
+
+        com.example.vetsync.modelo.EstadoCita.CONFIRMADA ->
+            colorScheme.secondaryContainer to colorScheme.onSecondaryContainer
+
+        com.example.vetsync.modelo.EstadoCita.COMPLETADA ->
+            colorScheme.surfaceVariant to colorScheme.onSurfaceVariant
+
+        com.example.vetsync.modelo.EstadoCita.CANCELADA ->
+            colorScheme.errorContainer to colorScheme.onErrorContainer
+    }
+}
+
+// =====================================================
+// TÍTULO DE SECCIÓN
+// =====================================================
+
 @Composable
 private fun TituloSeccionFicha(
     titulo: String
@@ -1786,17 +1806,23 @@ private fun TituloSeccionFicha(
         text = titulo,
         fontSize = 19.sp,
         fontWeight = FontWeight.Bold,
-        color = Color(0xFF1A1A1A)
+        color = MaterialTheme.colorScheme.onSurface
     )
 
     Spacer(modifier = Modifier.height(12.dp))
 }
+
+// =====================================================
+// DATO DE LA FICHA
+// =====================================================
 
 @Composable
 private fun DatoFicha(
     titulo: String,
     valor: String
 ) {
+
+    val colorScheme = MaterialTheme.colorScheme
 
     Column(
         modifier = Modifier
@@ -1807,7 +1833,7 @@ private fun DatoFicha(
         Text(
             text = titulo,
             fontSize = 12.sp,
-            color = GrisTextoSecundario,
+            color = colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Medium
         )
 
@@ -1818,10 +1844,14 @@ private fun DatoFicha(
                 "No registrado"
             },
             fontSize = 14.sp,
-            color = Color(0xFF252525)
+            color = colorScheme.onSurface
         )
     }
 }
+
+// =====================================================
+// CARGANDO FICHA
+// =====================================================
 
 @Composable
 private fun CargandoFicha() {
@@ -1835,10 +1865,14 @@ private fun CargandoFicha() {
     ) {
 
         CircularProgressIndicator(
-            color = VerdeVetSync
+            color = MaterialTheme.colorScheme.primary
         )
     }
 }
+
+// =====================================================
+// ERROR EN LA FICHA
+// =====================================================
 
 @Composable
 private fun ErrorFicha(
@@ -1846,14 +1880,21 @@ private fun ErrorFicha(
     onReintentar: () -> Unit
 ) {
 
+    val colorScheme = MaterialTheme.colorScheme
+
     Card(
         modifier = Modifier.fillMaxWidth(),
 
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = colorScheme.errorContainer
         ),
 
-        shape = RoundedCornerShape(14.dp)
+        shape = RoundedCornerShape(14.dp),
+
+        border = BorderStroke(
+            1.dp,
+            colorScheme.error.copy(alpha = 0.30f)
+        )
     ) {
 
         Column(
@@ -1866,7 +1907,7 @@ private fun ErrorFicha(
 
             Text(
                 text = mensaje,
-                color = Color(0xFFB3261E),
+                color = colorScheme.onErrorContainer,
                 fontSize = 13.sp
             )
 
@@ -1878,30 +1919,36 @@ private fun ErrorFicha(
 
                 Text(
                     text = "Reintentar",
-                    color = VerdeVetSync
+                    color = colorScheme.onErrorContainer
                 )
             }
         }
     }
 }
 
+// =====================================================
+// ESTADO VACÍO DE LA FICHA
+// =====================================================
+
 @Composable
 private fun EstadoFichaVacio(
     mensaje: String
 ) {
 
+    val colorScheme = MaterialTheme.colorScheme
+
     Card(
         modifier = Modifier.fillMaxWidth(),
 
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = colorScheme.surface
         ),
 
         shape = RoundedCornerShape(14.dp),
 
         border = BorderStroke(
             1.dp,
-            Color(0xFFE5E5E5)
+            colorScheme.outlineVariant
         )
     ) {
 
@@ -1909,10 +1956,14 @@ private fun EstadoFichaVacio(
             text = mensaje,
             modifier = Modifier.padding(20.dp),
             fontSize = 13.sp,
-            color = GrisTextoSecundario
+            color = colorScheme.onSurfaceVariant
         )
     }
 }
+
+// =====================================================
+// BUSCADOR Y FILTROS DE PACIENTES
+// =====================================================
 
 @Composable
 fun BuscadorFiltrosPacientesCard(
@@ -1923,49 +1974,98 @@ fun BuscadorFiltrosPacientesCard(
     onSearchFocus: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+
+    val colorScheme = MaterialTheme.colorScheme
+
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surface
+        ),
+
         shape = RoundedCornerShape(12.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E5E5))
+
+        border = BorderStroke(
+            1.dp,
+            colorScheme.outlineVariant
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Buscador
+
+            // BUSCADOR.
+
             OutlinedTextField(
                 value = textoBusqueda,
-                onValueChange = { nuevaLetra -> onBusquedaChange(nuevaLetra) },
+
+                onValueChange = { nuevaLetra ->
+                    onBusquedaChange(nuevaLetra)
+                },
+
                 placeholder = {
-                    Text("Buscar por nombre de mascota o\npropietario...", fontSize = 14.sp, lineHeight = 18.sp)
+                    Text(
+                        "Buscar por nombre de mascota o\npropietario...",
+                        fontSize = 14.sp,
+                        lineHeight = 18.sp
+                    )
                 },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.DarkGray) },
-                modifier = Modifier.fillMaxWidth().onFocusChanged{
-                    foco ->
-                    if(foco.isFocused){
-                        onSearchFocus()
-                    }
+
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = null,
+                        tint = colorScheme.onSurfaceVariant
+                    )
                 },
+
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { foco ->
+                        if (foco.isFocused) {
+                            onSearchFocus()
+                        }
+                    },
+
                 shape = RoundedCornerShape(8.dp),
+
                 colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color(0xFFE5E5E5),
-                    focusedBorderColor = Color(0xFF4A7D5E)
+                    unfocusedBorderColor = colorScheme.outlineVariant,
+                    focusedBorderColor = colorScheme.primary,
+                    unfocusedContainerColor = colorScheme.surface,
+                    focusedContainerColor = colorScheme.surface,
+                    cursorColor = colorScheme.primary
                 )
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Chips de Filtro
-            val opcionesFiltro = listOf("Todos","Perro", "Gato", "Ave", "Conejo", "Otro")
+            // CHIPS DE FILTRO.
+
+            val opcionesFiltro = listOf(
+                "Todos",
+                "Perro",
+                "Gato",
+                "Ave",
+                "Conejo",
+                "Otro"
+            )
 
             Row(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+
                 opcionesFiltro.forEach { opcion ->
+
                     FiltroMascotaChip(
                         text = opcion,
-                        isSelected = (filtroSeleccionado == opcion),
-                        showIcon = (opcion == "Todos"),
-                        modifier = Modifier.clickable { onFiltroChange(opcion) }
+                        isSelected = filtroSeleccionado == opcion,
+                        showIcon = opcion == "Todos",
+                        modifier = Modifier.clickable {
+                            onFiltroChange(opcion)
+                        }
                     )
                 }
             }
@@ -1973,36 +2073,85 @@ fun BuscadorFiltrosPacientesCard(
     }
 }
 
+// =====================================================
+// CHIP DE FILTRO DE MASCOTA
+// =====================================================
+
 @Composable
-fun FiltroMascotaChip(text: String, isSelected: Boolean, showIcon: Boolean = false, modifier: Modifier = Modifier) {
-    val bgColor = if (isSelected) Color(0xFF8BA793) else Color.White
-    val contentColor = if (isSelected) Color(0xFF1E3D2A) else Color.DarkGray
-    val borderColor = if (isSelected) Color.Transparent else Color(0xFFD4D4D4)
+fun FiltroMascotaChip(
+    text: String,
+    isSelected: Boolean,
+    showIcon: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+
+    val colorScheme = MaterialTheme.colorScheme
+
+    val bgColor = if (isSelected) {
+        colorScheme.primaryContainer
+    } else {
+        colorScheme.surface
+    }
+
+    val contentColor = if (isSelected) {
+        colorScheme.onPrimaryContainer
+    } else {
+        colorScheme.onSurfaceVariant
+    }
+
+    val borderColor = if (isSelected) {
+        colorScheme.primary
+    } else {
+        colorScheme.outlineVariant
+    }
 
     Row(
         modifier = modifier
-            .background(bgColor, RoundedCornerShape(20.dp))
-            .border(1.dp, borderColor, RoundedCornerShape(20.dp))
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .background(
+                bgColor,
+                RoundedCornerShape(20.dp)
+            )
+            .border(
+                1.dp,
+                borderColor,
+                RoundedCornerShape(20.dp)
+            )
+            .padding(
+                horizontal = 16.dp,
+                vertical = 8.dp
+            ),
+
         verticalAlignment = Alignment.CenterVertically
     ) {
+
         if (showIcon) {
+
             Icon(
                 imageVector = Icons.Default.Pets,
                 contentDescription = null,
                 tint = contentColor,
                 modifier = Modifier.size(16.dp)
             )
+
             Spacer(modifier = Modifier.width(6.dp))
         }
+
         Text(
             text = text,
             fontSize = 13.sp,
             color = contentColor,
-            fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal
+            fontWeight = if (isSelected) {
+                FontWeight.Medium
+            } else {
+                FontWeight.Normal
+            }
         )
     }
 }
+
+// =====================================================
+// TARJETA INDIVIDUAL DEL PACIENTE
+// =====================================================
 
 @Composable
 fun PacienteItemCard(
@@ -2016,94 +2165,138 @@ fun PacienteItemCard(
     onClick: () -> Unit
 ) {
 
-    val bitmapMascota = remember(fotoUrl) { ImagenUtils.base64ABitmap(fotoUrl) }
+    val colorScheme = MaterialTheme.colorScheme
+
+    val bitmapMascota = remember(fotoUrl) {
+        ImagenUtils.base64ABitmap(fotoUrl)
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surface
+        ),
+
         shape = RoundedCornerShape(12.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E5E5))
+
+        border = BorderStroke(
+            1.dp,
+            colorScheme.outlineVariant
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Fila Superior: Foto, Info y Etiqueta
+
+            // FOTO, INFORMACIÓN Y ESTADO.
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Avatar temporal de la mascota
 
                 if (bitmapMascota != null) {
+
                     Image(
                         bitmap = bitmapMascota,
                         contentDescription = nombre,
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.size(56.dp).clip(CircleShape)
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(CircleShape)
                     )
+
                 } else {
 
                     Box(
                         modifier = Modifier
                             .size(56.dp)
                             .clip(CircleShape)
-                            .background(Color.LightGray)
-                    )
+                            .background(colorScheme.primaryContainer),
+
+                        contentAlignment = Alignment.Center
+                    ) {
+
+                        Icon(
+                            imageVector = Icons.Default.Pets,
+                            contentDescription = null,
+                            tint = colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(27.dp)
+                        )
+                    }
                 }
+
                 Spacer(modifier = Modifier.width(16.dp))
 
-                // Info principal
                 Column(modifier = Modifier.weight(1f)) {
+
                     Text(
                         text = nombre,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color.Black
+                        color = colorScheme.onSurface
                     )
+
                     Spacer(modifier = Modifier.height(2.dp))
+
                     Text(
                         text = tipoRaza,
                         fontSize = 13.sp,
-                        color = Color.DarkGray
+                        color = colorScheme.onSurfaceVariant
                     )
                 }
 
-                // Etiqueta de Estado
-                Box(
-                    modifier = Modifier
-                        .background(estadoBgColor, RoundedCornerShape(6.dp))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                Surface(
+                    color = estadoBgColor,
+                    contentColor = estadoTextColor,
+                    shape = RoundedCornerShape(6.dp)
                 ) {
+
                     Text(
                         text = estado,
+                        modifier = Modifier.padding(
+                            horizontal = 8.dp,
+                            vertical = 4.dp
+                        ),
                         fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = estadoTextColor
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = Color(0xFFF0F0F0), thickness = 1.dp)
+
+            HorizontalDivider(
+                color = colorScheme.outlineVariant,
+                thickness = 1.dp
+            )
+
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Fila Inferior: Propietario
+            // PROPIETARIO.
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+
                 Row(verticalAlignment = Alignment.CenterVertically) {
+
                     Icon(
                         imageVector = Icons.Outlined.Person,
                         contentDescription = "Propietario",
-                        tint = Color.DarkGray,
+                        tint = colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(16.dp)
                     )
+
                     Spacer(modifier = Modifier.width(8.dp))
+
                     Text(
                         text = nombrePropietario,
                         fontSize = 13.sp,
-                        color = Color.DarkGray,
+                        color = colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -2111,7 +2304,7 @@ fun PacienteItemCard(
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = "Ver detalles",
-                    tint = Color.Gray,
+                    tint = colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -2119,16 +2312,55 @@ fun PacienteItemCard(
     }
 }
 
+// =====================================================
+// IDENTIFICAR ESPECIE PARA LOS FILTROS
+// =====================================================
+
 private fun coincideFiltroEspecie(
     especieTexto: String,
     filtro: String
 ): Boolean {
+
     val especie = especieTexto.trim().lowercase()
 
-    val esPerro = listOf("perro", "perra", "perros", "canino", "canina").any { especie.contains(it) }
-    val esGato = listOf("gato", "gata", "gatos", "felino", "felina").any { especie.contains(it) }
-    val esAve = listOf("ave", "aves", "pájaro", "pajaro", "loro", "perico").any { especie.contains(it) }
-    val esConejo = listOf("conejo", "coneja", "conejos").any { especie.contains(it) }
+    val esPerro = listOf(
+        "perro",
+        "perra",
+        "perros",
+        "canino",
+        "canina"
+    ).any {
+        especie.contains(it)
+    }
+
+    val esGato = listOf(
+        "gato",
+        "gata",
+        "gatos",
+        "felino",
+        "felina"
+    ).any {
+        especie.contains(it)
+    }
+
+    val esAve = listOf(
+        "ave",
+        "aves",
+        "pájaro",
+        "pajaro",
+        "loro",
+        "perico"
+    ).any {
+        especie.contains(it)
+    }
+
+    val esConejo = listOf(
+        "conejo",
+        "coneja",
+        "conejos"
+    ).any {
+        especie.contains(it)
+    }
 
     return when (filtro) {
         "Todos" -> true
@@ -2136,15 +2368,25 @@ private fun coincideFiltroEspecie(
         "Gato" -> esGato
         "Ave" -> esAve
         "Conejo" -> esConejo
-        "Otro" -> especie.isNotBlank() && !esPerro && !esGato && !esAve && !esConejo
+        "Otro" -> especie.isNotBlank() &&
+                !esPerro &&
+                !esGato &&
+                !esAve &&
+                !esConejo
         else -> true
     }
 }
+
+// =====================================================
+// ESTADO VACÍO DE PACIENTES
+// =====================================================
 
 @Composable
 private fun EstadoPacientesVacio(
     mensaje: String
 ) {
+
+    val colorScheme = MaterialTheme.colorScheme
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -2152,12 +2394,12 @@ private fun EstadoPacientesVacio(
         shape = RoundedCornerShape(16.dp),
 
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = colorScheme.surface
         ),
 
         border = BorderStroke(
             1.dp,
-            Color(0xFFE5E5E5)
+            colorScheme.outlineVariant
         )
     ) {
 
@@ -2172,7 +2414,7 @@ private fun EstadoPacientesVacio(
             Icon(
                 imageVector = Icons.Default.Pets,
                 contentDescription = null,
-                tint = Color(0xFF4A7D5E),
+                tint = colorScheme.primary,
                 modifier = Modifier.size(42.dp)
             )
 
@@ -2183,7 +2425,7 @@ private fun EstadoPacientesVacio(
             Text(
                 text = mensaje,
                 fontSize = 14.sp,
-                color = GrisTextoSecundario
+                color = colorScheme.onSurfaceVariant
             )
         }
     }

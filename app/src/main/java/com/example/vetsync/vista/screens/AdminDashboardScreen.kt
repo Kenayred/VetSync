@@ -1,9 +1,9 @@
 package com.example.vetsync.vista.screens
 
 import android.util.Log
-import androidx.compose.foundation.Image
+
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -25,17 +25,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.vetsync.R
-import com.example.vetsync.vista.theme.*
+
 import com.example.vetsync.controlador.CitaControlador
 import com.example.vetsync.modelo.CitaConMascota
 import com.example.vetsync.modelo.ResumenCitas
+
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -50,6 +48,8 @@ fun AdminDashboardScreen(
     onNavigateToPacientes: () -> Unit = {}
 ) {
 
+    val colorScheme = MaterialTheme.colorScheme
+
     var resumenCitas by remember {
         mutableStateOf(ResumenCitas())
     }
@@ -62,7 +62,8 @@ fun AdminDashboardScreen(
         mutableStateOf(0.0)
     }
 
-// Estados de carga independientes.
+    // Estados de carga independientes.
+
     var cargandoResumen by remember {
         mutableStateOf(true)
     }
@@ -75,7 +76,8 @@ fun AdminDashboardScreen(
         mutableStateOf(true)
     }
 
-// Errores independientes.
+    // Errores independientes.
+
     var errorResumen by remember {
         mutableStateOf<String?>(null)
     }
@@ -88,9 +90,9 @@ fun AdminDashboardScreen(
         mutableStateOf<String?>(null)
     }
 
-// --------------------------------------------------
-// CARGAR INFORMACIÓN DEL DASHBOARD
-// --------------------------------------------------
+    // --------------------------------------------------
+    // CARGAR INFORMACIÓN DEL DASHBOARD
+    // --------------------------------------------------
 
     fun cargarDashboard() {
 
@@ -103,14 +105,17 @@ fun AdminDashboardScreen(
         errorIngresos = null
 
         // 1. Resumen de citas.
+
         controladorCita.obtenerResumenCitasDiaAdmin(
 
             onSuccess = { resumen ->
+
                 resumenCitas = resumen
                 cargandoResumen = false
             },
 
             onFailure = { error ->
+
                 errorResumen = error.message
                     ?: "No se pudo cargar el resumen de citas."
 
@@ -124,14 +129,17 @@ fun AdminDashboardScreen(
         )
 
         // 2. Próximos pacientes.
+
         controladorCita.obtenerProximosPacientes(
 
             onSuccess = { lista ->
+
                 proximosPacientes = lista
                 cargandoPacientes = false
             },
 
             onFailure = { error ->
+
                 errorPacientes = error.message
                     ?: "No se pudieron cargar los pacientes."
 
@@ -145,14 +153,17 @@ fun AdminDashboardScreen(
         )
 
         // 3. Ingresos estimados.
+
         controladorCita.obtenerIngresosEstimadosDiaAdmin(
 
             onSuccess = { ingresos ->
+
                 ingresosEstimados = ingresos
                 cargandoIngresos = false
             },
 
             onFailure = { error ->
+
                 errorIngresos = error.message
                     ?: "No se pudieron calcular los ingresos."
 
@@ -171,6 +182,7 @@ fun AdminDashboardScreen(
     }
 
     val fechaActual = remember {
+
         LocalDate.now().format(
             DateTimeFormatter.ofPattern(
                 "EEEE d 'de' MMMM 'de' yyyy",
@@ -185,18 +197,23 @@ fun AdminDashboardScreen(
         errorIngresos
     )
 
+    // --------------------------------------------------
+    // CONTENEDOR PRINCIPAL
+    // --------------------------------------------------
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(FondoCrema)
+            .background(colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
+
         Text(
             text = "Resumen del Día",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = TextoOscuro
+            color = colorScheme.onBackground
         )
 
         Text(
@@ -204,17 +221,21 @@ fun AdminDashboardScreen(
                 it.uppercase(Locale("es", "SV"))
             },
             fontSize = 13.sp,
-            color = GrisTextoSecundario
+            color = colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        // --------------------------------------------------
+        // MENSAJES DE ERROR
+        // --------------------------------------------------
 
         if (erroresDashboard.isNotEmpty()) {
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFFE8E6)
+                    containerColor = colorScheme.errorContainer
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -226,7 +247,7 @@ fun AdminDashboardScreen(
                     Text(
                         text = "Algunos datos no pudieron cargarse.",
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFB3261E)
+                        color = colorScheme.onErrorContainer
                     )
 
                     erroresDashboard.forEach { mensaje ->
@@ -234,7 +255,7 @@ fun AdminDashboardScreen(
                         Text(
                             text = mensaje,
                             fontSize = 12.sp,
-                            color = Color(0xFFB3261E)
+                            color = colorScheme.onErrorContainer
                         )
                     }
 
@@ -243,9 +264,10 @@ fun AdminDashboardScreen(
                             cargarDashboard()
                         }
                     ) {
+
                         Text(
-                            "Reintentar",
-                            color = Color(0xFFB3261E)
+                            text = "Reintentar",
+                            color = colorScheme.onErrorContainer
                         )
                     }
                 }
@@ -266,8 +288,8 @@ fun AdminDashboardScreen(
                 resumenCitas.total.toString()
             },
             icon = Icons.Default.DateRange,
-            iconBgColor = FondoClaro,
-            iconTintColor = VerdeFondoIcono,
+            iconBgColor = colorScheme.primaryContainer,
+            iconTintColor = colorScheme.onPrimaryContainer,
             extraRightText = "Hoy"
         )
 
@@ -289,14 +311,17 @@ fun AdminDashboardScreen(
                 )
             },
             icon = Icons.Outlined.AccountBalanceWallet,
-            iconBgColor = NaranjaSuaveIcono,
-            iconTintColor = NaranjaIcono,
+            iconBgColor = colorScheme.tertiaryContainer,
+            iconTintColor = colorScheme.onTertiaryContainer,
             supportingText = "Citas confirmadas y completadas de hoy."
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Sección: Estado de Citas
+        // --------------------------------------------------
+        // ESTADO DE CITAS
+        // --------------------------------------------------
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -306,15 +331,17 @@ fun AdminDashboardScreen(
             Text(
                 text = "Estado de Citas",
                 fontSize = 20.sp,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                color = colorScheme.onSurface
             )
 
             TextButton(
                 onClick = onNavigateToCitas
             ) {
+
                 Text(
                     text = "Ver agenda",
-                    color = VerdeVetSync,
+                    color = colorScheme.primary,
                     fontSize = 12.sp
                 )
             }
@@ -323,6 +350,7 @@ fun AdminDashboardScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Primera fila.
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -336,8 +364,8 @@ fun AdminDashboardScreen(
                     resumenCitas.completadas.toString()
                 },
                 estado = "Completadas",
-                numeroColor = Color(0xFF2E5B4B),
-                bgColor = Color(0xFFF5EFEB)
+                numeroColor = colorScheme.onPrimaryContainer,
+                bgColor = colorScheme.primaryContainer
             )
 
             EstadoCitaMiniCard(
@@ -348,14 +376,15 @@ fun AdminDashboardScreen(
                     resumenCitas.pendientes.toString()
                 },
                 estado = "Pendientes",
-                numeroColor = Color(0xFFB57B22),
-                bgColor = Color(0xFFFDF8EA)
+                numeroColor = colorScheme.onTertiaryContainer,
+                bgColor = colorScheme.tertiaryContainer
             )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
         // Segunda fila.
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -369,8 +398,8 @@ fun AdminDashboardScreen(
                     resumenCitas.confirmadas.toString()
                 },
                 estado = "Confirmadas",
-                numeroColor = Color(0xFF333333),
-                bgColor = Color(0xFFE6F0E8)
+                numeroColor = colorScheme.onSecondaryContainer,
+                bgColor = colorScheme.secondaryContainer
             )
 
             EstadoCitaMiniCard(
@@ -381,18 +410,22 @@ fun AdminDashboardScreen(
                     resumenCitas.canceladas.toString()
                 },
                 estado = "Canceladas",
-                numeroColor = Color(0xFF9D4035),
-                bgColor = Color(0xFFFFE8E6)
+                numeroColor = colorScheme.onErrorContainer,
+                bgColor = colorScheme.errorContainer
             )
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Sección: Próximos Pacientes
+        // --------------------------------------------------
+        // PRÓXIMOS PACIENTES
+        // --------------------------------------------------
+
         Text(
             text = "Próximos Pacientes",
             fontSize = 20.sp,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
+            color = colorScheme.onSurface
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -407,8 +440,9 @@ fun AdminDashboardScreen(
                         .padding(24.dp),
                     contentAlignment = Alignment.Center
                 ) {
+
                     CircularProgressIndicator(
-                        color = VerdeVetSync
+                        color = colorScheme.primary
                     )
                 }
             }
@@ -418,7 +452,7 @@ fun AdminDashboardScreen(
                 Text(
                     text = errorPacientes.orEmpty(),
                     fontSize = 13.sp,
-                    color = Color(0xFFB3261E)
+                    color = colorScheme.error
                 )
             }
 
@@ -426,7 +460,7 @@ fun AdminDashboardScreen(
 
                 Text(
                     text = "No hay citas confirmadas para hoy.",
-                    color = GrisTextoSecundario,
+                    color = colorScheme.onSurfaceVariant,
                     fontSize = 14.sp
                 )
             }
@@ -444,13 +478,15 @@ fun AdminDashboardScreen(
                         )
                             .filter { it.isNotBlank() }
                             .joinToString(" • ")
-                            .ifBlank { "Información no disponible" },
+                            .ifBlank {
+                                "Información no disponible"
+                            },
 
                         estado = paciente.cita.estado.etiqueta,
 
-                        estadoBgColor = Color(0xFFD7E7D9),
+                        estadoBgColor = colorScheme.primaryContainer,
 
-                        estadoTextColor = Color(0xFF365C3F),
+                        estadoTextColor = colorScheme.onPrimaryContainer,
 
                         hora = paciente.cita.hora,
 
@@ -469,11 +505,15 @@ fun AdminDashboardScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        // --------------------------------------------------
+        // ACCESOS RÁPIDOS
+        // --------------------------------------------------
+
         Text(
             text = "Accesos rápidos",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
-            color = TextoOscuro
+            color = colorScheme.onSurface
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -486,7 +526,10 @@ fun AdminDashboardScreen(
             OutlinedButton(
                 onClick = onNavigateToCitas,
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = colorScheme.primary
+                )
             ) {
 
                 Text(
@@ -498,7 +541,10 @@ fun AdminDashboardScreen(
             OutlinedButton(
                 onClick = onNavigateToPacientes,
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = colorScheme.primary
+                )
             ) {
 
                 Text(
@@ -510,6 +556,10 @@ fun AdminDashboardScreen(
     }
 }
 
+// --------------------------------------------------
+// TARJETA KPI DEL DASHBOARD
+// --------------------------------------------------
+
 @Composable
 fun DashboardKpiCard(
     title: String,
@@ -520,18 +570,31 @@ fun DashboardKpiCard(
     extraRightText: String? = null,
     supportingText: String? = null
 ) {
+
+    val colorScheme = MaterialTheme.colorScheme
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surface
+        ),
         shape = RoundedCornerShape(12.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E5E5))
+        border = BorderStroke(
+            1.dp,
+            colorScheme.outlineVariant
+        )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
+
                 Box(
                     modifier = Modifier
                         .size(40.dp)
@@ -539,6 +602,7 @@ fun DashboardKpiCard(
                         .background(iconBgColor),
                     contentAlignment = Alignment.Center
                 ) {
+
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
@@ -546,11 +610,13 @@ fun DashboardKpiCard(
                         modifier = Modifier.size(20.dp)
                     )
                 }
+
                 if (extraRightText != null) {
+
                     Text(
                         text = extraRightText,
                         fontSize = 12.sp,
-                        color = Color.Gray
+                        color = colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -560,29 +626,38 @@ fun DashboardKpiCard(
             Text(
                 text = title,
                 fontSize = 14.sp,
-                color = Color.DarkGray
+                color = colorScheme.onSurfaceVariant
             )
-            Row(verticalAlignment = Alignment.Bottom) {
+
+            Row(
+                verticalAlignment = Alignment.Bottom
+            ) {
+
                 Text(
                     text = value,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    color = colorScheme.onSurface
                 )
+
                 if (supportingText != null) {
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
 
                     Text(
                         text = supportingText,
                         fontSize = 11.sp,
-                        color = Color.Gray
+                        color = colorScheme.onSurfaceVariant
                     )
                 }
             }
         }
     }
 }
+
+// --------------------------------------------------
+// TARJETA DE ESTADO DE CITA
+// --------------------------------------------------
 
 @Composable
 fun EstadoCitaMiniCard(
@@ -592,6 +667,9 @@ fun EstadoCitaMiniCard(
     numeroColor: Color,
     bgColor: Color
 ) {
+
+    val colorScheme = MaterialTheme.colorScheme
+
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
@@ -599,23 +677,33 @@ fun EstadoCitaMiniCard(
             .padding(vertical = 16.dp),
         contentAlignment = Alignment.Center
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
             Text(
                 text = numero,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = numeroColor
             )
+
             Spacer(modifier = Modifier.height(4.dp))
+
             Text(
                 text = estado,
                 fontSize = 11.sp,
-                color = Color.DarkGray,
+                color = colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
         }
     }
 }
+
+// --------------------------------------------------
+// TARJETA DE PACIENTE
+// --------------------------------------------------
 
 @Composable
 fun PacienteCard(
@@ -628,39 +716,56 @@ fun PacienteCard(
     tipoConsulta: String,
     descripcion: String
 ) {
+
+    val colorScheme = MaterialTheme.colorScheme
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surface
+        ),
         shape = RoundedCornerShape(12.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E5E5))
+        border = BorderStroke(
+            1.dp,
+            colorScheme.outlineVariant
+        )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Fila superior: Avatar, Nombre/Raza, Etiqueta de Estado
+
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+
+            // Fila superior: avatar, nombre y estado.
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Sustituye el Icon por tu Image/AsyncImage cuando tengas las fotos
+
                 Box(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .background(Color.LightGray)
+                        .background(colorScheme.surfaceVariant)
                 )
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                Column(modifier = Modifier.weight(1f)) {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+
                     Text(
                         text = nombre,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = colorScheme.onSurface
                     )
+
                     Text(
                         text = razaEdad,
                         fontSize = 12.sp,
-                        color = Color.DarkGray
+                        color = colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -668,8 +773,12 @@ fun PacienteCard(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
                         .background(estadoBgColor)
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .padding(
+                            horizontal = 8.dp,
+                            vertical = 4.dp
+                        )
                 ) {
+
                     Text(
                         text = estado,
                         fontSize = 11.sp,
@@ -680,44 +789,58 @@ fun PacienteCard(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            Divider(color = Color(0xFFF0F0F0), thickness = 1.dp)
+
+            HorizontalDivider(
+                color = colorScheme.outlineVariant,
+                thickness = 1.dp
+            )
+
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Fila de hora y tipo
+            // Fila de hora y tipo de consulta.
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
                     Icon(
                         imageVector = Icons.Outlined.Schedule,
                         contentDescription = "Hora",
                         modifier = Modifier.size(14.dp),
-                        tint = Color.Gray
+                        tint = colorScheme.onSurfaceVariant
                     )
+
                     Spacer(modifier = Modifier.width(4.dp))
+
                     Text(
                         text = hora,
                         fontSize = 12.sp,
-                        color = Color.DarkGray
+                        color = colorScheme.onSurfaceVariant
                     )
                 }
+
                 Text(
                     text = tipoConsulta,
                     fontSize = 12.sp,
-                    color = Color.DarkGray,
+                    color = colorScheme.onSurface,
                     fontWeight = FontWeight.Medium
                 )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Descripción
+            // Descripción.
+
             Text(
                 text = descripcion,
                 fontSize = 13.sp,
-                color = Color.DarkGray,
+                color = colorScheme.onSurfaceVariant,
                 lineHeight = 18.sp
             )
         }

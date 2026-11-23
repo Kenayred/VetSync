@@ -131,6 +131,9 @@ class NotaClinicaRepository {
 
         val fechaCreacion = System.currentTimeMillis()
 
+        val referenciaMascota = db.collection("mascotas")
+            .document(nota.mascotaId)
+
         db.runTransaction<NotaClinica> { transaccion ->
 
             // Consultamos la cita antes de realizar las escrituras.
@@ -139,6 +142,23 @@ class NotaClinicaRepository {
             if (!documentoCita.exists()) {
                 throw IllegalStateException(
                     "La cita seleccionada no existe."
+                )
+            }
+
+            // Consultamos también el documento de la mascota.
+            val documentoMascota = transaccion.get(referenciaMascota)
+
+            if (!documentoMascota.exists()) {
+                throw IllegalStateException(
+                    "La mascota asociada a la cita no existe."
+                )
+            }
+
+            val propietarioReal = documentoMascota.getString("idDueno") ?: ""
+
+            if (propietarioReal != nota.propietarioId) {
+                throw SecurityException(
+                    "La mascota no pertenece al propietario indicado."
                 )
             }
 
@@ -175,14 +195,17 @@ class NotaClinicaRepository {
 
             val fechaCita =
                 documentoCita.getString("fecha")
-                    ?: nota.fecha
+                    ?.trim()
+                    .orEmpty()
 
             val fechaHoraCita =
-                documentoCita.getString("hora") ?: ""
+                documentoCita.getString("hora")
+                    ?.trim()
+                    .orEmpty()
 
-            if (fechaCita.isBlank()) {
+            if (fechaCita.isBlank() || fechaHoraCita.isBlank()) {
                 throw IllegalStateException(
-                    "La cita no tiene una fecha válida."
+                    "La cita no tiene una fecha u hora válida."
                 )
             }
 

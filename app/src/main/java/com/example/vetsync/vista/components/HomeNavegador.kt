@@ -1,52 +1,45 @@
 package com.example.vetsync.vista.components
 
+import android.widget.Toast
+
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.vetsync.vista.theme.*
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.Image
-import androidx.compose.material.icons.filled.Dashboard
-import androidx.compose.runtime.remember
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Color
+import com.example.vetsync.controlador.UsuarioControlador
 import com.example.vetsync.modelo.ImagenUtils
 import com.example.vetsync.modelo.SesionUsuario
-import androidx.compose.material3.IconButton
-import android.widget.Toast
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.vetsync.controlador.UsuarioControlador
-import com.example.vetsync.vista.theme.RojoAlerta
-import com.example.vetsync.vista.theme.VerdeVetSync
+
+// --------------------------------------------------
+// BARRA SUPERIOR DEL CLIENTE
+// --------------------------------------------------
 
 @Composable
 fun HomeTopBar(
@@ -59,97 +52,130 @@ fun HomeTopBar(
     val fotoUrl = usuario?.fotoUrl ?: ""
 
     val bitmapPerfil = remember(fotoUrl) {
-        if (fotoUrl.isNotEmpty()) ImagenUtils.base64ABitmap(fotoUrl) else null
+        if (fotoUrl.isNotEmpty()) {
+            ImagenUtils.base64ABitmap(fotoUrl)
+        } else {
+            null
+        }
     }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(horizontal = 20.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        color = MaterialTheme.colorScheme.background,
+        contentColor = MaterialTheme.colorScheme.onBackground
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if(mostrarFotoPerfil){
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(VerdeClaroIcono)
-                    .border(1.dp, VerdeVetSync.copy(alpha = 0.4f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
 
-                    if (bitmapPerfil != null) {
-                        Image(
-                            bitmap = bitmapPerfil,
-                            contentDescription = "Foto de perfil",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Perfil",
-                            tint = VerdeVetSync,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-
-            }
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = "VetSync",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = VerdeVetSync
-            )
-        }
-
-        IconButton(
-            onClick = onNotificationsClick
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                contentAlignment = Alignment.TopEnd
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Notifications,
-                    contentDescription = "Abrir notificaciones",
-                    tint = Color(0xFF2B2B2B),
-                    modifier = Modifier.size(26.dp)
-                )
 
-                if (notificacionesNoLeidas > 0) {
-                    Surface(
-                        modifier = Modifier.offset(
-                            x = 5.dp,
-                            y = (-5).dp
-                        ),
-                        color = RojoAlerta,
-                        shape = CircleShape
-                    ) {
-                        Text(
-                            text = if (notificacionesNoLeidas > 9) {
-                                "9+"
-                            } else {
-                                notificacionesNoLeidas.toString()
-                            },
-                            modifier = Modifier.padding(
-                                horizontal = 4.dp,
-                                vertical = 2.dp
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                if (mostrarFotoPerfil) {
+
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(
+                                MaterialTheme.colorScheme.primaryContainer
+                            )
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.outline,
+                                CircleShape
                             ),
-                            color = Color.White,
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        contentAlignment = Alignment.Center
+                    ) {
+
+                        if (bitmapPerfil != null) {
+
+                            Image(
+                                bitmap = bitmapPerfil,
+                                contentDescription = "Foto de perfil",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+
+                        } else {
+
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Perfil",
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(10.dp))
+
+                Text(
+                    text = "VetSync",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            IconButton(
+                onClick = onNotificationsClick
+            ) {
+
+                Box(
+                    contentAlignment = Alignment.TopEnd
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Outlined.Notifications,
+                        contentDescription = "Abrir notificaciones",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(26.dp)
+                    )
+
+                    if (notificacionesNoLeidas > 0) {
+
+                        Surface(
+                            modifier = Modifier.offset(
+                                x = 5.dp,
+                                y = (-5).dp
+                            ),
+                            color = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError,
+                            shape = CircleShape
+                        ) {
+
+                            Text(
+                                text = if (notificacionesNoLeidas > 9) {
+                                    "9+"
+                                } else {
+                                    notificacionesNoLeidas.toString()
+                                },
+                                modifier = Modifier.padding(
+                                    horizontal = 4.dp,
+                                    vertical = 2.dp
+                                ),
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
         }
     }
 }
+
+// --------------------------------------------------
+// BARRA SUPERIOR DEL ADMINISTRADOR
+// --------------------------------------------------
 
 @Composable
 fun AdminHomeTopBar(
@@ -162,97 +188,130 @@ fun AdminHomeTopBar(
     val fotoUrl = usuario?.fotoUrl ?: ""
 
     val bitmapPerfil = remember(fotoUrl) {
-        if (fotoUrl.isNotEmpty()) ImagenUtils.base64ABitmap(fotoUrl) else null
+        if (fotoUrl.isNotEmpty()) {
+            ImagenUtils.base64ABitmap(fotoUrl)
+        } else {
+            null
+        }
     }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(horizontal = 20.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        color = MaterialTheme.colorScheme.background,
+        contentColor = MaterialTheme.colorScheme.onBackground
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if(mostrarFotoPerfil){
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                if (mostrarFotoPerfil) {
+
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(
+                                MaterialTheme.colorScheme.primaryContainer
+                            )
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.outline,
+                                CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+
+                        if (bitmapPerfil != null) {
+
+                            Image(
+                                bitmap = bitmapPerfil,
+                                contentDescription = "Foto de perfil",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+
+                        } else {
+
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Perfil",
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(10.dp))
+
+                Text(
+                    text = "VetSync",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            IconButton(
+                onClick = onNotificationsClick
+            ) {
+
                 Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(VerdeClaroIcono)
-                        .border(1.dp, VerdeVetSync.copy(alpha = 0.4f), CircleShape),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.TopEnd
                 ) {
 
-                    if (bitmapPerfil != null) {
-                        Image(
-                            bitmap = bitmapPerfil,
-                            contentDescription = "Foto de perfil",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Perfil",
-                            tint = VerdeVetSync,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Outlined.Notifications,
+                        contentDescription = "Abrir notificaciones",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(26.dp)
+                    )
 
-                }
-            }
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = "VetSync",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = VerdeVetSync
-            )
-        }
+                    if (notificacionesNoLeidas > 0) {
 
-        IconButton(
-            onClick = onNotificationsClick
-        ) {
-            Box(
-                contentAlignment = Alignment.TopEnd
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Notifications,
-                    contentDescription = "Abrir notificaciones",
-                    tint = Color(0xFF2B2B2B),
-                    modifier = Modifier.size(26.dp)
-                )
-
-                if (notificacionesNoLeidas > 0) {
-                    Surface(
-                        modifier = Modifier.offset(
-                            x = 5.dp,
-                            y = (-5).dp
-                        ),
-                        color = RojoAlerta,
-                        shape = CircleShape
-                    ) {
-                        Text(
-                            text = if (notificacionesNoLeidas > 9) {
-                                "9+"
-                            } else {
-                                notificacionesNoLeidas.toString()
-                            },
-                            modifier = Modifier.padding(
-                                horizontal = 4.dp,
-                                vertical = 2.dp
+                        Surface(
+                            modifier = Modifier.offset(
+                                x = 5.dp,
+                                y = (-5).dp
                             ),
-                            color = Color.White,
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                            color = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError,
+                            shape = CircleShape
+                        ) {
+
+                            Text(
+                                text = if (notificacionesNoLeidas > 9) {
+                                    "9+"
+                                } else {
+                                    notificacionesNoLeidas.toString()
+                                },
+                                modifier = Modifier.padding(
+                                    horizontal = 4.dp,
+                                    vertical = 2.dp
+                                ),
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
         }
     }
 }
+
+// --------------------------------------------------
+// NAVEGACIÓN INFERIOR DEL CLIENTE
+// --------------------------------------------------
 
 @Composable
 fun HomeBottomNavigationBar(
@@ -261,8 +320,10 @@ fun HomeBottomNavigationBar(
     onTabSelected: (Int) -> Unit
 ) {
     Surface(
-        color = Color(0xFFF4EFEA),
-        tonalElevation = 4.dp
+        color = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
     ) {
         Row(
             modifier = Modifier
@@ -277,12 +338,14 @@ fun HomeBottomNavigationBar(
                 selected = selectedTab == 0,
                 onClick = { onTabSelected(0) }
             )
+
             BottomNavItem(
                 label = "Mis\nmascotas",
                 icon = Icons.Outlined.FavoriteBorder,
                 selected = selectedTab == 1,
                 onClick = { onTabSelected(1) }
             )
+
             BottomNavItem(
                 label = "Citas",
                 icon = Icons.Outlined.DateRange,
@@ -290,6 +353,7 @@ fun HomeBottomNavigationBar(
                 hasBadge = true,
                 onClick = { onTabSelected(2) }
             )
+
             BottomNavItem(
                 label = "Notificaciones",
                 icon = Icons.Outlined.Notifications,
@@ -298,6 +362,7 @@ fun HomeBottomNavigationBar(
                 badgeCount = notificacionesNoLeidas,
                 onClick = { onTabSelected(3) }
             )
+
             BottomNavItem(
                 label = "Perfil",
                 icon = Icons.Outlined.Person,
@@ -308,14 +373,20 @@ fun HomeBottomNavigationBar(
     }
 }
 
+// --------------------------------------------------
+// NAVEGACIÓN INFERIOR DEL ADMINISTRADOR
+// --------------------------------------------------
+
 @Composable
 fun AdminHomeBottomNavigationBar(
     selectedTab: Int,
     onTabSelected: (Int) -> Unit
 ) {
     Surface(
-        color = Color(0xFFF4EFEA),
-        tonalElevation = 4.dp
+        color = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
     ) {
         Row(
             modifier = Modifier
@@ -330,12 +401,14 @@ fun AdminHomeBottomNavigationBar(
                 selected = selectedTab == 0,
                 onClick = { onTabSelected(0) }
             )
+
             BottomNavItem(
                 label = "Citas",
                 icon = Icons.Outlined.CalendarToday,
                 selected = selectedTab == 1,
                 onClick = { onTabSelected(1) }
             )
+
             BottomNavItem(
                 label = "Pacientes",
                 icon = Icons.Outlined.Pets,
@@ -343,12 +416,14 @@ fun AdminHomeBottomNavigationBar(
                 hasBadge = true,
                 onClick = { onTabSelected(2) }
             )
+
             BottomNavItem(
                 label = "Reportes",
                 icon = Icons.Outlined.Analytics,
                 selected = selectedTab == 3,
                 onClick = { onTabSelected(3) }
             )
+
             BottomNavItem(
                 label = "Perfil",
                 icon = Icons.Outlined.Person,
@@ -359,6 +434,10 @@ fun AdminHomeBottomNavigationBar(
     }
 }
 
+// --------------------------------------------------
+// ELEMENTO REUTILIZABLE DE NAVEGACIÓN
+// --------------------------------------------------
+
 @Composable
 fun BottomNavItem(
     label: String,
@@ -368,8 +447,17 @@ fun BottomNavItem(
     badgeCount: Int = 0,
     onClick: () -> Unit
 ) {
-    val backgroundColor = if (selected) VerdeClaroIcono else Color.Transparent
-    val contentColor = if (selected) VerdeVetSync else Color(0xFF3B3B3B)
+    val backgroundColor = if (selected) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        Color.Transparent
+    }
+
+    val contentColor = if (selected) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
 
     Column(
         modifier = Modifier
@@ -379,104 +467,141 @@ fun BottomNavItem(
             .padding(horizontal = 12.dp, vertical = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(contentAlignment = Alignment.TopEnd) {
+        Box(
+            contentAlignment = Alignment.TopEnd
+        ) {
             Icon(
                 imageVector = icon,
                 contentDescription = label,
                 tint = contentColor,
                 modifier = Modifier.size(22.dp)
             )
+
             if (hasBadge) {
-
                 if (badgeCount > 0) {
-
                     Surface(
                         modifier = Modifier.offset(
                             x = 6.dp,
                             y = (-5).dp
                         ),
-                        color = RojoAlerta,
+                        color = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
                         shape = CircleShape
                     ) {
                         Text(
-                            text = if (badgeCount > 9) {
-                                "9+"
-                            } else {
-                                badgeCount.toString()
-                            },
+                            text = if (badgeCount > 9) "9+" else badgeCount.toString(),
                             modifier = Modifier.padding(
                                 horizontal = 4.dp,
                                 vertical = 1.dp
                             ),
-                            color = Color.White,
                             fontSize = 8.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
-
                 } else {
-
                     Box(
                         modifier = Modifier
                             .size(7.dp)
                             .offset(x = 2.dp, y = (-1).dp)
                             .clip(CircleShape)
-                            .background(RojoAlerta)
+                            .background(MaterialTheme.colorScheme.error)
                     )
                 }
             }
         }
+
         Spacer(modifier = Modifier.height(2.dp))
+
         Text(
             text = label,
             fontSize = 10.sp,
             color = contentColor,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            fontWeight = if (selected) {
+                FontWeight.SemiBold
+            } else {
+                FontWeight.Normal
+            },
             textAlign = TextAlign.Center,
             lineHeight = 12.sp
         )
     }
 }
 
+// --------------------------------------------------
+// DIÁLOGO PARA CAMBIAR CONTRASEÑA
+// --------------------------------------------------
+
 @Composable
 fun DialogoCambiarContrasena(
     controlador: UsuarioControlador,
     onDismiss: () -> Unit
 ) {
+
     val context = LocalContext.current
+    val colorScheme = MaterialTheme.colorScheme
 
-    var contrasenaActual by remember { mutableStateOf("") }
-    var nuevaContrasena by remember { mutableStateOf("") }
-    var confirmarContrasena by remember { mutableStateOf("") }
+    var contrasenaActual by remember {
+        mutableStateOf("")
+    }
 
-    var verActual by remember { mutableStateOf(false) }
-    var verNueva by remember { mutableStateOf(false) }
-    var verConfirmar by remember { mutableStateOf(false) }
+    var nuevaContrasena by remember {
+        mutableStateOf("")
+    }
 
-    var cargando by remember { mutableStateOf(false) }
-    var errorMensaje by remember { mutableStateOf<String?>(null) }
+    var confirmarContrasena by remember {
+        mutableStateOf("")
+    }
+
+    var verActual by remember {
+        mutableStateOf(false)
+    }
+
+    var verNueva by remember {
+        mutableStateOf(false)
+    }
+
+    var verConfirmar by remember {
+        mutableStateOf(false)
+    }
+
+    var cargando by remember {
+        mutableStateOf(false)
+    }
+
+    var errorMensaje by remember {
+        mutableStateOf<String?>(null)
+    }
 
     AlertDialog(
-        onDismissRequest = { if (!cargando) onDismiss() },
-        containerColor = Color.White,
+        onDismissRequest = {
+            if (!cargando) onDismiss()
+        },
+
+        containerColor = colorScheme.surface,
+
         title = {
             Text(
                 text = "Cambiar contraseña",
                 fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
+                fontSize = 18.sp,
+                color = colorScheme.onSurface
             )
         },
+
         text = {
+
             Column {
+
                 Text(
                     text = "Por seguridad, ingresa tu contraseña actual antes de definir una nueva.",
                     fontSize = 13.sp,
-                    color = Color.DarkGray
+                    color = colorScheme.onSurfaceVariant
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Contraseña actual
+                // Contraseña actual.
+
                 OutlinedTextField(
                     value = contrasenaActual,
                     onValueChange = {
@@ -484,29 +609,55 @@ fun DialogoCambiarContrasena(
                         errorMensaje = null
                     },
                     enabled = !cargando,
-                    label = { Text("Contraseña actual") },
-                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    label = {
+                        Text("Contraseña actual")
+                    },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Lock,
+                            contentDescription = null
+                        )
+                    },
                     trailingIcon = {
-                        IconButton(onClick = { verActual = !verActual }) {
+
+                        IconButton(
+                            onClick = {
+                                verActual = !verActual
+                            }
+                        ) {
+
                             Icon(
-                                imageVector = if (verActual) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = null
+                                imageVector = if (verActual) {
+                                    Icons.Default.VisibilityOff
+                                } else {
+                                    Icons.Default.Visibility
+                                },
+                                contentDescription = "Mostrar u ocultar contraseña"
                             )
                         }
                     },
-                    visualTransformation = if (verActual) VisualTransformation.None else PasswordVisualTransformation(),
+                    visualTransformation = if (verActual) {
+                        VisualTransformation.None
+                    } else {
+                        PasswordVisualTransformation()
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = VerdeVetSync,
-                        focusedLabelColor = VerdeVetSync,
-                        cursorColor = VerdeVetSync
+                        focusedBorderColor = colorScheme.primary,
+                        unfocusedBorderColor = colorScheme.outline,
+                        focusedLabelColor = colorScheme.primary,
+                        unfocusedLabelColor = colorScheme.onSurfaceVariant,
+                        cursorColor = colorScheme.primary,
+                        focusedTextColor = colorScheme.onSurface,
+                        unfocusedTextColor = colorScheme.onSurface
                     )
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Nueva contraseña
+                // Nueva contraseña.
+
                 OutlinedTextField(
                     value = nuevaContrasena,
                     onValueChange = {
@@ -514,29 +665,55 @@ fun DialogoCambiarContrasena(
                         errorMensaje = null
                     },
                     enabled = !cargando,
-                    label = { Text("Nueva contraseña") },
-                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    label = {
+                        Text("Nueva contraseña")
+                    },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Lock,
+                            contentDescription = null
+                        )
+                    },
                     trailingIcon = {
-                        IconButton(onClick = { verNueva = !verNueva }) {
+
+                        IconButton(
+                            onClick = {
+                                verNueva = !verNueva
+                            }
+                        ) {
+
                             Icon(
-                                imageVector = if (verNueva) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = null
+                                imageVector = if (verNueva) {
+                                    Icons.Default.VisibilityOff
+                                } else {
+                                    Icons.Default.Visibility
+                                },
+                                contentDescription = "Mostrar u ocultar contraseña"
                             )
                         }
                     },
-                    visualTransformation = if (verNueva) VisualTransformation.None else PasswordVisualTransformation(),
+                    visualTransformation = if (verNueva) {
+                        VisualTransformation.None
+                    } else {
+                        PasswordVisualTransformation()
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = VerdeVetSync,
-                        focusedLabelColor = VerdeVetSync,
-                        cursorColor = VerdeVetSync
+                        focusedBorderColor = colorScheme.primary,
+                        unfocusedBorderColor = colorScheme.outline,
+                        focusedLabelColor = colorScheme.primary,
+                        unfocusedLabelColor = colorScheme.onSurfaceVariant,
+                        cursorColor = colorScheme.primary,
+                        focusedTextColor = colorScheme.onSurface,
+                        unfocusedTextColor = colorScheme.onSurface
                     )
                 )
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Confirmar nueva contraseña
+                // Confirmar nueva contraseña.
+
                 OutlinedTextField(
                     value = confirmarContrasena,
                     onValueChange = {
@@ -544,39 +721,69 @@ fun DialogoCambiarContrasena(
                         errorMensaje = null
                     },
                     enabled = !cargando,
-                    label = { Text("Confirmar nueva contraseña") },
-                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    label = {
+                        Text("Confirmar nueva contraseña")
+                    },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Lock,
+                            contentDescription = null
+                        )
+                    },
                     trailingIcon = {
-                        IconButton(onClick = { verConfirmar = !verConfirmar }) {
+
+                        IconButton(
+                            onClick = {
+                                verConfirmar = !verConfirmar
+                            }
+                        ) {
+
                             Icon(
-                                imageVector = if (verConfirmar) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = null
+                                imageVector = if (verConfirmar) {
+                                    Icons.Default.VisibilityOff
+                                } else {
+                                    Icons.Default.Visibility
+                                },
+                                contentDescription = "Mostrar u ocultar contraseña"
                             )
                         }
                     },
-                    visualTransformation = if (verConfirmar) VisualTransformation.None else PasswordVisualTransformation(),
+                    visualTransformation = if (verConfirmar) {
+                        VisualTransformation.None
+                    } else {
+                        PasswordVisualTransformation()
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = VerdeVetSync,
-                        focusedLabelColor = VerdeVetSync,
-                        cursorColor = VerdeVetSync
+                        focusedBorderColor = colorScheme.primary,
+                        unfocusedBorderColor = colorScheme.outline,
+                        focusedLabelColor = colorScheme.primary,
+                        unfocusedLabelColor = colorScheme.onSurfaceVariant,
+                        cursorColor = colorScheme.primary,
+                        focusedTextColor = colorScheme.onSurface,
+                        unfocusedTextColor = colorScheme.onSurface
                     )
                 )
 
                 if (errorMensaje != null) {
+
                     Spacer(modifier = Modifier.height(8.dp))
+
                     Text(
                         text = errorMensaje.orEmpty(),
-                        color = RojoAlerta,
+                        color = colorScheme.error,
                         fontSize = 12.sp
                     )
                 }
             }
         },
+
         confirmButton = {
+
             Button(
                 onClick = {
+
                     cargando = true
                     errorMensaje = null
 
@@ -584,41 +791,62 @@ fun DialogoCambiarContrasena(
                         contrasenaActual = contrasenaActual,
                         nuevaContrasena = nuevaContrasena,
                         confirmarContrasena = confirmarContrasena,
+
                         onSuccess = {
+
                             cargando = false
+
                             Toast.makeText(
                                 context,
                                 "Contraseña actualizada correctamente.",
                                 Toast.LENGTH_SHORT
                             ).show()
+
                             onDismiss()
                         },
+
                         onError = { mensaje ->
+
                             cargando = false
                             errorMensaje = mensaje
                         }
                     )
                 },
+
                 enabled = !cargando,
-                colors = ButtonDefaults.buttonColors(containerColor = VerdeVetSync)
+
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colorScheme.primary,
+                    contentColor = colorScheme.onPrimary
+                )
             ) {
+
                 if (cargando) {
+
                     CircularProgressIndicator(
                         modifier = Modifier.size(18.dp),
-                        color = Color.White,
+                        color = colorScheme.onPrimary,
                         strokeWidth = 2.dp
                     )
+
                 } else {
+
                     Text("Actualizar")
                 }
             }
         },
+
         dismissButton = {
+
             TextButton(
                 onClick = onDismiss,
                 enabled = !cargando
             ) {
-                Text("Cancelar", color = Color.Gray)
+
+                Text(
+                    "Cancelar",
+                    color = colorScheme.onSurfaceVariant
+                )
             }
         }
     )

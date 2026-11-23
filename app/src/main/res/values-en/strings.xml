@@ -1,0 +1,47 @@
+
+<resources>
+
+    <string name="app_name">VetSync</string>
+
+    <!-- Preferences -->
+    <string name="preferences_title">Preferences</string>
+    <string name="language_title">Language</string>
+    <string name="language_description">Select the application language</string>
+    <string name="language_spanish">Spanish</string>
+    <string name="language_english">English</string>
+    <string name="language_dialog_title">Select language</string>
+    <string name="language_dialog_cancel">Cancel</string>
+
+    <!-- Administrator profile -->
+    <string name="admin_profile_title">Administrator Profile</string>
+    <string name="admin_clinic_information">Clinic information</string>
+    <string name="admin_security">Security</string>
+    <string name="admin_change_password">Change password</string>
+    <string name="admin_logout">Log out</string>
+
+    <!-- Institutional information -->
+    <string name="clinic_name">Clinic name</string>
+    <string name="clinic_address">Address</string>
+    <string name="clinic_phone">Phone</string>
+    <string name="clinic_email">Institutional email</string>
+    <string name="clinic_description">Clinic description</string>
+    <string name="clinic_save">Save information</string>
+    <string name="clinic_schedule">Opening hours</string>
+
+    <!-- Client profile -->
+    <string name="client_profile_title">My profile</string>
+    <string name="client_personal_information">Personal information</string>
+    <string name="client_preferences">Preferences</string>
+    <string name="client_location">Location</string>
+    <string name="client_notifications">Notifications</string>
+    <string name="client_dark_mode">Dark mode</string>
+    <string name="client_notification_counter">Notification counter</string>
+    <string name="client_notification_counter_description">Show the number of unread notifications.</string>
+
+    <!-- General actions -->
+    <string name="action_save">Save changes</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_back">Back</string>
+    <string name="action_edit">Edit</string>
+
+</resources>

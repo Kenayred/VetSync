@@ -1,5 +1,6 @@
 package com.example.vetsync.vista.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,75 +12,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.BorderStroke
 import com.example.vetsync.modelo.Notificacion
 import com.example.vetsync.modelo.NotificacionRepository
 import com.example.vetsync.modelo.SesionUsuario
-import com.example.vetsync.vista.theme.*
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import android.content.Intent
-import android.provider.Settings
-import android.util.Log
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.platform.LocalContext
-import com.example.vetsync.controlador.CitaControlador
-import com.example.vetsync.notificaciones.NotificacionSistema
-import com.example.vetsync.notificaciones.ProgramadorRecordatorios
 
 @Composable
 fun AdminNotificacionesScreen() {
 
+    val colorScheme = MaterialTheme.colorScheme
     val usuarioId = SesionUsuario.idUsuario
-    val context = LocalContext.current
-
-    val controladorCitas = remember {
-        CitaControlador()
-    }
-
-    var permisoSistemaHabilitado by remember(usuarioId) {
-        mutableStateOf(
-            NotificacionSistema.tienePermiso(context)
-        )
-    }
-
-    val abrirAjustesNotificaciones =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.StartActivityForResult()
-        ) {
-
-            permisoSistemaHabilitado =
-                NotificacionSistema.tienePermiso(context)
-
-            // Si el admin habilitó las notificaciones,
-            // recuperamos la programación de sus recordatorios.
-            if (permisoSistemaHabilitado) {
-
-                controladorCitas.obtenerCitasAdmin(
-
-                    onSuccess = { citas ->
-
-                        ProgramadorRecordatorios.sincronizarRecordatorios(
-                            context = context.applicationContext,
-                            citas = citas
-                        )
-                    },
-
-                    onError = { error ->
-                        Log.w(
-                            "VetSync",
-                            "No se pudieron recuperar los recordatorios: $error"
-                        )
-                    }
-                )
-            }
-        }
 
     val repository = remember {
         NotificacionRepository()
@@ -142,7 +89,7 @@ fun AdminNotificacionesScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(FondoCrema)
+            .background(colorScheme.background)
             .padding(
                 horizontal = 20.dp,
                 vertical = 16.dp
@@ -153,90 +100,16 @@ fun AdminNotificacionesScreen() {
             text = "Notificaciones",
             fontSize = 30.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1E221F)
+            color = colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(6.dp))
 
         Text(
-            text = "Mantente al tanto de las solicitudes y citas clinicas.",
+            text = "Mantente al tanto de las solicitudes y citas clínicas.",
             fontSize = 14.sp,
-            color = GrisTextoSecundario
+            color = colorScheme.onSurfaceVariant
         )
-
-        if (!permisoSistemaHabilitado) {
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFFF4DF)
-                ),
-
-                shape = RoundedCornerShape(14.dp),
-
-                border = BorderStroke(
-                    1.dp,
-                    Color(0xFFF0DFC0)
-                )
-            ) {
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-
-                    Text(
-                        text = "Activa los recordatorios",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF78551C)
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Text(
-                        text = "Las notificaciones dentro de VetSync " +
-                                "seguirán disponibles, pero necesitas " +
-                                "habilitar las notificaciones de Android " +
-                                "para recibir recordatorios en tu dispositivo.",
-
-                        fontSize = 13.sp,
-                        lineHeight = 19.sp,
-                        color = Color(0xFF78551C)
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    OutlinedButton(
-                        onClick = {
-
-                            val intent = Intent(
-                                Settings.ACTION_APP_NOTIFICATION_SETTINGS
-                            ).apply {
-
-                                putExtra(
-                                    Settings.EXTRA_APP_PACKAGE,
-                                    context.packageName
-                                )
-                            }
-
-                            abrirAjustesNotificaciones.launch(intent)
-                        },
-
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = VerdeVetSync
-                        )
-                    ) {
-
-                        Text("Configurar notificaciones")
-                    }
-                }
-            }
-        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -260,8 +133,10 @@ fun AdminNotificacionesScreen() {
                         Text("Todas")
                     },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = VerdeClaroIcono,
-                        selectedLabelColor = VerdeVetSync
+                        selectedContainerColor = colorScheme.primaryContainer,
+                        selectedLabelColor = colorScheme.onPrimaryContainer,
+                        containerColor = colorScheme.surface,
+                        labelColor = colorScheme.onSurfaceVariant
                     )
                 )
 
@@ -274,8 +149,10 @@ fun AdminNotificacionesScreen() {
                         Text("No leídas")
                     },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = VerdeClaroIcono,
-                        selectedLabelColor = VerdeVetSync
+                        selectedContainerColor = colorScheme.primaryContainer,
+                        selectedLabelColor = colorScheme.onPrimaryContainer,
+                        containerColor = colorScheme.surface,
+                        labelColor = colorScheme.onSurfaceVariant
                     )
                 )
             }
@@ -310,7 +187,7 @@ fun AdminNotificacionesScreen() {
                     if (marcandoTodas) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(16.dp),
-                            color = VerdeVetSync,
+                            color = colorScheme.primary,
                             strokeWidth = 2.dp
                         )
 
@@ -323,7 +200,7 @@ fun AdminNotificacionesScreen() {
                         } else {
                             "Marcar todas como leídas"
                         },
-                        color = VerdeVetSync,
+                        color = colorScheme.primary,
                         fontSize = 12.sp
                     )
                 }
@@ -337,11 +214,13 @@ fun AdminNotificacionesScreen() {
             cargando -> {
 
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
-                        color = VerdeVetSync
+                        color = colorScheme.primary
                     )
                 }
             }
@@ -349,38 +228,58 @@ fun AdminNotificacionesScreen() {
             errorMensaje != null -> {
 
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = errorMensaje
-                            ?: "Ocurrió un error.",
-                        color = Color(0xFFB3261E),
-                        fontSize = 14.sp
-                    )
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = colorScheme.errorContainer
+                        )
+                    ) {
+                        Text(
+                            text = errorMensaje
+                                ?: "Ocurrió un error.",
+                            modifier = Modifier.padding(18.dp),
+                            color = colorScheme.onErrorContainer,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             }
 
             notificacionesFiltradas.isEmpty() -> {
 
-                TarjetaNotificacionesVacia(
-                    titulo = if (mostrarSoloNoLeidas) {
-                        "Todo al día"
-                    } else {
-                        "No tienes notificaciones"
-                    },
-                    mensaje = if (mostrarSoloNoLeidas) {
-                        "No tienes avisos pendientes de lectura."
-                    } else {
-                        "Aquí aparecerán las nuevas solicitudes de citas"
-                    }
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TarjetaNotificacionesVacia(
+                        titulo = if (mostrarSoloNoLeidas) {
+                            "Todo al día"
+                        } else {
+                            "No tienes notificaciones"
+                        },
+                        mensaje = if (mostrarSoloNoLeidas) {
+                            "No tienes avisos pendientes de lectura."
+                        } else {
+                            "Aquí aparecerán las nuevas solicitudes de citas"
+                        }
+                    )
+                }
             }
 
             else -> {
 
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
 
@@ -421,16 +320,17 @@ private fun TarjetaNotificacionesVacia(
     titulo: String = "No tienes notificaciones",
     mensaje: String = "Aquí aparecerán tus avisos."
 ) {
+    val colorScheme = MaterialTheme.colorScheme
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = colorScheme.surface
         ),
         border = BorderStroke(
             1.dp,
-            Color(0xFFEEECE8)
+            colorScheme.outlineVariant
         )
     ) {
 
@@ -444,7 +344,7 @@ private fun TarjetaNotificacionesVacia(
             Icon(
                 imageVector = Icons.Outlined.Notifications,
                 contentDescription = "Notificaciones",
-                tint = VerdeVetSync,
+                tint = colorScheme.primary,
                 modifier = Modifier.size(48.dp)
             )
 
@@ -454,7 +354,7 @@ private fun TarjetaNotificacionesVacia(
                 text = titulo,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E221F)
+                color = colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -462,7 +362,7 @@ private fun TarjetaNotificacionesVacia(
             Text(
                 text = mensaje,
                 fontSize = 14.sp,
-                color = GrisTextoSecundario,
+                color = colorScheme.onSurfaceVariant,
                 lineHeight = 21.sp
             )
         }
@@ -474,20 +374,21 @@ private fun NotificacionItem(
     notificacion: Notificacion,
     onMarcarLeida: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (notificacion.leida) {
-                Color.White
+                colorScheme.surface
             } else {
-                Color(0xFFF0F6EF)
+                colorScheme.primaryContainer.copy(alpha = 0.45f)
             }
         ),
         border = BorderStroke(
             1.dp,
-            Color(0xFFE5E8E5)
+            colorScheme.outlineVariant
         )
     ) {
 
@@ -506,13 +407,14 @@ private fun NotificacionItem(
                     modifier = Modifier.weight(1f),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E221F)
+                    color = colorScheme.onSurface
                 )
 
                 if (!notificacion.leida) {
 
                     Surface(
-                        color = VerdeClaroIcono,
+                        color = colorScheme.primaryContainer,
+                        contentColor = colorScheme.onPrimaryContainer,
                         shape = RoundedCornerShape(50)
                     ) {
                         Text(
@@ -522,8 +424,7 @@ private fun NotificacionItem(
                                 vertical = 4.dp
                             ),
                             fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = VerdeVetSync
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
@@ -534,7 +435,7 @@ private fun NotificacionItem(
             Text(
                 text = notificacion.mensaje,
                 fontSize = 14.sp,
-                color = GrisTextoSecundario,
+                color = colorScheme.onSurfaceVariant,
                 lineHeight = 20.sp
             )
 
@@ -543,7 +444,7 @@ private fun NotificacionItem(
             Text(
                 text = formatearFecha(notificacion.fechaCreacion),
                 fontSize = 12.sp,
-                color = GrisTextoSecundario
+                color = colorScheme.onSurfaceVariant
             )
 
             if (!notificacion.leida) {
@@ -555,7 +456,7 @@ private fun NotificacionItem(
                 ) {
                     Text(
                         text = "Marcar como leída",
-                        color = VerdeVetSync,
+                        color = colorScheme.primary,
                         fontWeight = FontWeight.SemiBold
                     )
                 }

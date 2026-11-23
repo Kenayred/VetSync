@@ -5,16 +5,80 @@ import com.example.vetsync.modelo.UsuarioRepository
 import com.example.vetsync.modelo.Usuario
 import com.example.vetsync.modelo.RolUsuario
 import com.example.vetsync.modelo.SesionUsuario
-import com.google.firebase.Firebase
-import java.util.UUID
-import org.mindrot.jbcrypt.BCrypt
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 
 class UsuarioControlador {
 
     private val dbManager = UsuarioRepository()
     private val auth = FirebaseAuth.getInstance()
+
+    private fun completarInicioSesionConPerfil(
+        usuarioEncontrado: Usuario,
+        onSuccess: (Usuario) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val usuarioFirebase = auth.currentUser
+
+        if (
+            usuarioFirebase == null ||
+            usuarioFirebase.uid != usuarioEncontrado.id
+        ) {
+            onError("No se pudo validar la sesión de Firebase.")
+            return
+        }
+
+        // Actualizamos los datos locales de Firebase Authentication.
+        usuarioFirebase.reload()
+            .addOnSuccessListener {
+
+                val correoFirebase = auth.currentUser?.email
+                    ?.trim()
+                    .orEmpty()
+
+                val correoFinal = correoFirebase.ifBlank {
+                    usuarioEncontrado.correo
+                }
+
+                val usuarioFinal = usuarioEncontrado.copy(
+                    id = usuarioFirebase.uid,
+                    correo = correoFinal
+                )
+
+                // Si el correo ya coincide, no necesitamos escribir nuevamente.
+                if (correoFinal == usuarioEncontrado.correo) {
+                    SesionUsuario.iniciarSesion(usuarioFinal)
+                    onSuccess(usuarioFinal)
+                    return@addOnSuccessListener
+                }
+
+                // Sincronizamos Firestore con el correo verificado en Auth.
+                dbManager.actualizarDatosUsuario(
+                    idUsuario = usuarioFirebase.uid,
+                    datosActualizados = mapOf(
+                        "correo" to correoFinal
+                    ),
+                    onSuccess = {
+                        SesionUsuario.iniciarSesion(usuarioFinal)
+                        onSuccess(usuarioFinal)
+                    },
+                    onFailure = { error ->
+                        onError(
+                            error.message
+                                ?: "No se pudo sincronizar el correo de tu cuenta."
+                        )
+                    }
+                )
+            }
+            .addOnFailureListener { error ->
+                onError(
+                    error.message
+                        ?: "No se pudo actualizar la información de autenticación."
+                )
+            }
+    }
 
     fun registrarUsuario(
         username: String,
@@ -126,8 +190,11 @@ class UsuarioControlador {
                     dbManager.obtenerUsuarioPorId(
                         id = uid,
                         onSuccess = { usuarioEncontrado ->
-                            SesionUsuario.iniciarSesion(usuarioEncontrado)
-                            onSuccess(usuarioEncontrado)
+                            completarInicioSesionConPerfil(
+                                usuarioEncontrado = usuarioEncontrado,
+                                onSuccess = onSuccess,
+                                onError = onError
+                            )
                         },
                         onError = { error -> onError(error) }
                     )
@@ -147,24 +214,48 @@ class UsuarioControlador {
 
         auth.signInWithCredential(credencial)
             .addOnSuccessListener { authResult ->
-                val firebaseUser = authResult.user
-                if (firebaseUser != null) {
 
-                    dbManager.obtenerUsuarioPorId(
-                        id = firebaseUser.uid,
-                        onSuccess = { usuarioExistente ->
-                            // Ya existía en la base de datos
-                            SesionUsuario.iniciarSesion(usuarioExistente)
-                            onSuccess(usuarioExistente)
-                        },
-                        onError = {
-                            // No existe (es nuevo), lo registramos automáticamente
+                val firebaseUser = authResult.user
+
+                if (firebaseUser == null) {
+                    onError(
+                        "No se pudo recuperar la cuenta autenticada."
+                    )
+                    return@addOnSuccessListener
+                }
+
+                dbManager.obtenerUsuarioPorIdConResultado(
+                    id = firebaseUser.uid,
+
+                    // El perfil ya existe: respetamos sus datos y su rol.
+                    onSuccess = { usuarioExistente ->
+                        completarInicioSesionConPerfil(
+                            usuarioEncontrado = usuarioExistente,
+                            onSuccess = onSuccess,
+                            onError = onError
+                        )
+                    },
+
+                    // Solo creamos un perfil cuando Firestore confirma
+                    // que realmente no existe.
+                    onNotFound = {
+
+                        val correoGoogle =
+                            firebaseUser.email?.trim().orEmpty()
+
+                        if (correoGoogle.isBlank()) {
+                            onError(
+                                "No se pudo recuperar el correo de la cuenta de Google."
+                            )
+                        } else {
+
                             val nuevoUsuario = Usuario(
                                 id = firebaseUser.uid,
-                                username = firebaseUser.email?.substringBefore("@") ?: "user_${firebaseUser.uid.take(5)}",
+                                username = correoGoogle.substringBefore("@"),
                                 contrasena = "",
-                                nombre = firebaseUser.displayName ?: "Usuario de Google",
-                                correo = firebaseUser.email ?: "",
+                                nombre = firebaseUser.displayName
+                                    ?: "Usuario de Google",
+                                correo = correoGoogle,
                                 telefono = "",
                                 rol = RolUsuario.CLIENTE,
                                 fotoUrl = firebaseUser.photoUrl?.toString() ?: ""
@@ -172,18 +263,36 @@ class UsuarioControlador {
 
                             dbManager.guardarUsuario(
                                 usuario = nuevoUsuario,
+
                                 onSuccess = {
                                     SesionUsuario.iniciarSesion(nuevoUsuario)
                                     onSuccess(nuevoUsuario)
                                 },
-                                onError = { error -> onError(error) }
+
+                                onError = { error ->
+                                    onError(error)
+                                }
                             )
                         }
-                    )
-                }
+                    },
+
+                    // Un error de conexión o permisos ya no crea ni
+                    // sobrescribe perfiles.
+                    onFailure = { error ->
+
+                        onError(
+                            error.message
+                                ?: "No se pudieron recuperar los datos de tu cuenta."
+                        )
+                    }
+                )
             }
-            .addOnFailureListener { e ->
-                onError("Error al autenticar con Google: ${e.localizedMessage}")
+            .addOnFailureListener { error ->
+
+                onError(
+                    "Error al autenticar con Google: " +
+                            (error.localizedMessage ?: "Inténtalo nuevamente.")
+                )
             }
     }
 
@@ -212,14 +321,15 @@ class UsuarioControlador {
 
             onSuccess = { usuarioEncontrado ->
 
-                // El UID de Firebase es el identificador oficial.
                 val usuarioRestaurado = usuarioEncontrado.copy(
                     id = usuarioFirebase.uid
                 )
 
-                SesionUsuario.iniciarSesion(usuarioRestaurado)
-
-                onSuccess(usuarioRestaurado)
+                completarInicioSesionConPerfil(
+                    usuarioEncontrado = usuarioRestaurado,
+                    onSuccess = onSuccess,
+                    onError = onError
+                )
             },
 
             onNotFound = {
@@ -247,7 +357,8 @@ class UsuarioControlador {
         nuevoTelefono: String,
         nuevoCorreo: String,
         onSuccess: () -> Unit,
-        onError: (String) -> Unit
+        onError: (String) -> Unit,
+        nuevoUbicacion: String? = null
     ) {
         val usuarioActual = SesionUsuario.usuarioActual
 
@@ -260,6 +371,16 @@ class UsuarioControlador {
         val usernameLimpio = nuevoUsername.trim()
         val telefonoLimpio = nuevoTelefono.trim()
         val correoLimpio = nuevoCorreo.trim()
+        val ubicacionLimpia = (
+                nuevoUbicacion ?: usuarioActual.ubicacion
+                ).trim()
+
+        if (ubicacionLimpia.length > 150) {
+            onError(
+                "La ubicación no debe superar los 150 caracteres."
+            )
+            return
+        }
 
         // 1. Validar los campos obligatorios.
         if (
@@ -295,36 +416,62 @@ class UsuarioControlador {
             return
         }
 
-        // 5. Comprobar que el correo no pertenezca a otro usuario.
-        dbManager.verificarCorreoExistente(
-            correo = correoLimpio,
-            idUsuarioExcluir = usuarioActual.id,
-            onDisponible = {
+        // 5. Verificar la sesión de Firebase.
+        val usuarioFirebase = auth.currentUser
 
-                // 6. Comprobar que el nombre de usuario esté disponible.
-                dbManager.verificarUsernameExistente(
-                    username = usernameLimpio,
-                    idUsuarioExcluir = usuarioActual.id,
-                    onDisponible = {
+        if (
+            usuarioFirebase == null ||
+            usuarioFirebase.uid != usuarioActual.id
+        ) {
+            onError("La sesión no es válida. Inicia sesión nuevamente.")
+            return
+        }
 
-                        val actualizaciones = mapOf(
-                            "nombre" to nombreLimpio,
-                            "username" to usernameLimpio,
-                            "telefono" to telefonoLimpio,
-                            "correo" to correoLimpio
-                        )
+        val correoActualFirebase = usuarioFirebase.email
+            ?.trim()
+            .orEmpty()
 
-                        // 7. Guardar los cambios en Firestore.
+        if (correoActualFirebase.isBlank()) {
+            onError("No se pudo recuperar el correo de tu cuenta.")
+            return
+        }
+
+// 6. Comprobar si realmente se desea cambiar el correo.
+        val requiereVerificacionCorreo =
+            correoLimpio != correoActualFirebase
+
+// 7. Verificar la disponibilidad del nombre de usuario.
+        val verificarUsername: () -> Unit = {
+
+            dbManager.verificarUsernameExistente(
+                username = usernameLimpio,
+                idUsuarioExcluir = usuarioActual.id,
+
+                onDisponible = {
+
+                    // Guardamos los demás datos sin adelantar el correo nuevo.
+                    val actualizaciones = mapOf(
+                        "nombre" to nombreLimpio,
+                        "username" to usernameLimpio,
+                        "telefono" to telefonoLimpio,
+                        "correo" to correoActualFirebase,
+                        "ubicacion" to ubicacionLimpia
+                    )
+
+                    val guardarDatosPerfil: () -> Unit = {
+
                         dbManager.actualizarDatosUsuario(
                             idUsuario = usuarioActual.id,
                             datosActualizados = actualizaciones,
 
                             onSuccess = {
+
                                 val usuarioModificado = usuarioActual.copy(
                                     nombre = nombreLimpio,
                                     username = usernameLimpio,
                                     telefono = telefonoLimpio,
-                                    correo = correoLimpio
+                                    correo = correoActualFirebase,
+                                    ubicacion = ubicacionLimpia
                                 )
 
                                 SesionUsuario.iniciarSesion(usuarioModificado)
@@ -339,30 +486,81 @@ class UsuarioControlador {
                                 )
                             }
                         )
-                    },
-
-                    onOcupado = {
-                        onError(
-                            "Este nombre de usuario ya está registrado por otra cuenta."
-                        )
-                    },
-
-                    onError = { mensaje ->
-                        onError(mensaje)
                     }
-                )
-            },
 
-            onOcupado = {
-                onError(
-                    "Este correo electrónico ya está registrado por otra cuenta."
-                )
-            },
+                    if (requiereVerificacionCorreo) {
 
-            onError = { mensaje ->
-                onError(mensaje)
-            }
-        )
+                        // Firebase envía el enlace de verificación.
+                        usuarioFirebase.verifyBeforeUpdateEmail(correoLimpio)
+                            .addOnSuccessListener {
+
+                                guardarDatosPerfil()
+                            }
+                            .addOnFailureListener { error ->
+
+                                val mensaje = when (error) {
+
+                                    is FirebaseAuthRecentLoginRequiredException -> {
+                                        "Por seguridad, cierra sesión e inicia sesión nuevamente antes de cambiar tu correo."
+                                    }
+
+                                    is FirebaseAuthUserCollisionException -> {
+                                        "El correo electrónico ya pertenece a otra cuenta."
+                                    }
+
+                                    else -> {
+                                        error.localizedMessage
+                                            ?: "No se pudo enviar el correo de verificación."
+                                    }
+                                }
+
+                                onError(mensaje)
+                            }
+
+                    } else {
+
+                        guardarDatosPerfil()
+                    }
+                },
+
+                onOcupado = {
+                    onError(
+                        "Este nombre de usuario ya está registrado por otra cuenta."
+                    )
+                },
+
+                onError = { mensaje ->
+                    onError(mensaje)
+                }
+            )
+        }
+
+// 8. Verificar la disponibilidad del correo nuevo.
+        if (requiereVerificacionCorreo) {
+
+            dbManager.verificarCorreoExistente(
+                correo = correoLimpio,
+                idUsuarioExcluir = usuarioActual.id,
+
+                onDisponible = {
+                    verificarUsername()
+                },
+
+                onOcupado = {
+                    onError(
+                        "Este correo electrónico ya está registrado por otra cuenta."
+                    )
+                },
+
+                onError = { mensaje ->
+                    onError(mensaje)
+                }
+            )
+
+        } else {
+
+            verificarUsername()
+        }
     }
 
     fun actualizarFotoDePerfil(
@@ -517,8 +715,27 @@ class UsuarioControlador {
                         onError("No se pudo actualizar la contraseña: ${e.localizedMessage}")
                     }
             }
-            .addOnFailureListener {
-                onError("La contraseña actual es incorrecta.")
+            .addOnFailureListener { error ->
+
+                val mensaje = when (
+                    (error as? com.google.firebase.auth.FirebaseAuthException)?.errorCode
+                ) {
+                    "ERROR_INVALID_CREDENTIAL",
+                    "ERROR_WRONG_PASSWORD" -> {
+                        "La contraseña actual es incorrecta."
+                    }
+
+                    "ERROR_NETWORK_REQUEST_FAILED" -> {
+                        "No se pudo conectar con el servidor. Comprueba tu conexión."
+                    }
+
+                    else -> {
+                        error.localizedMessage
+                            ?: "No se pudo verificar tu contraseña actual."
+                    }
+                }
+
+                onError(mensaje)
             }
     }
 

@@ -71,6 +71,48 @@ class UsuarioRepository {
             .addOnFailureListener { e -> onError(e.message ?: "Error de red.") }
     }
 
+    fun obtenerUsuarioPorIdConResultado(
+        id: String,
+        onSuccess: (Usuario) -> Unit,
+        onNotFound: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        if (id.isBlank()) {
+            onFailure(
+                IllegalArgumentException(
+                    "El identificador del usuario está vacío."
+                )
+            )
+            return
+        }
+
+        db.collection("usuarios")
+            .document(id)
+            .get()
+            .addOnSuccessListener { documento ->
+
+                if (!documento.exists()) {
+                    onNotFound()
+                    return@addOnSuccessListener
+                }
+
+                val usuario = documento.toObject(Usuario::class.java)
+
+                if (usuario != null) {
+                    onSuccess(usuario)
+                } else {
+                    onFailure(
+                        IllegalStateException(
+                            "No se pudieron recuperar los datos del perfil."
+                        )
+                    )
+                }
+            }
+            .addOnFailureListener { error ->
+                onFailure(error)
+            }
+    }
+
     fun verificarCorreoExistente(
         correo: String,
         idUsuarioExcluir: String? = null,

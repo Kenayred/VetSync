@@ -8,7 +8,8 @@ data class Usuario(
     var correo: String = "",
     var telefono: String = "",
     var rol: RolUsuario = RolUsuario.CLIENTE,
-    var fotoUrl: String = ""
+    var fotoUrl: String = "",
+    var ubicacion: String = ""
 ) : Persona(id, nombre) {
 
     override fun obtenerTipo(): String {

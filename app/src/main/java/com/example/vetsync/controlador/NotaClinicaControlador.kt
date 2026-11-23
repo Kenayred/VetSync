@@ -17,6 +17,13 @@ class NotaClinicaControlador {
         onError: (String) -> Unit
     ) {
 
+        if (SesionUsuario.usuarioActual?.rol != RolUsuario.CLIENTE) {
+            onError(
+                "No tienes permisos para consultar historiales clínicos."
+            )
+            return
+        }
+
         val propietarioId = SesionUsuario.idUsuario
 
         if (propietarioId.isBlank()) {
@@ -146,16 +153,16 @@ class NotaClinicaControlador {
         }
 
         // 5. Validar los valores numéricos opcionales.
-        if (peso != null && peso <= 0) {
+        if (peso != null && (!peso.isFinite() || peso <= 0)) {
             onError(
-                "El peso debe ser un valor mayor que cero."
+                "El peso debe ser un número válido mayor que cero."
             )
             return
         }
 
-        if (temperatura != null && temperatura <= 0) {
+        if (temperatura != null && (!temperatura.isFinite() || temperatura <= 0)) {
             onError(
-                "La temperatura debe ser un valor mayor que cero."
+                "La temperatura debe ser un número válido mayor que cero."
             )
             return
         }

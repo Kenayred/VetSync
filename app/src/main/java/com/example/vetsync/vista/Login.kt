@@ -123,8 +123,8 @@ fun LoginScreen(
             onValueChange = { username = it
                 errorMensaje = null},
             enabled = !isLoading,
-            label = { Text("Usuario") },
-            placeholder = { Text("kenay") },
+            label = { Text("Correo electrónico") },
+            placeholder = { Text("correo@ejemplo.com") },
             leadingIcon = { Icon(Icons.Default.AccountCircle, contentDescription = "Email Icon") },
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
