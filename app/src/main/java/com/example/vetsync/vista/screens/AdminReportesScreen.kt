@@ -1,7 +1,16 @@
-
 package com.example.vetsync.vista.screens
 
 import android.app.DatePickerDialog
+import android.content.ClipData
+import android.content.Intent
+import android.graphics.Paint
+import android.graphics.pdf.PdfDocument
+import android.net.Uri
+import android.widget.Toast
+
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -17,11 +26,8 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Schedule
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material.icons.outlined.Share
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,26 +39,27 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
 import com.example.vetsync.controlador.CitaControlador
 import com.example.vetsync.modelo.Cita
 import com.example.vetsync.modelo.EstadoCita
+
+import java.io.ByteArrayOutputStream
 import java.text.NumberFormat
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Currency
 import java.util.Locale
-import android.content.ClipData
-import android.content.Intent
-import android.net.Uri
-import android.widget.Toast
-import android.graphics.Paint
-import android.graphics.pdf.PdfDocument
+
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
-import java.time.LocalDateTime
+
+// ======================================================
+// MODELOS INTERNOS DEL REPORTE
+// ======================================================
 
 private enum class PeriodoReporte(val etiqueta: String) {
     HOY("Hoy"),
@@ -71,9 +78,9 @@ private data class ServicioReporte(
     val cantidad: Int
 )
 
-private val VerdeReporte = Color(0xFF2E5B4B)
-private val FondoReporte = Color(0xFFFDFCF9)
-private val GrisReporte = Color(0xFF6B7280)
+// ======================================================
+// PANTALLA PRINCIPAL DE REPORTES
+// ======================================================
 
 @Composable
 fun AdminReportesScreen(
@@ -82,9 +89,10 @@ fun AdminReportesScreen(
         CitaControlador()
     }
 ) {
-    val context = LocalContext.current
 
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val colorScheme = MaterialTheme.colorScheme
 
     var pdfPendiente by remember {
         mutableStateOf<ByteArray?>(null)
@@ -127,6 +135,10 @@ fun AdminReportesScreen(
     var fechaFinPersonalizada by remember {
         mutableStateOf(hoy)
     }
+
+    // ==================================================
+    // GUARDAR DOCUMENTO PDF
+    // ==================================================
 
     val guardarPdfLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument(
@@ -197,9 +209,9 @@ fun AdminReportesScreen(
         }
     }
 
-    // --------------------------------------------------
+    // ==================================================
     // CARGAR TODAS LAS CITAS DE FIRESTORE
-    // --------------------------------------------------
+    // ==================================================
 
     LaunchedEffect(solicitudRecarga) {
 
@@ -226,9 +238,9 @@ fun AdminReportesScreen(
         )
     }
 
-    // --------------------------------------------------
+    // ==================================================
     // DETERMINAR EL PERÍODO SELECCIONADO
-    // --------------------------------------------------
+    // ==================================================
 
     val rangoFecha = remember(
         periodoSeleccionado,
@@ -245,9 +257,9 @@ fun AdminReportesScreen(
     val fechaInicio = rangoFecha.first
     val fechaFin = rangoFecha.second
 
-    // --------------------------------------------------
+    // ==================================================
     // FILTRAR CITAS POR FECHA
-    // --------------------------------------------------
+    // ==================================================
 
     val citasFiltradas = remember(
         citas,
@@ -267,9 +279,9 @@ fun AdminReportesScreen(
         }
     }
 
-    // --------------------------------------------------
+    // ==================================================
     // CALCULAR INDICADORES
-    // --------------------------------------------------
+    // ==================================================
 
     val totalCitas = citasFiltradas.size
 
@@ -289,7 +301,7 @@ fun AdminReportesScreen(
         it.estado == EstadoCita.CANCELADA
     }
 
-    // El cálculo considera únicamente servicios completados.
+    // Solo se consideran servicios completados.
     // No representa dinero efectivamente cobrado.
 
     val ingresosEstimados = citasFiltradas
@@ -304,9 +316,9 @@ fun AdminReportesScreen(
             }
         }
 
-    // --------------------------------------------------
+    // ==================================================
     // PREPARAR DATOS PARA LOS GRÁFICOS
-    // --------------------------------------------------
+    // ==================================================
 
     val actividad = remember(
         citasFiltradas,
@@ -346,14 +358,14 @@ fun AdminReportesScreen(
             .take(5)
     }
 
-    // --------------------------------------------------
-    // INTERFAZ
-    // --------------------------------------------------
+    // ==================================================
+    // INTERFAZ PRINCIPAL
+    // ==================================================
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(FondoReporte)
+            .background(colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(
                 horizontal = 18.dp,
@@ -362,7 +374,9 @@ fun AdminReportesScreen(
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
 
-        // Encabezado.
+        // --------------------------------------------------
+        // ENCABEZADO
+        // --------------------------------------------------
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -378,7 +392,7 @@ fun AdminReportesScreen(
                     text = "Reportes y estadísticas",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1A1A1A)
+                    color = colorScheme.onBackground
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -386,7 +400,7 @@ fun AdminReportesScreen(
                 Text(
                     text = "Resumen de la actividad de VetSync",
                     fontSize = 13.sp,
-                    color = GrisReporte
+                    color = colorScheme.onSurfaceVariant
                 )
             }
 
@@ -400,10 +414,14 @@ fun AdminReportesScreen(
                 Icon(
                     imageVector = Icons.Outlined.Refresh,
                     contentDescription = "Actualizar reportes",
-                    tint = VerdeReporte
+                    tint = colorScheme.primary
                 )
             }
         }
+
+        // --------------------------------------------------
+        // EXPORTACIÓN PDF Y COMPARTIR
+        // --------------------------------------------------
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -457,7 +475,8 @@ fun AdminReportesScreen(
                 },
 
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = VerdeReporte
+                    containerColor = colorScheme.primary,
+                    contentColor = colorScheme.onPrimary
                 )
             ) {
 
@@ -465,7 +484,7 @@ fun AdminReportesScreen(
 
                     CircularProgressIndicator(
                         modifier = Modifier.size(18.dp),
-                        color = Color.White,
+                        color = colorScheme.onPrimary,
                         strokeWidth = 2.dp
                     )
 
@@ -487,7 +506,8 @@ fun AdminReportesScreen(
                 OutlinedButton(
                     onClick = {
 
-                        val uri = uriReporteGuardado ?: return@OutlinedButton
+                        val uri = uriReporteGuardado
+                            ?: return@OutlinedButton
 
                         val intent = Intent(Intent.ACTION_SEND).apply {
 
@@ -526,7 +546,11 @@ fun AdminReportesScreen(
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
-                    }
+                    },
+
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = colorScheme.primary
+                    )
                 ) {
 
                     Icon(
@@ -541,20 +565,28 @@ fun AdminReportesScreen(
             }
         }
 
+        // --------------------------------------------------
+        // CARGA
+        // --------------------------------------------------
+
         if (cargando) {
 
             LinearProgressIndicator(
                 modifier = Modifier.fillMaxWidth(),
-                color = VerdeReporte
+                color = colorScheme.primary
             )
         }
+
+        // --------------------------------------------------
+        // ERROR DE CARGA
+        // --------------------------------------------------
 
         if (errorCarga != null) {
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFFF0EE)
+                    containerColor = colorScheme.errorContainer
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -566,7 +598,7 @@ fun AdminReportesScreen(
                     Text(
                         text = "No se pudieron cargar los reportes",
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFB3261E)
+                        color = colorScheme.onErrorContainer
                     )
 
                     Spacer(modifier = Modifier.height(6.dp))
@@ -574,7 +606,7 @@ fun AdminReportesScreen(
                     Text(
                         text = errorCarga.orEmpty(),
                         fontSize = 13.sp,
-                        color = Color.DarkGray
+                        color = colorScheme.onErrorContainer
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))
@@ -584,15 +616,18 @@ fun AdminReportesScreen(
                             solicitudRecarga++
                         }
                     ) {
-                        Text("Reintentar")
+                        Text(
+                            "Reintentar",
+                            color = colorScheme.onErrorContainer
+                        )
                     }
                 }
             }
         }
 
-        // --------------------------------------------------
+        // ==================================================
         // FILTROS
-        // --------------------------------------------------
+        // ==================================================
 
         Column {
 
@@ -600,7 +635,7 @@ fun AdminReportesScreen(
                 text = "Período del reporte",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF222222)
+                color = colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -616,19 +651,28 @@ fun AdminReportesScreen(
 
                     FilterChip(
                         selected = periodoSeleccionado == periodo,
+
                         onClick = {
                             periodoSeleccionado = periodo
                         },
+
                         label = {
                             Text(periodo.etiqueta)
                         },
+
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0xFFE2EFE7),
-                            selectedLabelColor = VerdeReporte
+                            selectedContainerColor = colorScheme.primaryContainer,
+                            selectedLabelColor = colorScheme.onPrimaryContainer,
+                            containerColor = colorScheme.surface,
+                            labelColor = colorScheme.onSurfaceVariant
                         )
                     )
                 }
             }
+
+            // --------------------------------------------------
+            // FECHAS PERSONALIZADAS
+            // --------------------------------------------------
 
             if (
                 periodoSeleccionado ==
@@ -644,6 +688,7 @@ fun AdminReportesScreen(
 
                     OutlinedButton(
                         modifier = Modifier.weight(1f),
+
                         onClick = {
 
                             DatePickerDialog(
@@ -666,7 +711,11 @@ fun AdminReportesScreen(
                                 fechaInicioPersonalizada.monthValue - 1,
                                 fechaInicioPersonalizada.dayOfMonth
                             ).show()
-                        }
+                        },
+
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = colorScheme.primary
+                        )
                     ) {
 
                         Text(
@@ -679,6 +728,7 @@ fun AdminReportesScreen(
 
                     OutlinedButton(
                         modifier = Modifier.weight(1f),
+
                         onClick = {
 
                             DatePickerDialog(
@@ -701,7 +751,11 @@ fun AdminReportesScreen(
                                 fechaFinPersonalizada.monthValue - 1,
                                 fechaFinPersonalizada.dayOfMonth
                             ).show()
-                        }
+                        },
+
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = colorScheme.primary
+                        )
                     ) {
 
                         Text(
@@ -723,19 +777,19 @@ fun AdminReportesScreen(
                     formatearFecha(fechaFin)
                 }",
                 fontSize = 12.sp,
-                color = GrisReporte
+                color = colorScheme.onSurfaceVariant
             )
         }
 
-        // --------------------------------------------------
+        // ==================================================
         // INDICADORES GENERALES
-        // --------------------------------------------------
+        // ==================================================
 
         Text(
             text = "Resumen general",
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF222222)
+            color = colorScheme.onSurface
         )
 
         Row(
@@ -748,7 +802,7 @@ fun AdminReportesScreen(
                 titulo = "Total de citas",
                 valor = totalCitas.toString(),
                 icono = Icons.Outlined.CalendarMonth,
-                color = Color(0xFF477B9D)
+                color = colorScheme.primary
             )
 
             TarjetaIndicador(
@@ -756,7 +810,7 @@ fun AdminReportesScreen(
                 titulo = "Completadas",
                 valor = completadas.toString(),
                 icono = Icons.Outlined.CheckCircle,
-                color = Color(0xFF39845A)
+                color = colorScheme.secondary
             )
         }
 
@@ -770,7 +824,7 @@ fun AdminReportesScreen(
                 titulo = "Pendientes",
                 valor = pendientes.toString(),
                 icono = Icons.Outlined.Schedule,
-                color = Color(0xFFBD8A38)
+                color = colorScheme.tertiary
             )
 
             TarjetaIndicador(
@@ -778,7 +832,7 @@ fun AdminReportesScreen(
                 titulo = "Confirmadas",
                 valor = confirmadas.toString(),
                 icono = Icons.Outlined.Event,
-                color = Color(0xFF478B91)
+                color = colorScheme.primary
             )
         }
 
@@ -792,7 +846,7 @@ fun AdminReportesScreen(
                 titulo = "Canceladas",
                 valor = canceladas.toString(),
                 icono = Icons.Outlined.Cancel,
-                color = Color(0xFFB94B48)
+                color = colorScheme.error
             )
 
             TarjetaIndicador(
@@ -800,28 +854,28 @@ fun AdminReportesScreen(
                 titulo = "Ingresos estimados",
                 valor = formatearUSD(ingresosEstimados),
                 icono = Icons.Outlined.AttachMoney,
-                color = VerdeReporte
+                color = colorScheme.secondary
             )
         }
 
         Text(
             text = "Los ingresos estimados corresponden a la suma del costo de las citas completadas. No representan cobros verificados.",
             fontSize = 11.sp,
-            color = GrisReporte,
+            color = colorScheme.onSurfaceVariant,
             lineHeight = 16.sp
         )
 
-        // --------------------------------------------------
+        // ==================================================
         // GRÁFICO DE ACTIVIDAD
-        // --------------------------------------------------
+        // ==================================================
 
         GraficoActividad(
             puntos = actividad
         )
 
-        // --------------------------------------------------
+        // ==================================================
         // SERVICIOS MÁS SOLICITADOS
-        // --------------------------------------------------
+        // ==================================================
 
         GraficoServicios(
             servicios = servicios
@@ -831,7 +885,10 @@ fun AdminReportesScreen(
     }
 }
 
-
+// ======================================================
+// GENERAR PDF DEL REPORTE
+// Esta función conserva su paleta independiente del tema.
+// ======================================================
 
 private fun generarPdfReporte(
     citas: List<Cita>,
@@ -1366,13 +1423,6 @@ private fun generarPdfReporte(
             textoSecundario
         )
 
-        val inicio = numeroPagina * filasPorPagina
-
-        val fin = minOf(
-            inicio + filasPorPagina,
-            citasOrdenadas.size
-        )
-
         val encabezados = arrayOf(
             "Fecha",
             "Hora",
@@ -1432,6 +1482,13 @@ private fun generarPdfReporte(
                 true
             )
         }
+
+        val inicio = numeroPagina * filasPorPagina
+
+        val fin = minOf(
+            inicio + filasPorPagina,
+            citasOrdenadas.size
+        )
 
         var y = 168f
 
@@ -1532,9 +1589,9 @@ private fun generarPdfReporte(
     }
 }
 
-// --------------------------------------------------
+// ======================================================
 // TARJETA DE INDICADOR
-// --------------------------------------------------
+// ======================================================
 
 @Composable
 private fun TarjetaIndicador(
@@ -1545,15 +1602,17 @@ private fun TarjetaIndicador(
     color: Color
 ) {
 
+    val colorScheme = MaterialTheme.colorScheme
+
     Card(
         modifier = modifier.heightIn(min = 112.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = colorScheme.surface
         ),
         shape = RoundedCornerShape(14.dp),
         border = BorderStroke(
             1.dp,
-            Color(0xFFE8E8E8)
+            colorScheme.outlineVariant
         )
     ) {
 
@@ -1576,28 +1635,30 @@ private fun TarjetaIndicador(
                 text = valor,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF222222),
+                color = colorScheme.onSurface,
                 maxLines = 1
             )
 
             Text(
                 text = titulo,
                 fontSize = 11.sp,
-                color = GrisReporte,
+                color = colorScheme.onSurfaceVariant,
                 maxLines = 2
             )
         }
     }
 }
 
-// --------------------------------------------------
+// ======================================================
 // GRÁFICO DE ACTIVIDAD DE CITAS
-// --------------------------------------------------
+// ======================================================
 
 @Composable
 private fun GraficoActividad(
     puntos: List<PuntoActividad>
 ) {
+
+    val colorScheme = MaterialTheme.colorScheme
 
     TarjetaReporte {
 
@@ -1609,7 +1670,7 @@ private fun GraficoActividad(
                 text = "Actividad de citas",
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF222222)
+                color = colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -1617,7 +1678,7 @@ private fun GraficoActividad(
             Text(
                 text = "Cantidad de citas registradas en el período",
                 fontSize = 12.sp,
-                color = GrisReporte
+                color = colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(18.dp))
@@ -1651,7 +1712,7 @@ private fun GraficoActividad(
                                 text = punto.cantidad.toString(),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = GrisReporte
+                                color = colorScheme.onSurfaceVariant
                             )
 
                             Spacer(modifier = Modifier.height(5.dp))
@@ -1679,7 +1740,7 @@ private fun GraficoActividad(
                                                 topEnd = 6.dp
                                             )
                                         )
-                                        .background(VerdeReporte)
+                                        .background(colorScheme.primary)
                                 )
                             }
 
@@ -1688,7 +1749,7 @@ private fun GraficoActividad(
                             Text(
                                 text = punto.etiqueta,
                                 fontSize = 9.sp,
-                                color = GrisReporte,
+                                color = colorScheme.onSurfaceVariant,
                                 maxLines = 1
                             )
                         }
@@ -1699,14 +1760,16 @@ private fun GraficoActividad(
     }
 }
 
-// --------------------------------------------------
-// SERVICIOS MÁS SOLICITADOS
-// --------------------------------------------------
+// ======================================================
+// GRÁFICO DE SERVICIOS MÁS SOLICITADOS
+// ======================================================
 
 @Composable
 private fun GraficoServicios(
     servicios: List<ServicioReporte>
 ) {
+
+    val colorScheme = MaterialTheme.colorScheme
 
     TarjetaReporte {
 
@@ -1718,7 +1781,7 @@ private fun GraficoServicios(
                 text = "Servicios más solicitados",
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF222222)
+                color = colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(5.dp))
@@ -1726,7 +1789,7 @@ private fun GraficoServicios(
             Text(
                 text = "Distribución según las citas registradas",
                 fontSize = 12.sp,
-                color = GrisReporte
+                color = colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -1755,7 +1818,7 @@ private fun GraficoServicios(
                                 text = "${index + 1}. ${servicio.nombre}",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = Color(0xFF333333),
+                                color = colorScheme.onSurface,
                                 modifier = Modifier.weight(1f)
                             )
 
@@ -1763,7 +1826,7 @@ private fun GraficoServicios(
                                 text = servicio.cantidad.toString(),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = VerdeReporte
+                                color = colorScheme.primary
                             )
                         }
 
@@ -1774,7 +1837,7 @@ private fun GraficoServicios(
                                 .fillMaxWidth()
                                 .height(9.dp)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0xFFEBEFEC))
+                                .background(colorScheme.surfaceVariant)
                         ) {
 
                             Box(
@@ -1784,7 +1847,7 @@ private fun GraficoServicios(
                                     )
                                     .fillMaxHeight()
                                     .clip(RoundedCornerShape(10.dp))
-                                    .background(VerdeReporte)
+                                    .background(colorScheme.primary)
                             )
                         }
                     }
@@ -1798,32 +1861,40 @@ private fun GraficoServicios(
     }
 }
 
-// --------------------------------------------------
+// ======================================================
 // TARJETA REUTILIZABLE
-// --------------------------------------------------
+// ======================================================
 
 @Composable
 private fun TarjetaReporte(
     contenido: @Composable () -> Unit
 ) {
 
+    val colorScheme = MaterialTheme.colorScheme
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = colorScheme.surface
         ),
         shape = RoundedCornerShape(15.dp),
         border = BorderStroke(
             1.dp,
-            Color(0xFFE5E5E5)
+            colorScheme.outlineVariant
         )
     ) {
         contenido()
     }
 }
 
+// ======================================================
+// MENSAJE SIN DATOS
+// ======================================================
+
 @Composable
 private fun MensajeSinDatos() {
+
+    val colorScheme = MaterialTheme.colorScheme
 
     Box(
         modifier = Modifier
@@ -1835,14 +1906,14 @@ private fun MensajeSinDatos() {
         Text(
             text = "No hay información disponible para este período.",
             fontSize = 13.sp,
-            color = GrisReporte
+            color = colorScheme.onSurfaceVariant
         )
     }
 }
 
-// --------------------------------------------------
+// ======================================================
 // CÁLCULO DE RANGOS
-// --------------------------------------------------
+// ======================================================
 
 private fun obtenerRangoReporte(
     periodo: PeriodoReporte,
@@ -1877,9 +1948,9 @@ private fun obtenerRangoReporte(
     }
 }
 
-// --------------------------------------------------
+// ======================================================
 // GENERAR PUNTOS PARA EL GRÁFICO
-// --------------------------------------------------
+// ======================================================
 
 private fun generarActividad(
     citas: List<Cita>,
@@ -1987,6 +2058,10 @@ private fun generarActividad(
     return puntos
 }
 
+// ======================================================
+// CONTAR CITAS EN UN RANGO
+// ======================================================
+
 private fun contarCitasEnRango(
     citas: List<Cita>,
     fechaInicio: LocalDate,
@@ -2005,18 +2080,26 @@ private fun contarCitasEnRango(
     }
 }
 
-// --------------------------------------------------
-// FORMATO DE FECHAS Y MONEDA
-// --------------------------------------------------
+// ======================================================
+// FORMATO DE FECHAS
+// ======================================================
 
-private fun formatearFecha(fecha: LocalDate): String {
+private fun formatearFecha(
+    fecha: LocalDate
+): String {
 
     return fecha.format(
         DateTimeFormatter.ofPattern("dd/MM/yyyy")
     )
 }
 
-private fun formatearUSD(valor: Double): String {
+// ======================================================
+// FORMATO DE MONEDA
+// ======================================================
+
+private fun formatearUSD(
+    valor: Double
+): String {
 
     val formato = NumberFormat.getCurrencyInstance(Locale.US)
 

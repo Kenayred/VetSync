@@ -1,15 +1,19 @@
-
 package com.example.vetsync.vista.screens
 
 import android.net.Uri
 import android.widget.Toast
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+
 import androidx.compose.material3.*
+
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,15 +22,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
 import com.example.vetsync.controlador.MascotaControlador
 import com.example.vetsync.modelo.ImagenUtils
 import com.example.vetsync.modelo.Mascota
+
 import com.example.vetsync.vista.AgregarMascotaTopBar
 import com.example.vetsync.vista.CampoFormularioMascota
 import com.example.vetsync.vista.DropdownFormularioMascota
 import com.example.vetsync.vista.SelectorFechaMascota
 import com.example.vetsync.vista.SubirFotoMascotaBox
-import com.example.vetsync.vista.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,10 +41,15 @@ fun EditarMascotaAdminScreen(
     onBackClick: () -> Unit,
     onMascotaEditada: (Mascota) -> Unit
 ) {
+
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    val colorScheme = MaterialTheme.colorScheme
 
-    // Datos actuales de la mascota.
+    // --------------------------------------------------
+    // DATOS ACTUALES DE LA MASCOTA
+    // --------------------------------------------------
+
     var nombre by remember(mascota.id) {
         mutableStateOf(mascota.nombre)
     }
@@ -66,7 +76,11 @@ fun EditarMascotaAdminScreen(
 
     var peso by remember(mascota.id) {
         mutableStateOf(
-            if (mascota.peso > 0.0) mascota.peso.toString() else ""
+            if (mascota.peso > 0.0) {
+                mascota.peso.toString()
+            } else {
+                ""
+            }
         )
     }
 
@@ -82,32 +96,70 @@ fun EditarMascotaAdminScreen(
         mutableStateOf(mascota.fotoUrl)
     }
 
-    // Estados de validación visual.
-    var nombreError by remember { mutableStateOf(false) }
-    var especieError by remember { mutableStateOf(false) }
-    var razaError by remember { mutableStateOf(false) }
-    var edadError by remember { mutableStateOf(false) }
-    var sexoError by remember { mutableStateOf(false) }
-    var fechaError by remember { mutableStateOf(false) }
-    var pesoError by remember { mutableStateOf(false) }
+    // --------------------------------------------------
+    // ESTADOS DE VALIDACIÓN VISUAL
+    // --------------------------------------------------
 
-    var guardando by remember { mutableStateOf(false) }
+    var nombreError by remember {
+        mutableStateOf(false)
+    }
 
-    val opcionesSexo = listOf("Macho", "Hembra")
+    var especieError by remember {
+        mutableStateOf(false)
+    }
 
-    // Selector de fotografías.
+    var razaError by remember {
+        mutableStateOf(false)
+    }
+
+    var edadError by remember {
+        mutableStateOf(false)
+    }
+
+    var sexoError by remember {
+        mutableStateOf(false)
+    }
+
+    var fechaError by remember {
+        mutableStateOf(false)
+    }
+
+    var pesoError by remember {
+        mutableStateOf(false)
+    }
+
+    var guardando by remember {
+        mutableStateOf(false)
+    }
+
+    val opcionesSexo = listOf(
+        "Macho",
+        "Hembra"
+    )
+
+    // --------------------------------------------------
+    // SELECTOR DE FOTOGRAFÍAS
+    // --------------------------------------------------
+
     val selectorImagenLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
 
         if (uri != null) {
+
             runCatching {
-                ImagenUtils.uriABase64(context, uri)
+                ImagenUtils.uriABase64(
+                    context,
+                    uri
+                )
             }.onSuccess { imagen ->
 
                 if (imagen.isNotBlank()) {
+
                     fotoBase64 = imagen
+
                 } else {
+
                     Toast.makeText(
                         context,
                         "No se pudo procesar la fotografía.",
@@ -116,6 +168,7 @@ fun EditarMascotaAdminScreen(
                 }
 
             }.onFailure {
+
                 Toast.makeText(
                     context,
                     "Ocurrió un error al seleccionar la fotografía.",
@@ -125,13 +178,19 @@ fun EditarMascotaAdminScreen(
         }
     }
 
+    // --------------------------------------------------
+    // INTERFAZ
+    // --------------------------------------------------
+
     Scaffold(
-        containerColor = FondoCrema,
+        containerColor = colorScheme.background,
+
         topBar = {
             AgregarMascotaTopBar(
                 onBackClick = onBackClick
             )
         }
+
     ) { paddingValues ->
 
         Column(
@@ -145,11 +204,15 @@ fun EditarMascotaAdminScreen(
                 )
         ) {
 
+            // --------------------------------------------------
+            // ENCABEZADO
+            // --------------------------------------------------
+
             Text(
                 text = "Editar paciente",
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E221F)
+                color = colorScheme.onBackground
             )
 
             Spacer(modifier = Modifier.height(6.dp))
@@ -157,18 +220,30 @@ fun EditarMascotaAdminScreen(
             Text(
                 text = "Actualiza la información general de esta mascota.",
                 fontSize = 14.sp,
-                color = GrisTextoSecundario,
+                color = colorScheme.onSurfaceVariant,
                 lineHeight = 20.sp
             )
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // --------------------------------------------------
+            // TARJETA DEL FORMULARIO
+            // --------------------------------------------------
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
+
                 shape = RoundedCornerShape(20.dp),
+
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White
+                    containerColor = colorScheme.surface
                 ),
+
+                border = BorderStroke(
+                    1.dp,
+                    colorScheme.outlineVariant
+                ),
+
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 0.5.dp
                 )
@@ -180,13 +255,15 @@ fun EditarMascotaAdminScreen(
                         .padding(18.dp)
                 ) {
 
+                    // --------------------------------------------------
                     // FOTOGRAFÍA
+                    // --------------------------------------------------
 
                     Text(
                         text = "Fotografía del paciente",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = TextoLabelMascota
+                        color = colorScheme.onSurface
                     )
 
                     Spacer(modifier = Modifier.height(10.dp))
@@ -200,7 +277,9 @@ fun EditarMascotaAdminScreen(
 
                     Spacer(modifier = Modifier.height(22.dp))
 
+                    // --------------------------------------------------
                     // NOMBRE
+                    // --------------------------------------------------
 
                     CampoFormularioMascota(
                         label = "Nombre",
@@ -215,7 +294,9 @@ fun EditarMascotaAdminScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    // --------------------------------------------------
                     // ESPECIE
+                    // --------------------------------------------------
 
                     CampoFormularioMascota(
                         label = "Especie",
@@ -230,7 +311,9 @@ fun EditarMascotaAdminScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    // --------------------------------------------------
                     // RAZA
+                    // --------------------------------------------------
 
                     CampoFormularioMascota(
                         label = "Raza",
@@ -245,7 +328,9 @@ fun EditarMascotaAdminScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    // --------------------------------------------------
                     // EDAD
+                    // --------------------------------------------------
 
                     CampoFormularioMascota(
                         label = "Edad (años)",
@@ -261,7 +346,9 @@ fun EditarMascotaAdminScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    // --------------------------------------------------
                     // SEXO
+                    // --------------------------------------------------
 
                     DropdownFormularioMascota(
                         label = "Sexo",
@@ -277,7 +364,9 @@ fun EditarMascotaAdminScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    // --------------------------------------------------
                     // FECHA DE NACIMIENTO
+                    // --------------------------------------------------
 
                     SelectorFechaMascota(
                         label = "Fecha de nacimiento",
@@ -292,7 +381,9 @@ fun EditarMascotaAdminScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    // --------------------------------------------------
                     // PESO
+                    // --------------------------------------------------
 
                     CampoFormularioMascota(
                         label = "Peso (kg)",
@@ -308,7 +399,9 @@ fun EditarMascotaAdminScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    // --------------------------------------------------
                     // COLOR Y MARCAS
+                    // --------------------------------------------------
 
                     CampoFormularioMascota(
                         label = "Color / Marcas",
@@ -321,7 +414,9 @@ fun EditarMascotaAdminScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
+                    // --------------------------------------------------
                     // OBSERVACIONES
+                    // --------------------------------------------------
 
                     CampoFormularioMascota(
                         label = "Observaciones o condiciones especiales",
@@ -337,26 +432,37 @@ fun EditarMascotaAdminScreen(
                     Spacer(modifier = Modifier.height(22.dp))
 
                     HorizontalDivider(
-                        color = Color(0xFFEEEEEE),
+                        color = colorScheme.outlineVariant,
                         thickness = 1.dp
                     )
 
                     Spacer(modifier = Modifier.height(18.dp))
 
+                    // --------------------------------------------------
                     // CANCELAR
+                    // --------------------------------------------------
 
                     OutlinedButton(
                         onClick = onBackClick,
                         enabled = !guardando,
+
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(46.dp),
+
                         shape = RoundedCornerShape(50),
+
+                        border = BorderStroke(
+                            1.dp,
+                            colorScheme.outline
+                        ),
+
                         colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = Color.White,
-                            contentColor = Color(0xFF3A4D3E)
+                            containerColor = colorScheme.surface,
+                            contentColor = colorScheme.onSurface
                         )
                     ) {
+
                         Text(
                             text = "Cancelar",
                             fontSize = 14.sp,
@@ -366,19 +472,26 @@ fun EditarMascotaAdminScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
+                    // --------------------------------------------------
                     // GUARDAR CAMBIOS
+                    // --------------------------------------------------
 
                     Button(
                         onClick = {
 
                             nombreError = nombre.isBlank()
+
                             especieError = especie.isBlank()
+
                             razaError = raza.isBlank()
+
                             edadError = edad.trim()
                                 .toIntOrNull()
                                 ?.let { it < 0 || false }
                                 ?: true
+
                             sexoError = sexo.isBlank()
+
                             fechaError = fechaNacimiento.isBlank()
 
                             val pesoConvertido = peso
@@ -463,7 +576,8 @@ fun EditarMascotaAdminScreen(
                         shape = RoundedCornerShape(50),
 
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = VerdeVetSync
+                            containerColor = colorScheme.primary,
+                            contentColor = colorScheme.onPrimary
                         )
                     ) {
 
@@ -471,7 +585,7 @@ fun EditarMascotaAdminScreen(
 
                             CircularProgressIndicator(
                                 modifier = Modifier.size(20.dp),
-                                color = Color.White,
+                                color = colorScheme.onPrimary,
                                 strokeWidth = 2.dp
                             )
 
@@ -480,8 +594,7 @@ fun EditarMascotaAdminScreen(
                             Text(
                                 text = "Guardar cambios",
                                 fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color.White
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }

@@ -1,11 +1,14 @@
 package com.example.vetsync.vista.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -21,37 +24,31 @@ import androidx.compose.material.icons.outlined.LocalHospital
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import com.example.vetsync.controlador.CitaControlador
+import com.example.vetsync.controlador.NotaClinicaControlador
 import com.example.vetsync.modelo.Cita
 import com.example.vetsync.modelo.EstadoCita
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
-import com.example.vetsync.controlador.NotaClinicaControlador
-import androidx.compose.foundation.horizontalScroll
 
 @Composable
 fun AdminCitasScreen(
     modifier: Modifier = Modifier
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     val controlador = remember {
         CitaControlador()
     }
@@ -203,6 +200,7 @@ fun AdminCitasScreen(
     // --------------------------------------------------
     // FILTRAR CITAS POR ESTADO
     // --------------------------------------------------
+
     val citasFiltradas = when (filtroEstadoSeleccionado) {
 
         "Pendientes" -> citas.filter {
@@ -231,7 +229,7 @@ fun AdminCitasScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFFDFCF9))
+            .background(colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(
                 horizontal = 20.dp,
@@ -243,7 +241,7 @@ fun AdminCitasScreen(
             text = "Agenda de Citas",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1A1A1A)
+            color = colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(6.dp))
@@ -251,7 +249,7 @@ fun AdminCitasScreen(
         Text(
             text = "Fecha: ${LocalDate.now().format(formatoFecha)}",
             fontSize = 14.sp,
-            color = Color.Gray
+            color = colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -260,12 +258,12 @@ fun AdminCitasScreen(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = Color.White
+                containerColor = colorScheme.surface
             ),
             shape = RoundedCornerShape(12.dp),
             border = BorderStroke(
                 1.dp,
-                Color(0xFFE5E5E5)
+                colorScheme.outlineVariant
             )
         ) {
             Column(
@@ -275,20 +273,21 @@ fun AdminCitasScreen(
                 Text(
                     text = "Resumen de citas",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
+                    fontSize = 16.sp,
+                    color = colorScheme.onSurface
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 FilaResumen(
-                    color = Color(0xFFCDE2D4),
+                    color = colorScheme.primaryContainer,
                     etiqueta = "Total de citas",
                     valor = citas.size.toString(),
                     isBold = true
                 )
 
                 FilaResumen(
-                    color = Color(0xFFFDE89C),
+                    color = colorScheme.tertiaryContainer,
                     etiqueta = "Pendientes",
                     valor = citas.count {
                         it.estado == EstadoCita.PENDIENTE
@@ -296,7 +295,7 @@ fun AdminCitasScreen(
                 )
 
                 FilaResumen(
-                    color = Color(0xFF91C5A9),
+                    color = colorScheme.secondaryContainer,
                     etiqueta = "Confirmadas",
                     valor = citas.count {
                         it.estado == EstadoCita.CONFIRMADA
@@ -304,7 +303,7 @@ fun AdminCitasScreen(
                 )
 
                 FilaResumen(
-                    color = Color(0xFFF7D1C9),
+                    color = colorScheme.errorContainer,
                     etiqueta = "Canceladas",
                     valor = citas.count {
                         it.estado == EstadoCita.CANCELADA
@@ -312,7 +311,7 @@ fun AdminCitasScreen(
                 )
 
                 FilaResumen(
-                    color = Color(0xFFE0E0E0),
+                    color = colorScheme.surfaceVariant,
                     etiqueta = "Completadas",
                     valor = citas.count {
                         it.estado == EstadoCita.COMPLETADA
@@ -327,7 +326,7 @@ fun AdminCitasScreen(
             text = "Citas registradas",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF1A1A1A)
+            color = colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -346,13 +345,14 @@ fun AdminCitasScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFE2EFE7)
-                )
+                    containerColor = colorScheme.primaryContainer
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
                     text = mensajeExito ?: "",
                     modifier = Modifier.padding(14.dp),
-                    color = Color(0xFF285C3A),
+                    color = colorScheme.onPrimaryContainer,
                     fontSize = 13.sp
                 )
             }
@@ -364,22 +364,26 @@ fun AdminCitasScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFFE8E6)
-                )
+                    containerColor = colorScheme.errorContainer
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(14.dp)
                 ) {
                     Text(
                         text = errorMensaje ?: "",
-                        color = Color(0xFFB3261E),
+                        color = colorScheme.onErrorContainer,
                         fontSize = 13.sp
                     )
 
                     TextButton(
                         onClick = { cargarCitas() }
                     ) {
-                        Text("Reintentar")
+                        Text(
+                            "Reintentar",
+                            color = colorScheme.onErrorContainer
+                        )
                     }
                 }
             }
@@ -396,7 +400,7 @@ fun AdminCitasScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(
-                        color = Color(0xFF4A7D5E)
+                        color = colorScheme.primary
                     )
                 }
             }
@@ -410,14 +414,18 @@ fun AdminCitasScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                        containerColor = colorScheme.surface
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(
+                        1.dp,
+                        colorScheme.outlineVariant
+                    )
                 ) {
                     Text(
                         text = "Todavía no hay citas registradas.",
                         modifier = Modifier.padding(24.dp),
-                        color = Color.Gray,
+                        color = colorScheme.onSurfaceVariant,
                         fontSize = 14.sp
                     )
                 }
@@ -429,14 +437,14 @@ fun AdminCitasScreen(
                     modifier = Modifier.fillMaxWidth(),
 
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                        containerColor = colorScheme.surface
                     ),
 
                     shape = RoundedCornerShape(12.dp),
 
                     border = BorderStroke(
                         1.dp,
-                        Color(0xFFE5E5E5)
+                        colorScheme.outlineVariant
                     )
                 ) {
 
@@ -452,7 +460,7 @@ fun AdminCitasScreen(
                             text = "No hay citas ${filtroEstadoSeleccionado.lowercase()}.",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color.DarkGray,
+                            color = colorScheme.onSurface,
                             textAlign = TextAlign.Center
                         )
 
@@ -465,7 +473,7 @@ fun AdminCitasScreen(
                         ) {
                             Text(
                                 text = "Mostrar todas las citas",
-                                color = Color(0xFF4A7D5E)
+                                color = colorScheme.primary
                             )
                         }
                     }
@@ -498,6 +506,7 @@ fun AdminCitasScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
     }
+
     citaParaNota?.let { cita ->
 
         FormularioNotaClinicaDialog(
@@ -539,6 +548,7 @@ private fun FiltrosEstadoCitas(
     filtroSeleccionado: String,
     onFiltroSeleccionado: (String) -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
 
     val opciones = listOf(
         "Total" to citas.size,
@@ -568,7 +578,7 @@ private fun FiltrosEstadoCitas(
             text = "Filtrar por estado",
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
-            color = Color.DarkGray
+            color = colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -599,10 +609,10 @@ private fun FiltrosEstadoCitas(
                     },
 
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Color(0xFFE2EFE7),
-                        selectedLabelColor = Color(0xFF285C3A),
-                        containerColor = Color.White,
-                        labelColor = Color.DarkGray
+                        selectedContainerColor = colorScheme.primaryContainer,
+                        selectedLabelColor = colorScheme.onPrimaryContainer,
+                        containerColor = colorScheme.surface,
+                        labelColor = colorScheme.onSurfaceVariant
                     )
                 )
             }
@@ -625,6 +635,7 @@ private fun FormularioNotaClinicaDialog(
         String
     ) -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
 
     var motivo by remember(cita.id) {
         mutableStateOf(cita.motivo)
@@ -667,7 +678,7 @@ private fun FormularioNotaClinicaDialog(
             Text(
                 text = "Registrar nota clínica",
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1A1A1A)
+                color = colorScheme.onSurface
             )
         },
 
@@ -685,28 +696,29 @@ private fun FormularioNotaClinicaDialog(
                 Text(
                     text = "Paciente: ${cita.nombreMascota}",
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF4A7D5E)
+                    color = colorScheme.primary
                 )
 
                 Text(
                     text = "Servicio: ${cita.nombreServicio}",
                     fontSize = 13.sp,
-                    color = Color.Gray
+                    color = colorScheme.onSurfaceVariant
                 )
 
                 Text(
                     text = "Fecha: ${cita.fecha} • Hora: ${cita.hora}",
                     fontSize = 13.sp,
-                    color = Color.Gray
+                    color = colorScheme.onSurfaceVariant
                 )
 
                 HorizontalDivider(
-                    color = Color(0xFFE5E5E5)
+                    color = colorScheme.outlineVariant
                 )
 
                 Text(
                     text = "Información clínica",
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface
                 )
 
                 OutlinedTextField(
@@ -719,7 +731,12 @@ private fun FormularioNotaClinicaDialog(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2,
-                    enabled = !guardando
+                    enabled = !guardando,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = colorScheme.primary,
+                        focusedLabelColor = colorScheme.primary,
+                        cursorColor = colorScheme.primary
+                    )
                 )
 
                 OutlinedTextField(
@@ -739,7 +756,12 @@ private fun FormularioNotaClinicaDialog(
                     ),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !guardando
+                    enabled = !guardando,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = colorScheme.primary,
+                        focusedLabelColor = colorScheme.primary,
+                        cursorColor = colorScheme.primary
+                    )
                 )
 
                 OutlinedTextField(
@@ -759,7 +781,12 @@ private fun FormularioNotaClinicaDialog(
                     ),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !guardando
+                    enabled = !guardando,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = colorScheme.primary,
+                        focusedLabelColor = colorScheme.primary,
+                        cursorColor = colorScheme.primary
+                    )
                 )
 
                 OutlinedTextField(
@@ -773,7 +800,12 @@ private fun FormularioNotaClinicaDialog(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3,
-                    enabled = !guardando
+                    enabled = !guardando,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = colorScheme.primary,
+                        focusedLabelColor = colorScheme.primary,
+                        cursorColor = colorScheme.primary
+                    )
                 )
 
                 OutlinedTextField(
@@ -787,7 +819,12 @@ private fun FormularioNotaClinicaDialog(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 3,
-                    enabled = !guardando
+                    enabled = !guardando,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = colorScheme.primary,
+                        focusedLabelColor = colorScheme.primary,
+                        cursorColor = colorScheme.primary
+                    )
                 )
 
                 OutlinedTextField(
@@ -800,20 +837,25 @@ private fun FormularioNotaClinicaDialog(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     minLines = 2,
-                    enabled = !guardando
+                    enabled = !guardando,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = colorScheme.primary,
+                        focusedLabelColor = colorScheme.primary,
+                        cursorColor = colorScheme.primary
+                    )
                 )
 
                 Text(
                     text = "* Campos obligatorios",
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = colorScheme.onSurfaceVariant
                 )
 
                 if (mensajeError != null) {
 
                     Text(
                         text = mensajeError,
-                        color = Color(0xFFB3261E),
+                        color = colorScheme.error,
                         fontSize = 13.sp
                     )
                 }
@@ -896,7 +938,8 @@ private fun FormularioNotaClinicaDialog(
                 enabled = !guardando,
 
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF4A7D5E)
+                    containerColor = colorScheme.primary,
+                    contentColor = colorScheme.onPrimary
                 )
             ) {
 
@@ -904,7 +947,7 @@ private fun FormularioNotaClinicaDialog(
 
                     CircularProgressIndicator(
                         modifier = Modifier.size(18.dp),
-                        color = Color.White,
+                        color = colorScheme.onPrimary,
                         strokeWidth = 2.dp
                     )
 
@@ -927,13 +970,16 @@ private fun FormularioNotaClinicaDialog(
                 onClick = onDismiss,
                 enabled = !guardando
             ) {
-                Text("Cancelar")
+                Text(
+                    "Cancelar",
+                    color = colorScheme.primary
+                )
             }
         },
 
         shape = RoundedCornerShape(18.dp),
 
-        containerColor = Color.White
+        containerColor = colorScheme.surface
     )
 }
 
@@ -945,29 +991,31 @@ private fun CitaAdminItem(
     onConfirmar: () -> Unit,
     onRegistrarNota: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     val estadoColor = when (cita.estado) {
-        EstadoCita.PENDIENTE -> Color(0xFFFDF0D5)
-        EstadoCita.CONFIRMADA -> Color(0xFFE2EFE7)
-        EstadoCita.COMPLETADA -> Color(0xFF91C5A9)
-        EstadoCita.CANCELADA -> Color(0xFFF7D1C9)
+        EstadoCita.PENDIENTE -> colorScheme.tertiaryContainer
+        EstadoCita.CONFIRMADA -> colorScheme.secondaryContainer
+        EstadoCita.COMPLETADA -> colorScheme.surfaceVariant
+        EstadoCita.CANCELADA -> colorScheme.errorContainer
     }
 
     val estadoTextoColor = when (cita.estado) {
-        EstadoCita.PENDIENTE -> Color(0xFFB57B22)
-        EstadoCita.CONFIRMADA -> Color(0xFF285C3A)
-        EstadoCita.COMPLETADA -> Color.White
-        EstadoCita.CANCELADA -> Color(0xFF9D4035)
+        EstadoCita.PENDIENTE -> colorScheme.onTertiaryContainer
+        EstadoCita.CONFIRMADA -> colorScheme.onSecondaryContainer
+        EstadoCita.COMPLETADA -> colorScheme.onSurfaceVariant
+        EstadoCita.CANCELADA -> colorScheme.onErrorContainer
     }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = colorScheme.surface
         ),
         shape = RoundedCornerShape(14.dp),
         border = BorderStroke(
             1.dp,
-            Color(0xFFE5E5E5)
+            colorScheme.outlineVariant
         )
     ) {
 
@@ -987,7 +1035,7 @@ private fun CitaAdminItem(
                     modifier = Modifier.weight(1f),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1A1A1A)
+                    color = colorScheme.onSurface
                 )
 
                 Surface(
@@ -1012,7 +1060,7 @@ private fun CitaAdminItem(
             Text(
                 text = "Servicio: ${cita.nombreServicio}",
                 fontSize = 14.sp,
-                color = Color.DarkGray
+                color = colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(5.dp))
@@ -1020,7 +1068,7 @@ private fun CitaAdminItem(
             Text(
                 text = "Fecha: ${cita.fecha}  •  Hora: ${cita.hora}",
                 fontSize = 13.sp,
-                color = Color.Gray
+                color = colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(5.dp))
@@ -1034,7 +1082,7 @@ private fun CitaAdminItem(
                     )
                 }",
                 fontSize = 13.sp,
-                color = Color.Gray
+                color = colorScheme.onSurfaceVariant
             )
 
             if (cita.motivo.isNotBlank()) {
@@ -1043,7 +1091,7 @@ private fun CitaAdminItem(
                 Text(
                     text = "Motivo: ${cita.motivo}",
                     fontSize = 13.sp,
-                    color = Color.Gray
+                    color = colorScheme.onSurfaceVariant
                 )
             }
 
@@ -1072,7 +1120,8 @@ private fun CitaAdminItem(
                         .height(44.dp),
 
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF4A7D5E)
+                        containerColor = colorScheme.primary,
+                        contentColor = colorScheme.onPrimary
                     ),
 
                     shape = RoundedCornerShape(8.dp)
@@ -1083,7 +1132,7 @@ private fun CitaAdminItem(
 
                         CircularProgressIndicator(
                             modifier = Modifier.size(18.dp),
-                            color = Color.White,
+                            color = colorScheme.onPrimary,
                             strokeWidth = 2.dp
                         )
 
@@ -1106,56 +1155,117 @@ private fun CitaAdminItem(
     }
 }
 
+// ======================================================
+// COMPONENTES AUXILIARES DE LA AGENDA
+// Se conservan para no eliminar elementos existentes.
+// ======================================================
+
 @Composable
 fun CardFiltrosBusqueda() {
+    val colorScheme = MaterialTheme.colorScheme
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surface
+        ),
         shape = RoundedCornerShape(12.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E5E5))
+        border = BorderStroke(
+            1.dp,
+            colorScheme.outlineVariant
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Chips de filtro
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                FilterChipCustom("Todas", true, Modifier.weight(1f))
-                FilterChipCustom("Pendientes", false, Modifier.weight(1f))
-                FilterChipCustom("Completadas", false, Modifier.weight(1f))
+                FilterChipCustom(
+                    "Todas",
+                    true,
+                    Modifier.weight(1f)
+                )
+
+                FilterChipCustom(
+                    "Pendientes",
+                    false,
+                    Modifier.weight(1f)
+                )
+
+                FilterChipCustom(
+                    "Completadas",
+                    false,
+                    Modifier.weight(1f)
+                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Buscador y botones de vista
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = "",
                     onValueChange = {},
-                    placeholder = { Text("Buscar paciente...", fontSize = 14.sp) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
-                    modifier = Modifier.weight(1f).height(50.dp),
+                    placeholder = {
+                        Text(
+                            "Buscar paciente...",
+                            fontSize = 14.sp
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = null,
+                            tint = colorScheme.onSurfaceVariant
+                        )
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = Color(0xFFE5E5E5),
-                        focusedBorderColor = Color(0xFF4A7D5E)
+                        unfocusedBorderColor = colorScheme.outlineVariant,
+                        focusedBorderColor = colorScheme.primary,
+                        cursorColor = colorScheme.primary
                     ),
                     singleLine = true
                 )
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                // Toggle de vista (Lista / Calendario)
                 Row(
                     modifier = Modifier
-                        .background(Color(0xFFF5EFEB), RoundedCornerShape(8.dp))
+                        .background(
+                            colorScheme.surfaceVariant,
+                            RoundedCornerShape(8.dp)
+                        )
                         .padding(4.dp)
                 ) {
-                    Box(modifier = Modifier.background(Color.White, RoundedCornerShape(6.dp)).padding(6.dp)) {
-                        Icon(Icons.Outlined.ViewAgenda, contentDescription = "Lista", tint = Color.DarkGray, modifier = Modifier.size(20.dp))
+                    Box(
+                        modifier = Modifier
+                            .background(
+                                colorScheme.primaryContainer,
+                                RoundedCornerShape(6.dp)
+                            )
+                            .padding(6.dp)
+                    ) {
+                        Icon(
+                            Icons.Outlined.ViewAgenda,
+                            contentDescription = "Lista",
+                            tint = colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
-                    Box(modifier = Modifier.padding(6.dp)) {
-                        Icon(Icons.Outlined.CalendarMonth, contentDescription = "Calendario", tint = Color.Gray, modifier = Modifier.size(20.dp))
+
+                    Box(
+                        modifier = Modifier.padding(6.dp)
+                    ) {
+                        Icon(
+                            Icons.Outlined.CalendarMonth,
+                            contentDescription = "Calendario",
+                            tint = colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }
@@ -1164,16 +1274,30 @@ fun CardFiltrosBusqueda() {
 }
 
 @Composable
-fun FilterChipCustom(text: String, isSelected: Boolean, modifier: Modifier = Modifier) {
+fun FilterChipCustom(
+    text: String,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val colorScheme = MaterialTheme.colorScheme
+
     Box(
         modifier = modifier
             .background(
-                color = if (isSelected) Color(0xFFF5EFEB) else Color.Transparent,
+                color = if (isSelected) {
+                    colorScheme.primaryContainer
+                } else {
+                    Color.Transparent
+                },
                 shape = RoundedCornerShape(8.dp)
             )
             .border(
                 width = 1.dp,
-                color = if (isSelected) Color(0xFFD7C9BE) else Color(0xFFE5E5E5),
+                color = if (isSelected) {
+                    colorScheme.primary
+                } else {
+                    colorScheme.outlineVariant
+                },
                 shape = RoundedCornerShape(8.dp)
             )
             .padding(vertical = 8.dp),
@@ -1182,46 +1306,85 @@ fun FilterChipCustom(text: String, isSelected: Boolean, modifier: Modifier = Mod
         Text(
             text = text,
             fontSize = 12.sp,
-            color = if (isSelected) Color.DarkGray else Color.Gray,
-            fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal
+            color = if (isSelected) {
+                colorScheme.onPrimaryContainer
+            } else {
+                colorScheme.onSurfaceVariant
+            },
+            fontWeight = if (isSelected) {
+                FontWeight.Medium
+            } else {
+                FontWeight.Normal
+            }
         )
     }
 }
 
 @Composable
 fun CardCalendarioMensual() {
+    val colorScheme = MaterialTheme.colorScheme
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surface
+        ),
         shape = RoundedCornerShape(12.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E5E5))
+        border = BorderStroke(
+            1.dp,
+            colorScheme.outlineVariant
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Octubre 2026", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(
+                    "Octubre 2026",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = colorScheme.onSurface
+                )
+
                 Row {
-                    Icon(Icons.Default.ChevronLeft, contentDescription = "Anterior", tint = Color.Gray)
+                    Icon(
+                        Icons.Default.ChevronLeft,
+                        contentDescription = "Anterior",
+                        tint = colorScheme.onSurfaceVariant
+                    )
+
                     Spacer(modifier = Modifier.width(8.dp))
-                    Icon(Icons.Default.ChevronRight, contentDescription = "Siguiente", tint = Color.Black)
+
+                    Icon(
+                        Icons.Default.ChevronRight,
+                        contentDescription = "Siguiente",
+                        tint = colorScheme.onSurface
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Días de la semana
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
                 listOf("D", "L", "M", "M", "J", "V", "S").forEach { day ->
-                    Text(text = day, fontSize = 12.sp, color = Color.Gray, modifier = Modifier.width(32.dp), textAlign = TextAlign.Center)
+                    Text(
+                        text = day,
+                        fontSize = 12.sp,
+                        color = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.width(32.dp),
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Cuadrícula de fechas (Simulada para la vista estática)
             val fechas = listOf(
                 listOf("1" to true, "2" to true, "3" to false, "4" to false, "5" to false, "6" to false, "7" to false),
                 listOf("8" to false, "9" to false, "10" to false, "11" to false, "12" to false, "13" to false, "14" to false),
@@ -1231,24 +1394,50 @@ fun CardCalendarioMensual() {
             )
 
             fechas.forEach { semana ->
-                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceAround) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
                     semana.forEach { (dia, isTenue) ->
-                        val isSelected = dia == "24" // Día actual seleccionado
+                        val isSelected = dia == "24"
+
                         Box(
                             modifier = Modifier
                                 .size(32.dp)
                                 .clip(CircleShape)
-                                .background(if (isSelected) Color(0xFF4A7D5E) else Color.Transparent),
+                                .background(
+                                    if (isSelected) {
+                                        colorScheme.primary
+                                    } else {
+                                        Color.Transparent
+                                    }
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
                                 Text(
                                     text = dia,
                                     fontSize = 14.sp,
-                                    color = if (isSelected) Color.White else if (isTenue) Color.LightGray else Color.Black
+                                    color = if (isSelected) {
+                                        colorScheme.onPrimary
+                                    } else if (isTenue) {
+                                        colorScheme.outline
+                                    } else {
+                                        colorScheme.onSurface
+                                    }
                                 )
+
                                 if (isSelected) {
-                                    Box(modifier = Modifier.size(4.dp).clip(CircleShape).background(Color.White))
+                                    Box(
+                                        modifier = Modifier
+                                            .size(4.dp)
+                                            .clip(CircleShape)
+                                            .background(colorScheme.onPrimary)
+                                    )
                                 }
                             }
                         }
@@ -1261,40 +1450,99 @@ fun CardCalendarioMensual() {
 
 @Composable
 fun CardResumenDia() {
+    val colorScheme = MaterialTheme.colorScheme
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(
+            containerColor = colorScheme.surface
+        ),
         shape = RoundedCornerShape(12.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E5E5))
+        border = BorderStroke(
+            1.dp,
+            colorScheme.outlineVariant
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Resumen del Día", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text(
+                "Resumen del Día",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                color = colorScheme.onSurface
+            )
+
             Spacer(modifier = Modifier.height(16.dp))
 
-            FilaResumen(color = Color(0xFFCDE2D4), etiqueta = "Total Citas", valor = "12", isBold = true)
-            FilaResumen(color = Color(0xFFFDE89C), etiqueta = "Pendientes", valor = "8")
-            FilaResumen(color = Color(0xFF91C5A9), etiqueta = "Completadas", valor = "3")
-            FilaResumen(color = Color(0xFFF7D1C9), etiqueta = "Canceladas", valor = "1")
+            FilaResumen(
+                color = colorScheme.primaryContainer,
+                etiqueta = "Total Citas",
+                valor = "12",
+                isBold = true
+            )
+
+            FilaResumen(
+                color = colorScheme.tertiaryContainer,
+                etiqueta = "Pendientes",
+                valor = "8"
+            )
+
+            FilaResumen(
+                color = colorScheme.secondaryContainer,
+                etiqueta = "Completadas",
+                valor = "3"
+            )
+
+            FilaResumen(
+                color = colorScheme.errorContainer,
+                etiqueta = "Canceladas",
+                valor = "1"
+            )
         }
     }
 }
 
 @Composable
-fun FilaResumen(color: Color, etiqueta: String, valor: String, isBold: Boolean = false) {
+fun FilaResumen(
+    color: Color,
+    etiqueta: String,
+    valor: String,
+    isBold: Boolean = false
+) {
+    val colorScheme = MaterialTheme.colorScheme
+
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(color))
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .clip(CircleShape)
+                    .background(color)
+            )
+
             Spacer(modifier = Modifier.width(8.dp))
-            Text(text = etiqueta, fontSize = 14.sp, color = Color.DarkGray)
+
+            Text(
+                text = etiqueta,
+                fontSize = 14.sp,
+                color = colorScheme.onSurfaceVariant
+            )
         }
+
         Text(
             text = valor,
             fontSize = 14.sp,
-            fontWeight = if (isBold) FontWeight.Bold else FontWeight.Medium
+            fontWeight = if (isBold) {
+                FontWeight.Bold
+            } else {
+                FontWeight.Medium
+            },
+            color = colorScheme.onSurface
         )
     }
 }
@@ -1303,7 +1551,7 @@ fun FilaResumen(color: Color, etiqueta: String, valor: String, isBold: Boolean =
 fun CitaItem(
     hora: String,
     ampm: String,
-    horaColor: Color = Color.Black,
+    horaColor: Color = MaterialTheme.colorScheme.onSurface,
     nombrePaciente: String,
     estado: String,
     estadoBgColor: Color,
@@ -1314,72 +1562,164 @@ fun CitaItem(
     etiquetas: List<Pair<Pair<ImageVector, String>, Color>>,
     botones: @Composable () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     Column {
-        // Cabecera de Hora
-        Box(modifier = Modifier.fillMaxWidth().background(Color(0xFFF5EFEB), RoundedCornerShape(8.dp)).padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+        // Cabecera de hora.
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    colorScheme.surfaceVariant,
+                    RoundedCornerShape(8.dp)
+                )
+                .padding(vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
             Row(verticalAlignment = Alignment.Bottom) {
-                Text(text = hora, fontSize = 20.sp, fontWeight = FontWeight.Medium, color = horaColor)
+                Text(
+                    text = hora,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = horaColor
+                )
+
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(text = ampm, fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(bottom = 3.dp))
+
+                Text(
+                    text = ampm,
+                    fontSize = 12.sp,
+                    color = colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 3.dp)
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Tarjeta de Detalle
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(
+                containerColor = colorScheme.surface
+            ),
             shape = RoundedCornerShape(12.dp),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E5E5))
+            border = BorderStroke(
+                1.dp,
+                colorScheme.outlineVariant
+            )
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.Top) {
-                    // Avatar
+
                     if (esAvatarLetra) {
                         Box(
-                            modifier = Modifier.size(50.dp).clip(CircleShape).background(Color(0xFFCDE2D4)),
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(CircleShape)
+                                .background(colorScheme.primaryContainer),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = letraAvatar, fontSize = 20.sp, color = Color(0xFF4A7D5E))
+                            Text(
+                                text = letraAvatar,
+                                fontSize = 20.sp,
+                                color = colorScheme.onPrimaryContainer
+                            )
                         }
                     } else {
-                        Box(modifier = Modifier.size(50.dp).clip(CircleShape).background(Color.LightGray)) // Reemplazar con foto
+                        Box(
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(CircleShape)
+                                .background(colorScheme.surfaceVariant)
+                        )
                     }
 
                     Spacer(modifier = Modifier.width(12.dp))
 
-                    // Info principal
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = nombrePaciente, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = nombrePaciente,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colorScheme.onSurface
+                            )
+
                             Spacer(modifier = Modifier.width(8.dp))
-                            Box(modifier = Modifier.background(estadoBgColor, RoundedCornerShape(4.dp)).padding(horizontal = 6.dp, vertical = 2.dp)) {
-                                Text(text = estado, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = estadoTextColor)
+
+                            Box(
+                                modifier = Modifier
+                                    .background(
+                                        estadoBgColor,
+                                        RoundedCornerShape(4.dp)
+                                    )
+                                    .padding(
+                                        horizontal = 6.dp,
+                                        vertical = 2.dp
+                                    )
+                            ) {
+                                Text(
+                                    text = estado,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = estadoTextColor
+                                )
                             }
                         }
 
                         Spacer(modifier = Modifier.height(4.dp))
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Outlined.Person, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Gray)
+                            Icon(
+                                Icons.Outlined.Person,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = colorScheme.onSurfaceVariant
+                            )
+
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text(text = nombreDueno, fontSize = 13.sp, color = Color.Gray)
+
+                            Text(
+                                text = nombreDueno,
+                                fontSize = 13.sp,
+                                color = colorScheme.onSurfaceVariant
+                            )
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Etiquetas (Vacuna, Precio, etc.)
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             etiquetas.forEach { (contenido, bgColor) ->
                                 val (icono, texto) = contenido
+
                                 Row(
-                                    modifier = Modifier.background(bgColor, RoundedCornerShape(6.dp)).padding(horizontal = 8.dp, vertical = 4.dp),
+                                    modifier = Modifier
+                                        .background(
+                                            bgColor,
+                                            RoundedCornerShape(6.dp)
+                                        )
+                                        .padding(
+                                            horizontal = 8.dp,
+                                            vertical = 4.dp
+                                        ),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(icono, contentDescription = null, modifier = Modifier.size(12.dp), tint = Color.DarkGray)
+                                    Icon(
+                                        icono,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(12.dp),
+                                        tint = colorScheme.onSurfaceVariant
+                                    )
+
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text(text = texto, fontSize = 11.sp, color = Color.DarkGray)
+
+                                    Text(
+                                        text = texto,
+                                        fontSize = 11.sp,
+                                        color = colorScheme.onSurfaceVariant
+                                    )
                                 }
                             }
                         }
@@ -1388,7 +1728,6 @@ fun CitaItem(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Botones de acción
                 botones()
             }
         }

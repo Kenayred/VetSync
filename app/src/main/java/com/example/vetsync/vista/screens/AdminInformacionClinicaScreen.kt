@@ -1,20 +1,25 @@
-
 package com.example.vetsync.vista.screens
 
 import android.widget.Toast
+
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+
 import androidx.compose.foundation.text.KeyboardOptions
+
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Business
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Phone
+
 import androidx.compose.material3.*
+
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,11 +29,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
 import com.example.vetsync.controlador.InformacionClinicaControlador
 import com.example.vetsync.modelo.InformacionClinica
-
-private val VerdeClinica = Color(0xFF2E5B4B)
-private val FondoClinica = Color(0xFFFDFCF9)
 
 @Composable
 fun AdminInformacionClinicaScreen(
@@ -39,24 +42,51 @@ fun AdminInformacionClinicaScreen(
 ) {
 
     val context = LocalContext.current
+    val colorScheme = MaterialTheme.colorScheme
 
     // --------------------------------------------------
     // ESTADOS
     // --------------------------------------------------
 
-    var nombre by remember { mutableStateOf("") }
-    var direccion by remember { mutableStateOf("") }
-    var telefono by remember { mutableStateOf("") }
-    var correo by remember { mutableStateOf("") }
-    var descripcion by remember { mutableStateOf("") }
+    var nombre by remember {
+        mutableStateOf("")
+    }
 
-    var cargando by remember { mutableStateOf(true) }
-    var guardando by remember { mutableStateOf(false) }
+    var direccion by remember {
+        mutableStateOf("")
+    }
 
-    var errorCarga by remember { mutableStateOf<String?>(null) }
-    var errorFormulario by remember { mutableStateOf<String?>(null) }
+    var telefono by remember {
+        mutableStateOf("")
+    }
 
-    var reintentos by remember { mutableIntStateOf(0) }
+    var correo by remember {
+        mutableStateOf("")
+    }
+
+    var descripcion by remember {
+        mutableStateOf("")
+    }
+
+    var cargando by remember {
+        mutableStateOf(true)
+    }
+
+    var guardando by remember {
+        mutableStateOf(false)
+    }
+
+    var errorCarga by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    var errorFormulario by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    var reintentos by remember {
+        mutableIntStateOf(0)
+    }
 
     // --------------------------------------------------
     // CARGAR INFORMACIÓN DE FIRESTORE
@@ -96,10 +126,12 @@ fun AdminInformacionClinicaScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(FondoClinica)
+            .background(colorScheme.background)
     ) {
 
-        // Encabezado.
+        // --------------------------------------------------
+        // ENCABEZADO
+        // --------------------------------------------------
 
         Row(
             modifier = Modifier
@@ -108,6 +140,7 @@ fun AdminInformacionClinicaScreen(
                     horizontal = 16.dp,
                     vertical = 12.dp
                 ),
+
             verticalAlignment = Alignment.CenterVertically
         ) {
 
@@ -119,7 +152,7 @@ fun AdminInformacionClinicaScreen(
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                     contentDescription = "Regresar",
-                    tint = VerdeClinica
+                    tint = colorScheme.primary
                 )
             }
 
@@ -131,32 +164,36 @@ fun AdminInformacionClinicaScreen(
                     text = "Información de la clínica",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1A1A1A)
+                    color = colorScheme.onBackground
                 )
 
                 Text(
                     text = "Configuración institucional",
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = colorScheme.onSurfaceVariant
                 )
             }
         }
 
         HorizontalDivider(
-            color = Color(0xFFEAEAEA)
+            color = colorScheme.outlineVariant
         )
 
-        // Indicador de carga.
+        // --------------------------------------------------
+        // INDICADOR DE CARGA
+        // --------------------------------------------------
 
         if (cargando) {
 
             LinearProgressIndicator(
                 modifier = Modifier.fillMaxWidth(),
-                color = VerdeClinica
+                color = colorScheme.primary
             )
         }
 
-        // Contenido.
+        // --------------------------------------------------
+        // CONTENIDO
+        // --------------------------------------------------
 
         Column(
             modifier = Modifier
@@ -166,28 +203,39 @@ fun AdminInformacionClinicaScreen(
                     horizontal = 20.dp,
                     vertical = 18.dp
                 ),
+
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            // Tarjeta informativa.
+            // --------------------------------------------------
+            // TARJETA INFORMATIVA
+            // --------------------------------------------------
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
+
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFE2EFE7)
+                    containerColor = colorScheme.primaryContainer
                 ),
-                shape = RoundedCornerShape(14.dp)
+
+                shape = RoundedCornerShape(14.dp),
+
+                border = BorderStroke(
+                    1.dp,
+                    colorScheme.outlineVariant
+                )
             ) {
 
                 Row(
                     modifier = Modifier.padding(16.dp),
+
                     verticalAlignment = Alignment.CenterVertically
                 ) {
 
                     Icon(
                         imageVector = Icons.Outlined.Business,
                         contentDescription = null,
-                        tint = VerdeClinica,
+                        tint = colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(34.dp)
                     )
 
@@ -199,7 +247,7 @@ fun AdminInformacionClinicaScreen(
                             text = "Datos institucionales",
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
-                            color = VerdeClinica
+                            color = colorScheme.onPrimaryContainer
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
@@ -207,21 +255,31 @@ fun AdminInformacionClinicaScreen(
                         Text(
                             text = "Administra la información de contacto y presentación de VetSync.",
                             fontSize = 12.sp,
-                            color = Color(0xFF43584D),
+                            color = colorScheme.onPrimaryContainer,
                             lineHeight = 17.sp
                         )
                     }
                 }
             }
 
-            // Error de carga.
+            // --------------------------------------------------
+            // ERROR DE CARGA
+            // --------------------------------------------------
 
             if (errorCarga != null) {
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
+
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFFFF0EE)
+                        containerColor = colorScheme.errorContainer
+                    ),
+
+                    shape = RoundedCornerShape(14.dp),
+
+                    border = BorderStroke(
+                        1.dp,
+                        colorScheme.error.copy(alpha = 0.30f)
                     )
                 ) {
 
@@ -232,7 +290,7 @@ fun AdminInformacionClinicaScreen(
                         Text(
                             text = "No se pudo cargar la información",
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFFB3261E)
+                            color = colorScheme.onErrorContainer
                         )
 
                         Spacer(modifier = Modifier.height(5.dp))
@@ -240,7 +298,7 @@ fun AdminInformacionClinicaScreen(
                         Text(
                             text = errorCarga.orEmpty(),
                             fontSize = 13.sp,
-                            color = Color.DarkGray
+                            color = colorScheme.onErrorContainer
                         )
 
                         TextButton(
@@ -248,26 +306,34 @@ fun AdminInformacionClinicaScreen(
                                 reintentos++
                             }
                         ) {
-                            Text("Reintentar")
+
+                            Text(
+                                "Reintentar",
+                                color = colorScheme.onErrorContainer
+                            )
                         }
                     }
                 }
             }
 
-            // Formulario: solo se habilita cuando la carga
-            // inicial ha finalizado correctamente.
+            // --------------------------------------------------
+            // FORMULARIO
+            // --------------------------------------------------
 
             if (errorCarga == null && !cargando) {
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
+
                     colors = CardDefaults.cardColors(
-                        containerColor = Color.White
+                        containerColor = colorScheme.surface
                     ),
+
                     shape = RoundedCornerShape(16.dp),
-                    border = androidx.compose.foundation.BorderStroke(
+
+                    border = BorderStroke(
                         1.dp,
-                        Color(0xFFE5E5E5)
+                        colorScheme.outlineVariant
                     )
                 ) {
 
@@ -275,6 +341,7 @@ fun AdminInformacionClinicaScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(18.dp),
+
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
 
@@ -282,152 +349,189 @@ fun AdminInformacionClinicaScreen(
                             text = "Información general",
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF222222)
+                            color = colorScheme.onSurface
                         )
 
-                        // Nombre.
+                        // NOMBRE.
 
                         OutlinedTextField(
                             value = nombre,
+
                             onValueChange = {
                                 nombre = it
                                 errorFormulario = null
                             },
+
                             modifier = Modifier.fillMaxWidth(),
+
                             enabled = !guardando,
+
                             singleLine = true,
+
                             label = {
                                 Text("Nombre de la clínica")
                             },
+
                             leadingIcon = {
                                 Icon(
                                     Icons.Outlined.Business,
                                     contentDescription = null
                                 )
                             },
+
                             colors = coloresCampoClinica()
                         )
 
-                        // Dirección.
+                        // DIRECCIÓN.
 
                         OutlinedTextField(
                             value = direccion,
+
                             onValueChange = {
                                 direccion = it
                                 errorFormulario = null
                             },
+
                             modifier = Modifier.fillMaxWidth(),
+
                             enabled = !guardando,
+
                             singleLine = true,
+
                             label = {
                                 Text("Dirección")
                             },
+
                             leadingIcon = {
                                 Icon(
                                     Icons.Outlined.LocationOn,
                                     contentDescription = null
                                 )
                             },
+
                             colors = coloresCampoClinica()
                         )
 
-                        // Teléfono.
+                        // TELÉFONO.
 
                         OutlinedTextField(
                             value = telefono,
+
                             onValueChange = {
                                 telefono = it
                                 errorFormulario = null
                             },
+
                             modifier = Modifier.fillMaxWidth(),
+
                             enabled = !guardando,
+
                             singleLine = true,
+
                             label = {
                                 Text("Teléfono")
                             },
+
                             leadingIcon = {
                                 Icon(
                                     Icons.Outlined.Phone,
                                     contentDescription = null
                                 )
                             },
+
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Phone
                             ),
+
                             colors = coloresCampoClinica()
                         )
 
-                        // Correo.
+                        // CORREO.
 
                         OutlinedTextField(
                             value = correo,
+
                             onValueChange = {
                                 correo = it
                                 errorFormulario = null
                             },
+
                             modifier = Modifier.fillMaxWidth(),
+
                             enabled = !guardando,
+
                             singleLine = true,
+
                             label = {
                                 Text("Correo institucional")
                             },
+
                             leadingIcon = {
                                 Icon(
                                     Icons.Outlined.Email,
                                     contentDescription = null
                                 )
                             },
+
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Email
                             ),
+
                             colors = coloresCampoClinica()
                         )
 
-                        // Descripción.
+                        // DESCRIPCIÓN.
 
                         OutlinedTextField(
                             value = descripcion,
+
                             onValueChange = {
                                 descripcion = it
                                 errorFormulario = null
                             },
+
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(min = 110.dp),
+
                             enabled = !guardando,
+
                             label = {
                                 Text("Descripción de la clínica")
                             },
+
                             placeholder = {
                                 Text(
                                     "Escribe una breve descripción de los servicios y atención veterinaria..."
                                 )
                             },
+
                             minLines = 3,
+
                             colors = coloresCampoClinica()
                         )
 
                         Text(
                             text = "${descripcion.length}/500 caracteres",
                             fontSize = 11.sp,
-                            color = Color.Gray,
+                            color = colorScheme.onSurfaceVariant,
                             modifier = Modifier.align(
                                 Alignment.End
                             )
                         )
 
-                        // Errores de validación.
+                        // ERRORES DE VALIDACIÓN.
 
                         if (errorFormulario != null) {
 
                             Text(
                                 text = errorFormulario.orEmpty(),
-                                color = Color(0xFFB3261E),
+                                color = colorScheme.error,
                                 fontSize = 12.sp
                             )
                         }
 
-                        // Botón guardar.
+                        // GUARDAR INFORMACIÓN.
 
                         Button(
                             onClick = {
@@ -466,13 +570,18 @@ fun AdminInformacionClinicaScreen(
                                     }
                                 )
                             },
+
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),
+
                             enabled = !guardando,
+
                             shape = RoundedCornerShape(12.dp),
+
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = VerdeClinica
+                                containerColor = colorScheme.primary,
+                                contentColor = colorScheme.onPrimary
                             )
                         ) {
 
@@ -480,7 +589,7 @@ fun AdminInformacionClinicaScreen(
 
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(20.dp),
-                                    color = Color.White,
+                                    color = colorScheme.onPrimary,
                                     strokeWidth = 2.dp
                                 )
 
@@ -507,13 +616,16 @@ fun AdminInformacionClinicaScreen(
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
+
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White
+                    containerColor = colorScheme.surface
                 ),
+
                 shape = RoundedCornerShape(16.dp),
-                border = androidx.compose.foundation.BorderStroke(
+
+                border = BorderStroke(
                     1.dp,
-                    Color(0xFFE5E5E5)
+                    colorScheme.outlineVariant
                 )
             ) {
 
@@ -525,7 +637,7 @@ fun AdminInformacionClinicaScreen(
                         text = "Horario de atención",
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF222222)
+                        color = colorScheme.onSurface
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -537,7 +649,7 @@ fun AdminInformacionClinicaScreen(
 
                     HorizontalDivider(
                         modifier = Modifier.padding(vertical = 10.dp),
-                        color = Color(0xFFEEEEEE)
+                        color = colorScheme.outlineVariant
                     )
 
                     HorarioClinicaRow(
@@ -547,7 +659,7 @@ fun AdminInformacionClinicaScreen(
 
                     HorizontalDivider(
                         modifier = Modifier.padding(vertical = 10.dp),
-                        color = Color(0xFFEEEEEE)
+                        color = colorScheme.outlineVariant
                     )
 
                     HorarioClinicaRow(
@@ -560,7 +672,7 @@ fun AdminInformacionClinicaScreen(
                     Text(
                         text = "Estos horarios corresponden a las reglas actuales de disponibilidad de citas.",
                         fontSize = 11.sp,
-                        color = Color.Gray,
+                        color = colorScheme.onSurfaceVariant,
                         lineHeight = 16.sp
                     )
                 }
@@ -571,21 +683,21 @@ fun AdminInformacionClinicaScreen(
     }
 }
 
-// --------------------------------------------------
+// ======================================================
 // COLORES DE LOS CAMPOS
-// --------------------------------------------------
+// ======================================================
 
 @Composable
 private fun coloresCampoClinica() =
     OutlinedTextFieldDefaults.colors(
-        focusedBorderColor = VerdeClinica,
-        focusedLabelColor = VerdeClinica,
-        cursorColor = VerdeClinica
+        focusedBorderColor = MaterialTheme.colorScheme.primary,
+        focusedLabelColor = MaterialTheme.colorScheme.primary,
+        cursorColor = MaterialTheme.colorScheme.primary
     )
 
-// --------------------------------------------------
+// ======================================================
 // FILA DE HORARIO
-// --------------------------------------------------
+// ======================================================
 
 @Composable
 private fun HorarioClinicaRow(
@@ -593,23 +705,27 @@ private fun HorarioClinicaRow(
     horario: String
 ) {
 
+    val colorScheme = MaterialTheme.colorScheme
+
     Row(
         modifier = Modifier.fillMaxWidth(),
+
         horizontalArrangement = Arrangement.SpaceBetween,
+
         verticalAlignment = Alignment.CenterVertically
     ) {
 
         Text(
             text = dia,
             fontSize = 13.sp,
-            color = Color(0xFF3A3A3A)
+            color = colorScheme.onSurfaceVariant
         )
 
         Text(
             text = horario,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
-            color = VerdeClinica
+            color = colorScheme.primary
         )
     }
 }
